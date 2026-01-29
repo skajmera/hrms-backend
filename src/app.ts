@@ -16,15 +16,9 @@ const app: Application = express();
 app.set('trust proxy', 1);
 // Security Middleware
 app.use(helmet());
-// app.use(
-//   helmet({
-//     crossOriginOpenerPolicy: false,
-//     crossOriginEmbedderPolicy: false,
-//   })
-// );
 // CORS Configuration
 app.use(cors({
-  origin:'*',// config.cors.origin,
+  origin: config.cors.origin,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH','OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
