@@ -1,0 +1,86 @@
+import { Response, NextFunction } from 'express';
+import { announcementService } from './announcement.service';
+import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
+import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '../../../../shared/utils/response';
+import { HTTP_STATUS } from '../../../../config/constants';
+
+export class AnnouncementController {
+  async createAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcement = await announcementService.createAnnouncement({ ...req.body, createdBy: req.user._id });
+      sendSuccessResponse(res, 'Announcement created successfully', announcement, HTTP_STATUS.CREATED);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
+    }
+  }
+
+  async getAnnouncementById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcement = await announcementService.getAnnouncementById(req.params.id);
+      sendSuccessResponse(res, 'Announcement retrieved successfully', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
+  async getAllAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
+      const result = await announcementService.getAllAnnouncements(filters, { page: Number(page), limit: Number(limit), sortBy: sortBy as string, sortOrder: sortOrder as 'asc' | 'desc' });
+      sendPaginatedResponse(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async updateAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcement = await announcementService.updateAnnouncement(req.params.id, req.body);
+      sendSuccessResponse(res, 'Announcement updated successfully', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
+    }
+  }
+
+  async deleteAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await announcementService.deleteAnnouncement(req.params.id);
+      sendSuccessResponse(res, 'Announcement deleted successfully');
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
+  async getMyAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcements = await announcementService.getActiveAnnouncementsForUser(
+        req.user._id.toString(),
+        req.user.role,
+        req.user.professionalDetails.department.toString()
+      );
+      sendSuccessResponse(res, 'Your announcements retrieved successfully', announcements);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async markAsViewed(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await announcementService.markAsViewed(req.params.id, req.user._id.toString());
+      sendSuccessResponse(res, 'Announcement marked as viewed');
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async togglePin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcement = await announcementService.togglePin(req.params.id);
+      sendSuccessResponse(res, 'Announcement pin status updated', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+}
+
+export const announcementController = new AnnouncementController();
