@@ -15,13 +15,13 @@ const app: Application = express();
 // 👇 VERY IMPORTANT (rate-limit se pehle)
 app.set('trust proxy', 1);
 // Security Middleware
-// app.use(helmet());
-app.use(
-  helmet({
-    crossOriginOpenerPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
-);
+app.use(helmet());
+// app.use(
+//   helmet({
+//     crossOriginOpenerPolicy: false,
+//     crossOriginEmbedderPolicy: false,
+//   })
+// );
 // CORS Configuration
 app.use(cors({
   origin:'*',// config.cors.origin,
@@ -49,14 +49,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // Swagger Documentation
-// app.use('/api/v1/docs', 
-// swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-//   customCss: '.swagger-ui .topbar { display: none }',
-//   customSiteTitle: 'HRMS API Documentation',
-//   customfavIcon: '/favicon.ico'
-// }));
 
-///
 app.use(
   '/api/v1/docs',
   (req:Request, res:Response, next:NextFunction) => {
@@ -69,10 +62,9 @@ app.use(
   swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'HRMS API Documentation',
+    customfavIcon: '/favicon.ico'
   })
 );
-
-///
 
 
 app.get('/api/v1/docs.json', (req, res) => {
