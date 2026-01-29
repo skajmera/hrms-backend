@@ -60,8 +60,9 @@ app.use(compression());
 app.use(
   '/api/v1/docs',
   (req:Request, res:Response, next:NextFunction) => {
-    res.removeHeader('Cross-Origin-Opener-Policy');
-    res.removeHeader('Cross-Origin-Embedder-Policy');
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");
     next();
   },
   swaggerUi.serve,
