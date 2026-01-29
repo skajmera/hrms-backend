@@ -15,8 +15,12 @@ const app: Application = express();
 // 👇 VERY IMPORTANT (rate-limit se pehle)
 app.set('trust proxy', 1);
 // Security Middleware
-app.use(helmet());
-
+// app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 // CORS Configuration
 app.use(cors({
   origin:'*',// config.cors.origin,
@@ -44,9 +48,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // Swagger Documentation
-app.use('/api/v1/docs', helmet({
-  contentSecurityPolicy: false,
-}), swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/api/v1/docs', 
+//   helmet({
+//   contentSecurityPolicy: false,
+// }), 
+swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'HRMS API Documentation',
   customfavIcon: '/favicon.ico'
