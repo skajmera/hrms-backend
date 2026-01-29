@@ -16,11 +16,13 @@ const app: Application = express();
 app.set('trust proxy', 1);
 // Security Middleware
 // app.use(helmet());
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: false,
-//   })
-// );
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 // CORS Configuration
 app.use(cors({
   origin:'*',// config.cors.origin,
