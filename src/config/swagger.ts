@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'https://rs444324-5000.inc1.devtunnels.ms/api/v1',//`http://localhost:${config.port}/api/v1`,
+        url: 'http://68.183.245.11:5001/api/v1',//`http://localhost:${config.port}/api/v1`,
         description: 'Development Server'
       },
       {
