@@ -49,15 +49,30 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // Swagger Documentation
-app.use('/api/v1/docs', 
-//   helmet({
-//   contentSecurityPolicy: false,
-// }), 
-swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'HRMS API Documentation',
-  customfavIcon: '/favicon.ico'
-}));
+// app.use('/api/v1/docs', 
+// swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+//   customCss: '.swagger-ui .topbar { display: none }',
+//   customSiteTitle: 'HRMS API Documentation',
+//   customfavIcon: '/favicon.ico'
+// }));
+
+///
+app.use(
+  '/api/v1/docs',
+  (req:Request, res:Response, next:NextFunction) => {
+    res.removeHeader('Cross-Origin-Opener-Policy');
+    res.removeHeader('Cross-Origin-Embedder-Policy');
+    next();
+  },
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'HRMS API Documentation',
+  })
+);
+
+///
+
 
 app.get('/api/v1/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
