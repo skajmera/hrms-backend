@@ -44,7 +44,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(compression());
 
 // Swagger Documentation
-app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/api/v1/docs', helmet({
+  contentSecurityPolicy: false,
+}), swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'HRMS API Documentation',
   customfavIcon: '/favicon.ico'
