@@ -53,7 +53,7 @@ export interface ISalaryDetails {
 export interface IProfessionalDetails {
   employeeId: string;
   designation: string;
-  department: Types.ObjectId | string;
+  department: any |Types.ObjectId | string;
   joiningDate: Date;
   employmentStatus: keyof typeof EMPLOYMENT_STATUS;
   probationEndDate?: Date;

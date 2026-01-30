@@ -409,4 +409,81 @@ router.post('/generate', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
  */
 router.put('/:id/mark-paid', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), payrollController.markAsPaid.bind(payrollController));
 
+
+
+/**
+ * @swagger
+ * /hr/payroll/{id}/download:
+ *   get:
+ *     summary: Download payslip PDF
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: PDF file
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ */
+router.get('/:id/download', payrollController.downloadPayslip.bind(payrollController));
+
+/**
+ * @swagger
+ * /hr/payroll/{id}/regenerate:
+ *   post:
+ *     summary: Regenerate payslip PDF
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payslip regenerated successfully
+ */
+router.post('/:id/regenerate', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), payrollController.regeneratePayslip.bind(payrollController));
+
+/**
+ * @swagger
+ * /hr/payroll/bulk-generate:
+ *   post:
+ *     summary: Bulk generate payroll for all employees
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - month
+ *               - year
+ *             properties:
+ *               month:
+ *                 type: integer
+ *               year:
+ *                 type: integer
+ *               departmentId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Bulk generation completed
+ */
+router.post('/bulk-generate', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), payrollController.bulkGeneratePayroll.bind(payrollController));
+
 export default router;

@@ -3,7 +3,7 @@ import { payrollService } from './payroll.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
-
+import path from 'path';
 export class PayrollController {
   async generatePayroll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -58,6 +58,53 @@ export class PayrollController {
     try {
       const payroll = await payrollService.markAsPaid(req.params.id, req.body);
       sendSuccessResponse(res, 'Payroll marked as paid successfully', payroll);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * Download payslip PDF
+   */
+  async downloadPayslip(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const pdfPath = await payrollService.downloadPayslip(req.params.id);
+      const fullPath = path.join(process.cwd(), pdfPath);
+      
+      res.download(fullPath, (err) => {
+        if (err) {
+          sendErrorResponse(res, 'Failed to download payslip', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        }
+      });
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Regenerate payslip
+   */
+  async regeneratePayslip(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const pdfPath = await payrollService.regeneratePayslip(req.params.id);
+      sendSuccessResponse(res, 'Payslip regenerated successfully', { path: pdfPath });
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * Bulk generate payroll
+   */
+  async bulkGeneratePayroll(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { month, year, departmentId } = req.body;
+      const results = await payrollService.bulkGeneratePayroll(month, year, departmentId);
+      
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      sendSuccessResponse(res, `Payroll generation completed. Success: ${successCount}, Failed: ${failCount}`, results);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
     }
