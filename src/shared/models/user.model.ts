@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/user.interface';
 import { config } from '../../config/env';
 import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES } from '../../config/constants';
+import { fillAndStroke } from 'pdfkit';
 
 const AddressSchema = new Schema({
   street: { type: String, required: true },
@@ -84,20 +85,20 @@ const UserSchema = new Schema<IUser>({
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
   password: { type: String, required: true, minlength: 6, select: false },
-  phone: { type: String, required: true },
+  phone: { type: String, required: fillAndStroke },
   alternatePhone: { type: String },
-  dateOfBirth: { type: Date, required: true },
-  gender: { type: String, enum: ['MALE', 'FEMALE', 'OTHER'], required: true },
+  dateOfBirth: { type: Date, required: false },
+  gender: { type: String, enum: ['MALE', 'FEMALE', 'OTHER'], required: false },
   bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
   maritalStatus: { type: String, enum: ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED'] },
   profilePicture: { type: String },
   
   // Address
-  currentAddress: { type: AddressSchema, required: true },
+  currentAddress: { type: AddressSchema, required: false },
   permanentAddress: AddressSchema,
   
   // Professional Details
-  professionalDetails: { type: ProfessionalDetailsSchema, required: true },
+  professionalDetails: { type: ProfessionalDetailsSchema, required: false },
   
   // Education & Experience
   education: [EducationSchema],

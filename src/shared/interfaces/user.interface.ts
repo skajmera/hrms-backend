@@ -69,24 +69,24 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   password: string;
-  phone: string;
+  phone?: string;
   alternatePhone?: string;
-  dateOfBirth: Date;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  dateOfBirth?: Date;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
   bloodGroup?: string;
   maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
   profilePicture?: string;
   
   // Address
-  currentAddress: IAddress;
+  currentAddress?: IAddress;
   permanentAddress?: IAddress;
   
   // Professional Details
-  professionalDetails: IProfessionalDetails;
+  professionalDetails?: IProfessionalDetails | any;
   
   // Education & Experience
-  education: IEducation[];
-  experience: IExperience[];
+  education?: IEducation[];
+  experience?: IExperience[];
   
   // Emergency Contact
   emergencyContact?: {
@@ -97,8 +97,8 @@ export interface IUser extends Document {
   
   // System Fields
   role: keyof typeof USER_ROLES;
-  isActive: boolean;
-  isEmailVerified: boolean;
+  isActive?: boolean;
+  isEmailVerified?: boolean;
   emailVerificationToken?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -121,12 +121,12 @@ export interface IUserCreateInput {
   lastName: string;
   email: string;
   password: string;
-  phone: string;
-  dateOfBirth: Date;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  phone?: string;
+  dateOfBirth?: Date;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
   role: keyof typeof USER_ROLES;
-  currentAddress: IAddress;
-  professionalDetails: IProfessionalDetails;
+  currentAddress?: IAddress;
+  professionalDetails?: IProfessionalDetails | any;
 }
 
 export interface IUserUpdateInput {

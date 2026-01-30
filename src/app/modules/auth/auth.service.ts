@@ -14,10 +14,10 @@ export class AuthService {
       throw new Error('User with this email already exists');
     }
 
-    const existingEmployeeId = await userDAL.findByEmployeeId(userData.professionalDetails.employeeId);
-    if (existingEmployeeId) {
-      throw new Error('Employee ID already exists');
-    }
+    // const existingEmployeeId = await userDAL.findByEmployeeId(userData.professionalDetails.employeeId);
+    // if (existingEmployeeId) {
+    //   throw new Error('Employee ID already exists');
+    // }
 
     const user = await userDAL.create(userData);
 
