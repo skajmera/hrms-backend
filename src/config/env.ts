@@ -35,6 +35,6 @@ export const config = {
   },
   
   cors: {
-    origin: process.env.CORS_ORIGIN ||  'http://localhost:3000' || 'http://68.183.245.11:5001'
+    origin: process.env.CORS_ORIGIN ||  'http://localhost:5173' || 'http://68.183.245.11:5001'
   }
 };

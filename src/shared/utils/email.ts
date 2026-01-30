@@ -74,8 +74,8 @@ export const sendWelcomeEmail = async (
 
       <div style="background-color: #f9fafb; padding: 15px; border-radius: 4px; margin: 15px 0;">
         <p style="margin: 6px 0;"><strong>Login URL:</strong> 
-          <a href="https://localhost:3000/login" target="_blank">
-            https://localhost:3000/login
+          <a href="https://localhost:5173/login" target="_blank">
+            https://localhost:5173/login
           </a>
         </p>
         <p style="margin: 6px 0;"><strong>Login ID:</strong> ${loginId}</p>
@@ -87,7 +87,7 @@ export const sendWelcomeEmail = async (
       </p>
 
       <div style="text-align: center; margin: 25px 0;">
-        <a href="https://localhost:3000/login"
+        <a href="https://localhost:5173/login"
            style="background-color: #2c7be5; color: #ffffff; padding: 10px 20px; 
                   text-decoration: none; border-radius: 4px; font-size: 14px;">
           Login to HRMS
