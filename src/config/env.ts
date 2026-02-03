@@ -35,6 +35,6 @@ export const config = {
   },
   
   cors: {
-    origin: process.env.CORS_ORIGIN ||  'http://localhost:5173' || 'https://rs444324-5000.inc1.devtunnels.ms'
+    origin: process.env.CORS_ORIGIN ||  'http://localhost:5173' || 'https://hrms-backend-khq1.onrender.com/'
   }
 };
