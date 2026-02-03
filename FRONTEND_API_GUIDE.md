@@ -16,11 +16,11 @@
 ## 🚀 Getting Started
 
 ### API Documentation
-- **Swagger UI**: `http://68.183.245.11:5001/api/v1/docs`
-- **Swagger JSON**: `http://68.183.245.11:5001/api/v1/docs.json`
+- **Swagger UI**: `https://rs444324-5000.inc1.devtunnels.ms/api/v1/docs`
+- **Swagger JSON**: `https://rs444324-5000.inc1.devtunnels.ms/api/v1/docs.json`
 
 ### Base URLs
-- **Development**: `http://68.183.245.11:5001/api/v1`
+- **Development**: `https://rs444324-5000.inc1.devtunnels.ms/api/v1`
 - **Production**: `https://api.braininventory.com/api/v1`
 
 ---
@@ -71,7 +71,7 @@ headers: {
 
 ## 🌐 API Base URL
 ```javascript
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://68.183.245.11:5001/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://rs444324-5000.inc1.devtunnels.ms/api/v1';
 ```
 
 ---
@@ -549,7 +549,7 @@ Access: Private
 // src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://68.183.245.11:5001/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://rs444324-5000.inc1.devtunnels.ms/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -943,7 +943,7 @@ const canViewPayroll = ['SUPER_ADMIN', 'HR_ADMIN'].includes(user.role);
 
 For any issues or questions:
 - **Email**: hr@braininventory.com
-- **Documentation**: http://68.183.245.11:5001/api/v1/docs
+- **Documentation**: https://rs444324-5000.inc1.devtunnels.ms/api/v1/docs
 - **Issue Tracker**: [GitHub Issues]
 
 ---

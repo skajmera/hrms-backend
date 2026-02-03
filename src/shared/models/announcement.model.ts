@@ -14,7 +14,11 @@ const AnnouncementSchema = new Schema<IAnnouncement>({
   // Dates
   startDate: { type: Date, required: true, default: Date.now },
   expiryDate: { type: Date },
-  
+  announcementType: {
+    type: String,
+    enum: ["GENERAL", "BIRTHDAY", "ANNIVERSARY"],
+    required: true
+  },
   // Target Audience
   targetAudience: {
     departments: [{ type: Schema.Types.ObjectId, ref: 'Department' }],

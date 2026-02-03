@@ -34,10 +34,11 @@ export class DashboardController {
 
   async getRecentAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log(req.user.professionalDetails)
       const announcements = await dashboardService.getRecentAnnouncements(
         req.user._id.toString(),
         req.user.role,
-        req.user.professionalDetails.department.toString()
+        req.user.professionalDetails?.department?.toString()
       );
       sendSuccessResponse(res, 'Announcements retrieved successfully', announcements);
     } catch (error: any) {

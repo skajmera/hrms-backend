@@ -13,7 +13,7 @@ export interface IAnnouncement extends Document {
   // Dates
   startDate: Date;
   expiryDate?: Date;
-  
+  announcementType: 'GENERAL' | 'BIRTHDAY' | 'ANNIVERSARY';
   // Target Audience
   targetAudience: {
     departments?: Types.ObjectId[] | string[];

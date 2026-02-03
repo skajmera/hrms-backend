@@ -140,6 +140,55 @@ export class UserDAL {
           birthDay: day,
           isActive: true
         }
+      },
+      {
+        $lookup: {
+          from: "announcements",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$isActive", true] },
+                    { $eq: ["$announcementType", "BIRTHDAY"] },
+                    { $lte: ["$startDate", today] },
+                    {
+                      $or: [
+                        { $eq: ["$expiryDate", null] },
+                        { $gte: ["$expiryDate", today] }
+                      ]
+                    },
+                    {
+                      $or: [
+                        { $eq: ["$targetAudience.isGlobal", true] },
+                        { $in: ["$$userId", "$targetAudience.specificUsers"] }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                title: 1,
+                content: 1,
+                priority: 1,
+                isPinned: 1,
+                attachments:1
+              }
+            }
+          ],
+          as: "birthdayAnnouncements"
+        }
+      },
+  
+      // 4️⃣ Clean response
+      {
+        $project: {
+          birthMonth: 0,
+          birthDay: 0
+        }
       }
     ]);
   }

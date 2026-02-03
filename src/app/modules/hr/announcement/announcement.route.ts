@@ -181,6 +181,10 @@ router.get('/:id', announcementController.getAnnouncementById.bind(announcementC
  *                 type: string
  *                 enum: [LOW, MEDIUM, HIGH, CRITICAL]
  *                 example: HIGH
+ *               announcementType:
+ *                 type: string
+ *                 enum: [BIRTHDAY, ANNIVERSARY, GENERAL]
+ *                 example: GENERAL
  *               startDate:
  *                 type: string
  *                 format: date

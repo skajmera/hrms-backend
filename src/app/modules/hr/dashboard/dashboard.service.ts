@@ -15,6 +15,7 @@ export class DashboardService {
     const lateCount = todayAttendance.filter(a => a.isLate).length;
     const wfhCount = todayAttendance.filter(a => a.status === 'WFH').length;
 
+    const newHires = await userDAL.getNewHires(30);
     return {
       totalEmployees: totalUsers.total,
       attendance: {
@@ -27,7 +28,8 @@ export class DashboardService {
       leaves: {
         pending: pendingLeaves.length,
         onLeaveToday: employeesOnLeave.length
-      }
+      },
+      newHires: newHires.length
     };
   }
 
