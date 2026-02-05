@@ -220,7 +220,7 @@ router.get('/announcements', dashboardController.getRecentAnnouncements.bind(das
  *                         type: string
  *                       email:
  *                         type: string
- *                       dateOfBirth:
+ *                       anniversary:
  *                         type: string
  *                         format: date
  *                       profilePicture:

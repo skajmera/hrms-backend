@@ -102,7 +102,7 @@ export class AttendanceDAL {
     return await AttendanceModel.find({
       date: { $gte: today, $lt: tomorrow }
     })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName shiftTime email professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
