@@ -408,6 +408,96 @@ export class UserDAL {
       }
     ]);
   }
+  // async getTodayAttendanceOverview(): Promise<any[]> {
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+  
+  //   const tomorrow = new Date(today);
+  //   tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  //   return await UserModel.aggregate([
+  //     {
+  //       $match: {
+  //         isActive: true,
+  //         role: "EMPLOYEE"
+  //       }
+  //     },
+  
+  //     {
+  //       $lookup: {
+  //         from: "attendances",
+  //         let: { userId: "$_id" },
+  //         pipeline: [
+  //           {
+  //             $match: {
+  //               $expr: {
+  //                 $and: [
+  //                   { $eq: ["$userId", "$$userId"] },
+  //                   { $gte: ["$date", today] },
+  //                   { $lt: ["$date", tomorrow] }
+  //                 ]
+  //               }
+  //             }
+  //           }
+  //         ],
+  //         as: "todayAttendance"
+  //       }
+  //     },
+  
+  //     {
+  //       $addFields: {
+  //         todayAttendance: { $arrayElemAt: ["$todayAttendance", 0] }
+  //       }
+  //     },
+  
+  //     {
+  //       $addFields: {
+  //         shiftStartTime: {
+  //           $dateFromString: {
+  //             dateString: {
+  //               $concat: [
+  //                 { $dateToString: { format: "%Y-%m-%d", date: today } },
+  //                 "T",
+  //                 "$professionalDetails.shift.startTime",
+  //                 ":00"
+  //               ]
+  //             }
+  //           }
+  //         }
+  //       }
+  //     },
+  
+  //     {
+  //       $addFields: {
+  //         attendanceStatus: {
+  //           $cond: [
+  //             { $ifNull: ["$todayAttendance.checkInTime", false] },
+  //             {
+  //               $cond: [
+  //                 { $gt: ["$todayAttendance.checkInTime", "$shiftStartTime"] },
+  //                 "LATE",
+  //                 "ON_TIME"
+  //               ]
+  //             },
+  //             "YET_TO_CHECK_IN"
+  //           ]
+  //         }
+  //       }
+  //     },
+  
+  //     {
+  //       $project: {
+  //         firstName: 1,
+  //         lastName: 1,
+  //         email: 1,
+  //         "professionalDetails.employeeId": 1,
+  //         "professionalDetails.department": 1,
+  //         attendanceStatus: 1,
+  //         checkInTime: "$todayAttendance.checkInTime"
+  //       }
+  //     }
+  //   ]);
+  // }
   async getTodayAttendanceOverview(): Promise<any[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -416,6 +506,7 @@ export class UserDAL {
     tomorrow.setDate(tomorrow.getDate() + 1);
   
     return await UserModel.aggregate([
+      // 1️⃣ Active employees only
       {
         $match: {
           isActive: true,
@@ -423,6 +514,7 @@ export class UserDAL {
         }
       },
   
+      // 2️⃣ Lookup today's attendance
       {
         $lookup: {
           from: "attendances",
@@ -438,43 +530,34 @@ export class UserDAL {
                   ]
                 }
               }
+            },
+            {
+              $project: {
+                checkInTime: 1,
+                isLate: 1
+              }
             }
           ],
           as: "todayAttendance"
         }
       },
   
+      // 3️⃣ Flatten attendance array
       {
         $addFields: {
           todayAttendance: { $arrayElemAt: ["$todayAttendance", 0] }
         }
       },
   
-      {
-        $addFields: {
-          shiftStartTime: {
-            $dateFromString: {
-              dateString: {
-                $concat: [
-                  { $dateToString: { format: "%Y-%m-%d", date: today } },
-                  "T",
-                  "$professionalDetails.shift.startTime",
-                  ":00"
-                ]
-              }
-            }
-          }
-        }
-      },
-  
+      // 4️⃣ Attendance status (USING isLate FLAG)
       {
         $addFields: {
           attendanceStatus: {
             $cond: [
-              { $ifNull: ["$todayAttendance.checkInTime", false] },
+              { $ifNull: ["$todayAttendance", false] },
               {
                 $cond: [
-                  { $gt: ["$todayAttendance.checkInTime", "$shiftStartTime"] },
+                  { $eq: ["$todayAttendance.isLate", true] },
                   "LATE",
                   "ON_TIME"
                 ]
@@ -485,6 +568,7 @@ export class UserDAL {
         }
       },
   
+      // 5️⃣ Final response
       {
         $project: {
           firstName: 1,
