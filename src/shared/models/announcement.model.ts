@@ -16,7 +16,7 @@ const AnnouncementSchema = new Schema<IAnnouncement>({
   expiryDate: { type: Date },
   announcementType: {
     type: String,
-    enum: ["GENERAL", "BIRTHDAY", "ANNIVERSARY"],
+    enum: ["GENERAL", "BIRTHDAY", "ANNIVERSARY", "EVENT", "EMERGENCY", "OTHER","NEWHIRE"],
     required: true
   },
   // Target Audience

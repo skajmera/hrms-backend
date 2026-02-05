@@ -42,6 +42,18 @@ export const USER_ROLES = {
     FLEXIBLE: 'FLEXIBLE'   // Flexible hours
   } as const;
   
+  export const SHIFT_TIME = {
+    startTime: {
+      type: String, 
+      required: true
+    },
+    endTime: {
+      type: String, 
+      required: true
+    }
+   
+  } as const;
+  
   export const EMPLOYMENT_STATUS = {
     ACTIVE: 'ACTIVE',
     PROBATION: 'PROBATION',

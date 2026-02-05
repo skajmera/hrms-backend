@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/user.interface';
 import { config } from '../../config/env';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIME } from '../../config/constants';
 import { fillAndStroke } from 'pdfkit';
 
 const AddressSchema = new Schema({
@@ -68,6 +68,12 @@ const ProfessionalDetailsSchema = new Schema({
     enum: Object.values(SHIFT_TYPES),
     default: SHIFT_TYPES.MORNING
   },
+  shiftTime: { 
+    type: String, 
+    enum: Object.values(SHIFT_TIME),
+    // default: SHIFT_TYPES.MORNING
+  },
+
   workLocation: { type: String, required: true },
   salaryDetails: SalaryDetailsSchema
 }, { _id: false });
@@ -92,6 +98,7 @@ const UserSchema = new Schema<IUser>({
   bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
   maritalStatus: { type: String, enum: ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED'] },
   profilePicture: { type: String },
+  anniversary: { type: Date, required: false },
   
   // Address
   currentAddress: { type: AddressSchema, required: false },

@@ -187,4 +187,52 @@ router.get('/new-hires', dashboardController.getNewHires.bind(dashboardControlle
  */
 router.get('/announcements', dashboardController.getRecentAnnouncements.bind(dashboardController));
 
+/**
+ * @swagger
+ * /hr/dashboard/anniversary:
+ *   get:
+ *     summary: Get today's anniversary
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Anniversary retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       dateOfBirth:
+ *                         type: string
+ *                         format: date
+ *                       profilePicture:
+ *                         type: string
+ *                       professionalDetails:
+ *                         type: object
+ *                         properties:
+ *                           designation:
+ *                             type: string
+ *                           department:
+ *                             type: object
+ */
+router.get('/anniversary', dashboardController.getAnniversary.bind(dashboardController));
+
 export default router;

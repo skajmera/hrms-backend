@@ -45,6 +45,16 @@ export class DashboardController {
       sendErrorResponse(res, error.message);
     }
   }
+
+
+  async getAnniversary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const birthdays = await dashboardService.getAnniversary();
+      sendSuccessResponse(res, 'Anniversary retrieved successfully', birthdays);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
 }
 
 export const dashboardController = new DashboardController();

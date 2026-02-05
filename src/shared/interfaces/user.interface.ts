@@ -72,6 +72,7 @@ export interface IUser extends Document {
   phone?: string;
   alternatePhone?: string;
   dateOfBirth?: Date;
+  anniversary?: Date;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   bloodGroup?: string;
   maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';

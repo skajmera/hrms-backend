@@ -44,6 +44,11 @@ export class DashboardService {
   async getRecentAnnouncements(userId: string, userRole: string, userDepartment: string) {
     return await announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);
   }
+
+
+  async getAnniversary() {
+    return await userDAL.getAnniversaryToday();
+  }
 }
 
 export const dashboardService = new DashboardService();
