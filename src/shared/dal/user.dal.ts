@@ -583,6 +583,56 @@ export class UserDAL {
     ]);
   }
   
+   async getYetToCheckInCount(): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const result = await UserModel.aggregate([
+      {
+        $match: {
+          isActive: true,
+          role: 'EMPLOYEE'
+        }
+      },
+
+      {
+        $lookup: {
+          from: 'attendances',
+          let: { userId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$userId', '$$userId'] },
+                    { $gte: ['$date', today] },
+                    { $lt: ['$date', tomorrow] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: 'todayAttendance'
+        }
+      },
+
+      {
+        $match: {
+          todayAttendance: { $size: 0 }
+        }
+      },
+
+      {
+        $count: 'yetToCheckInCount'
+      }
+    ]);
+
+    return result.length ? result[0].yetToCheckInCount : 0;
+  }
+
 }
 
 export const userDAL = new UserDAL();

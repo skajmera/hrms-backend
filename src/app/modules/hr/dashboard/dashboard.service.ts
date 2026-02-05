@@ -9,6 +9,7 @@ export class DashboardService {
     const todayAttendance = await attendanceDAL.getTodayAttendance();
     const pendingLeaves = await leaveDAL.getPendingLeaves();
     const employeesOnLeave = await leaveDAL.getEmployeesOnLeaveToday();
+    const getYetToCheckInCount = await userDAL.getYetToCheckInCount();
 
     const presentCount = todayAttendance.filter(a => a.status === 'PRESENT').length;
     const absentCount = todayAttendance.filter(a => a.status === 'ABSENT').length;
@@ -23,7 +24,8 @@ export class DashboardService {
         absent: absentCount,
         late: lateCount,
         wfh: wfhCount,
-        onLeave: employeesOnLeave.length
+        onLeave: employeesOnLeave.length,
+        getYetToCheckInCount: getYetToCheckInCount
       },
       leaves: {
         pending: pendingLeaves.length,
