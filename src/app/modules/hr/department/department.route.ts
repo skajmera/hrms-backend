@@ -192,7 +192,7 @@ router.get('/:id', departmentController.getDepartmentById.bind(departmentControl
  *                 example: 'Engineering Department'
  *               parentDepartment:
  *                 type: string
- *                 example: '507f1f77bcf86cd799439011'
+ *                 example: '697b0744dfffca6e32868866'
  *                 description: Parent department ID (optional)
  *               headOfDepartment:
  *                 type: string
@@ -262,7 +262,7 @@ router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), validat
  *                 example: 'Engineering Department'
  *               parentDepartment:
  *                 type: string
- *                 example: '507f1f77bcf86cd799439011'
+ *                 example: '697b0744dfffca6e32868866'
  *                 description: Parent department ID (optional)
  *               headOfDepartment:
  *                 type: string

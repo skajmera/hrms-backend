@@ -280,7 +280,7 @@ requestBody:
         properties:
           userId:
             type: string
-            example: '507f1f77bcf86cd799439011'
+            example: '697b0744dfffca6e32868866'
           leaveType:
             type: string
             enum: [CASUAL, SICK, EARNED, MATERNITY, PATERNITY, UNPAID]

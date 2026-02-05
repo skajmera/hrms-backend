@@ -244,7 +244,7 @@ router.get('/:id', attendanceController.getAttendanceById.bind(attendanceControl
  *             properties:
  *               userId:
  *                 type: string
- *                 example: '507f1f77bcf86cd799439011'
+ *                 example: '697b0744dfffca6e32868866'
  *               date:
  *                 type: string
  *                 format: date

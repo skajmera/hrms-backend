@@ -98,7 +98,7 @@ const router = Router();
  *                     example: 'Software Engineer'
  *                   department:
  *                     type: string
- *                     example: '507f1f77bcf86cd799439011'
+ *                     example: '697b0744dfffca6e32868866'
  *                   joiningDate:
  *                     type: string
  *                     format: date

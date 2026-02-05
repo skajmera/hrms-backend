@@ -202,7 +202,7 @@ router.get('/:id', announcementController.getAnnouncementById.bind(announcementC
  *                     type: array
  *                     items:
  *                       type: string
- *                     example: ['507f1f77bcf86cd799439011']
+ *                     example: ['697b0744dfffca6e32868866']
  *                   roles:
  *                     type: array
  *                     items:

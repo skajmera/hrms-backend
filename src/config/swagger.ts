@@ -42,7 +42,7 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           required: ['firstName', 'lastName', 'email', 'password', 'phone', 'dateOfBirth', 'gender'],
           properties: {
-            _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            _id: { type: 'string', example: '697b0744dfffca6e32868866' },
             firstName: { type: 'string', example: 'sk' },
             lastName: { type: 'string', example: 'ajmera' },
             email: { type: 'string', format: 'email', example: 's.ajmera@braininventory.com' },
@@ -56,7 +56,7 @@ const options: swaggerJsdoc.Options = {
               properties: {
                 employeeId: { type: 'string', example: 'EMP001' },
                 designation: { type: 'string', example: 'Software Engineer' },
-                department: { type: 'string', example: '507f1f77bcf86cd799439011' },
+                department: { type: 'string', example: '697b0744dfffca6e32868866' },
                 joiningDate: { type: 'string', format: 'date', example: '2026-01-01' },
                 employmentStatus: { type: 'string', enum: ['ACTIVE', 'PROBATION', 'RESIGNED', 'TERMINATED'], example: 'ACTIVE' }
               }
