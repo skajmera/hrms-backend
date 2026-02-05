@@ -1,6 +1,7 @@
 import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { IAttendanceCreateInput } from '../../../../shared/interfaces/attendance.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
+import {  userDAL} from '../../../../shared/dal/user.dal';
 
 export class AttendanceService {
   /**
@@ -64,7 +65,7 @@ export class AttendanceService {
    * Get today's attendance
    */
   async getTodayAttendance() {
-    return await attendanceDAL.getTodayAttendance();
+    return await userDAL.getTodayAttendanceOverview();
   }
 
   /**
