@@ -67,10 +67,9 @@ export class AnnouncementDAL {
   async getActiveAnnouncementsForUser(
     userId: string,
     userRole: string,
-    userDepartment: string
+    userDepartmentId: string
   ): Promise<IAnnouncement[]> {
     const now = new Date();
-
     return await AnnouncementModel.find({
         isActive: true,
         startDate: { $lte: now },
@@ -86,7 +85,7 @@ export class AnnouncementDAL {
             $or: [
               { "targetAudience.isGlobal": true },
               { "targetAudience.roles": userRole },
-              { "targetAudience.departments": userDepartment },
+              { "targetAudience.departments": userDepartmentId },
               { "targetAudience.specificUsers": userId }
             ]
           }
