@@ -26,8 +26,23 @@ export class AttendanceController {
   async getAllAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc', ...filters } = req.query;
-      
-      const result = await attendanceService.getAllAttendance(filters, {
+      const { userId, startDate, endDate,status }:any = req.query
+
+      const filterData: any = {
+      };
+      if (userId) {
+        filterData.userId = userId;
+      }
+      if(status){
+        filterData.status=status
+      }
+      if (startDate && endDate) {
+        filterData.date = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        };
+      }
+      const result = await attendanceService.getAllAttendance(filterData, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,

@@ -43,7 +43,6 @@ export class AttendanceDAL {
   ): Promise<{ records: IAttendance[]; total: number }> {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
-
     const records = await AttendanceModel.find(filters)
       .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
       .populate('approvedBy', 'firstName lastName')
