@@ -1,7 +1,7 @@
 import { DepartmentModel } from '../models/department.model';
 import { IDepartment, IDepartmentCreateInput, IDepartmentTree } from '../interfaces/department.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
-
+import { UserModel } from '../models/user.model';
 export class DepartmentDAL {
     /**
      * Create department
@@ -105,6 +105,68 @@ export class DepartmentDAL {
 
         return buildTree(null);
     }
+
+   async getHierarchyRaw() {
+    return DepartmentModel.aggregate([
+      {
+        $match: { isActive: true }
+      },
+
+      // Head of department
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'headOfDepartment',
+          foreignField: '_id',
+          as: 'head'
+        }
+      },
+      { $unwind: { path: '$head', preserveNullAndEmptyArrays: true } },
+
+      // Employees of department
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'employees',
+          foreignField: '_id',
+          as: 'employees'
+        }
+      },
+
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          code: 1,
+          parentDepartment: 1,
+          level: 1,
+          path: 1,
+
+          head: {
+            _id: '$head._id',
+            fullName: { $concat: ['$head.firstName', ' ', '$head.lastName'] },
+            designation: '$head.professionalDetails.designation'
+          },
+
+          employees: {
+            $map: {
+              input: '$employees',
+              as: 'e',
+              in: {
+                _id: '$$e._id',
+                fullName: { $concat: ['$$e.firstName', ' ', '$$e.lastName'] },
+                designation: '$$e.professionalDetails.designation',
+                reportingManager: '$$e.professionalDetails.reportingManager'
+              }
+            }
+          }
+        }
+      },
+
+      { $sort: { level: 1 } }
+    ]);
+  }
+
     /**
     
     Get all subdepartments
@@ -157,6 +219,45 @@ export class DepartmentDAL {
           }
         ]);
       }
+
+        /**
+   * Sync employees in department
+   * Called when user department changes
+   */
+  async syncEmployees(departmentId: string): Promise<void> {
+    const employees = await UserModel.find({
+      'professionalDetails.department': departmentId,
+      isActive: true
+    }).select('_id');
+
+    const employeeIds = employees.map(emp => emp._id);
+
+    await DepartmentModel.findByIdAndUpdate(departmentId, {
+      $set: {
+        employees: employeeIds,
+        employeeCount: employeeIds.length
+      }
+    });
+  }
+
+  /**
+   * Get all employees in department and sub-departments
+   */
+  async getAllEmployeesRecursive(departmentId: string): Promise<string[]> {
+    const department = await DepartmentModel.findById(departmentId);
+    if (!department) return [];
+
+    let allEmployees = [...department.employees.map(e => e.toString())];
+
+    const subDepts = await this.getSubDepartments(departmentId);
+    
+    for (const subDept of subDepts) {
+      const subEmployees = await this.getAllEmployeesRecursive(subDept._id.toString());
+      allEmployees = [...allEmployees, ...subEmployees];
+    }
+
+    return allEmployees;
+  }
     }
     
     

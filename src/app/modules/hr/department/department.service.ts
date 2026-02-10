@@ -42,6 +42,12 @@ export class DepartmentService {
 
   async getDepartmentTree() {
     return await departmentDAL.getDepartmentTree();
+    // return await departmentDAL.getHierarchyRaw();
+  }
+
+  async getDepartmentHierarchy() {
+    // return await departmentDAL.getDepartmentTree();
+    return await departmentDAL.getHierarchyRaw();
   }
 
   async getSubDepartments(parentId: string) {

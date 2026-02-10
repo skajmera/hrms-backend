@@ -3,7 +3,7 @@ import { departmentService } from './department.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
-
+import { buildHierarchy } from '../../../../shared/utils/buildHierarchy';
 export class DepartmentController {
   async createDepartment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -54,7 +54,17 @@ export class DepartmentController {
   async getDepartmentTree(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const tree = await departmentService.getDepartmentTree();
+      // const hierarchy = buildHierarchy(tree);
       sendSuccessResponse(res, 'Department tree retrieved successfully', tree);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+  async getDepartmentHierarchy(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tree = await departmentService.getDepartmentHierarchy();
+      const hierarchy = buildHierarchy(tree);
+      sendSuccessResponse(res, 'Department tree retrieved successfully', hierarchy);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

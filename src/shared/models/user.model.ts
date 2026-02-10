@@ -197,4 +197,22 @@ UserSchema.methods.getFullName = function(): string {
   return `${this.firstName} ${this.lastName}`;
 };
 
+
+// Sync department employees when user department changes
+UserSchema.post('save', async function(doc) {
+  const departmentDAL = (await import('../dal/department.dal')).departmentDAL;
+  
+  if (doc.professionalDetails?.department) {
+    await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+  }
+});
+
+// Sync when user is updated
+UserSchema.post('findOneAndUpdate', async function(doc) {
+  if (doc && doc.professionalDetails?.department) {
+    const departmentDAL = (await import('../dal/department.dal')).departmentDAL;
+    await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+  }
+});
+
 export const UserModel = mongoose.model<IUser>('User', UserSchema);

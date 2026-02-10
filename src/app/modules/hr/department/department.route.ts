@@ -330,5 +330,46 @@ router.put('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), depar
  *         description: Department not found
  */
 router.delete('/:id', authorize(USER_ROLES.SUPER_ADMIN), departmentController.deleteDepartment.bind(departmentController));
+/**
+ * @swagger
+ * /hr/departments/hierarchy:
+ *   get:
+ *     summary: Get department hierarchy 
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Department hierarchy retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       code:
+ *                         type: string
+ *                       headOfDepartment:
+ *                         type: object
+ *                       employeeCount:
+ *                         type: number
+ *                       children:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ */
+router.get('/hierarchy', departmentController.getDepartmentHierarchy.bind(departmentController));
 
 export default router;
