@@ -34,6 +34,7 @@ export class DepartmentDAL {
         const departments = await DepartmentModel.find(filters)
             .populate('parentDepartment', 'name code')
             .populate('headOfDepartment', 'firstName lastName email')
+            .populate('employees', 'firstName lastName email')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -86,6 +87,7 @@ export class DepartmentDAL {
     async getDepartmentTree(): Promise<IDepartmentTree[]> {
         const departments = await DepartmentModel.find({ isActive: true })
             .populate('headOfDepartment', 'firstName lastName email')
+            .populate('employees', 'firstName lastName email')
             .sort({ level: 1, name: 1 });
         const buildTree = (parentId: string | null = null): IDepartmentTree[] => {
             return departments
@@ -99,6 +101,7 @@ export class DepartmentDAL {
                     code: dept.code,
                     headOfDepartment: dept.headOfDepartment,
                     employeeCount: dept.employeeCount,
+                    employees: dept.employees,//hellloo
                     children: buildTree(dept._id.toString())
                 }));
         };

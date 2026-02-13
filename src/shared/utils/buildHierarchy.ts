@@ -37,7 +37,7 @@ export const buildHierarchy = (departments: any[]) => {
   
     // Attach user hierarchy to each department
     const attachUsers = (dept: any) => {
-      dept.userHierarchy = buildUserTree(dept.employees || []);
+      // dept.userHierarchy = buildUserTree(dept.employees || []);
       dept.children.forEach(attachUsers);
     };
   

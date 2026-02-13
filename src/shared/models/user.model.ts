@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/user.interface';
 import { config } from '../../config/env';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIME } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIME,EMPLOYMENT_TYPE } from '../../config/constants';
 import { fillAndStroke } from 'pdfkit';
 
 const AddressSchema = new Schema({
@@ -61,6 +61,11 @@ const ProfessionalDetailsSchema = new Schema({
     enum: Object.values(EMPLOYMENT_STATUS),
     default: EMPLOYMENT_STATUS.PROBATION
   },
+  employmentType: { 
+    type: String, 
+    enum: Object.values(EMPLOYMENT_TYPE),
+    default: EMPLOYMENT_TYPE.INTERN
+  },
   probationEndDate: { type: Date },
   reportingManager: { type: Schema.Types.ObjectId, ref: 'User' },
   shift: { 
@@ -69,8 +74,10 @@ const ProfessionalDetailsSchema = new Schema({
     default: SHIFT_TYPES.MORNING
   },
   shiftTime: { 
-    type: String, 
-    enum: Object.values(SHIFT_TIME),
+    startTime: { type: String },
+    endTime: { type: String, }
+    // type: String, 
+    // enum: Object.values(SHIFT_TIME),
     // default: SHIFT_TYPES.MORNING
   },
 

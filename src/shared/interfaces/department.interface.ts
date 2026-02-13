@@ -61,5 +61,6 @@ export interface IDepartmentTree {
   code: string;
   headOfDepartment?: any;
   employeeCount: number;
+  employees?: any[];//hello
   children: IDepartmentTree[];
 }

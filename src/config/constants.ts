@@ -102,3 +102,10 @@ export const USER_ROLES = {
     LIMIT: 10,
     MAX_LIMIT: 100
   } as const;
+
+  export const EMPLOYMENT_TYPE = {
+    INTERN: 'INTERN',
+    PERMANENT: 'PERMANENT',
+    CONTRACT: 'CONTRACT'
+  } as const;
+  

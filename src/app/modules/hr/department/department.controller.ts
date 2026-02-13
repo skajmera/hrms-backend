@@ -62,6 +62,7 @@ export class DepartmentController {
   }
   async getDepartmentHierarchy(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log("Fetching department hierarchy...");
       const tree = await departmentService.getDepartmentHierarchy();
       const hierarchy = buildHierarchy(tree);
       sendSuccessResponse(res, 'Department tree retrieved successfully', hierarchy);

@@ -66,4 +66,5 @@ export interface IAnnouncementCreateInput {
     size: number;
   }[];
   isPinned?: boolean;
+  isActive: boolean;
 }

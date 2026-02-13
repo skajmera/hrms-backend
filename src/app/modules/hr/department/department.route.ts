@@ -333,7 +333,7 @@ router.delete('/:id', authorize(USER_ROLES.SUPER_ADMIN), departmentController.de
 /**
  * @swagger
  * /hr/departments/hierarchy:
- *   get:
+ *   post:
  *     summary: Get department hierarchy 
  *     tags: [Departments]
  *     security:
@@ -370,6 +370,6 @@ router.delete('/:id', authorize(USER_ROLES.SUPER_ADMIN), departmentController.de
  *                         items:
  *                           type: object
  */
-router.get('/hierarchy', departmentController.getDepartmentHierarchy.bind(departmentController));
+router.post('/hierarchy', departmentController.getDepartmentHierarchy.bind(departmentController));
 
 export default router;

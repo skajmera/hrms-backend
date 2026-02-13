@@ -1,5 +1,5 @@
 import { Document, Types } from 'mongoose';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,EMPLOYMENT_TYPE } from '../../config/constants';
 
 /**
  * User related interfaces
@@ -56,9 +56,14 @@ export interface IProfessionalDetails {
   department: any |Types.ObjectId | string;
   joiningDate: Date;
   employmentStatus: keyof typeof EMPLOYMENT_STATUS;
+  employmentType?: keyof typeof EMPLOYMENT_TYPE;
   probationEndDate?: Date;
   reportingManager?: Types.ObjectId | string;
   shift: keyof typeof SHIFT_TYPES;
+  shiftTime?:{
+    startTime: string; 
+    endTime: string; 
+  }
   workLocation: string;
   salaryDetails?: ISalaryDetails;
 }
