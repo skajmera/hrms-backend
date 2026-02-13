@@ -1,6 +1,7 @@
 import { userDAL } from '../../../../shared/dal/user.dal';
 import { IUserCreateInput, IUserUpdateInput } from '../../../../shared/interfaces/user.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
+import { leaveDAL } from '../../../../shared/dal/leave.dal';
 
 export class UserService {
   /**
@@ -18,8 +19,21 @@ export class UserService {
     if (existingEmployeeId) {
       throw new Error('Employee ID already exists');
     }
+  const user = await userDAL.create(userData);
+ // ✅ CREATE INITIAL LEAVE BALANCE
+ const currentYear = new Date().getFullYear();
+ await leaveDAL.upsertLeaveBalance(user._id.toString(), currentYear, {
+   userId: user._id.toString(),
+   year: currentYear,
+   casualLeave: { total: 12, used: 0, remaining: 12 },
+   sickLeave: { total: 10, used: 0, remaining: 10 },
+   earnedLeave: { total: 15, used: 0, remaining: 15 },
+   maternityLeave: { total: 180, used: 0, remaining: 180 },
+   paternityLeave: { total: 15, used: 0, remaining: 15 }
+ } as any);
 
-    return await userDAL.create(userData);
+    return user;
+    
   }
 
   /**

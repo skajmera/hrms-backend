@@ -44,7 +44,7 @@ export class AttendanceDAL {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
     const records = await AttendanceModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
+      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime' )
       .populate('approvedBy', 'firstName lastName')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)

@@ -54,6 +54,32 @@ export class DashboardController {
       sendErrorResponse(res, error.message);
     }
   }
+
+
+  /**
+   * ✅ NEW - Get leave statistics
+   */
+  async getLeaveStatistics(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const stats = await dashboardService.getLeaveStatistics();
+      sendSuccessResponse(res, 'Leave statistics retrieved successfully', stats);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  /**
+   * ✅ NEW - Get top leave takers
+   */
+  async getTopLeaveTakers(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { limit = 10 } = req.query;
+      const topTakers = await dashboardService.getTopLeaveTakers(Number(limit));
+      sendSuccessResponse(res, 'Top leave takers retrieved successfully', topTakers);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
 }
 
 export const dashboardController = new DashboardController();

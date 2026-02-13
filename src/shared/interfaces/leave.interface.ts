@@ -6,7 +6,7 @@ import { LEAVE_STATUS, LEAVE_TYPES } from '../../config/constants';
  */
 
 export interface ILeave extends Document {
-  userId: Types.ObjectId | string;
+  userId: Types.ObjectId | string | any;
   leaveType: keyof typeof LEAVE_TYPES;
   startDate: Date;
   endDate: Date;

@@ -24,6 +24,7 @@ import departmentRoutes from '../app/modules/hr/department/department.route';
 import dashboardRoutes from '../app/modules/hr/dashboard/dashboard.route';
 import reportsRoutes from '../app/modules/hr/reports/reports.route';
 import holidaysRoutes from '../app/modules/hr/holidays/holidays.route';
+import analyticsRoutes from '../app/modules/hr/analytics/analytics.route';
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.use('/hr/departments', departmentRoutes);
 router.use('/hr/dashboard', dashboardRoutes);
 router.use('/hr/reports', reportsRoutes);
 router.use('/hr/holidays', holidaysRoutes);
-
+router.use('/hr/analytics', analyticsRoutes);
 export default router;
 
 

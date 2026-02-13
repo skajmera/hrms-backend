@@ -14,11 +14,17 @@
 // export default router;
 import { Router } from 'express';
 import { dashboardController } from './dashboard.controller';
-import { authenticate } from '../../../../shared/middlewares/auth.middleware';
+import { authenticate,authorize } from '../../../../shared/middlewares/auth.middleware';
+import { USER_ROLES } from '../../../../config/constants';
 
 const router = Router();
 
-router.use(authenticate);
+// router.use(authenticate);
+// router.use(authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN));
+
+// const router = Router();
+
+// router.use(authenticate);
 
 /**
  * @swagger
@@ -234,5 +240,75 @@ router.get('/announcements', dashboardController.getRecentAnnouncements.bind(das
  *                             type: object
  */
 router.get('/anniversary', dashboardController.getAnniversary.bind(dashboardController));
+
+
+/**
+ * @swagger
+ * /hr/dashboard/leave-statistics:
+ *   get:
+ *     summary: Get complete leave statistics for all users
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Leave statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalLeaveRequests:
+ *                           type: number
+ *                         approvedLeaves:
+ *                           type: number
+ *                         pendingApprovals:
+ *                           type: number
+ *                         totalLeaveRemaining:
+ *                           type: number
+ *                         percentageChange:
+ *                           type: string
+ *                         approvalRate:
+ *                           type: string
+ */
+router.get(
+  '/leave-statistics',
+//   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  dashboardController.getLeaveStatistics.bind(dashboardController)
+);
+
+/**
+ * @swagger
+ * /hr/dashboard/top-leave-takers:
+ *   get:
+ *     summary: Get employees with most leaves taken
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Top leave takers retrieved successfully
+ */
+router.get(
+  '/top-leave-takers',
+//   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  dashboardController.getTopLeaveTakers.bind(dashboardController)
+);
 
 export default router;

@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'https://hrms-backend-khq1.onrender.com/api/v1',////`http://localhost:${config.port}/api/v1`,
+        url: 'https://hrms-backend-khq1.onrender.com/api/v1',////`http://localhost:${config.port}/api/v1`,//"https://rs444324-5000.inc1.devtunnels.ms/api/v1",//
         description: 'Development Server'
       },
       {

@@ -170,7 +170,7 @@ export class LeaveDAL {
    */
   async updateLeaveBalanceAfterApproval(leave: ILeave): Promise<void> {
     const year = leave.startDate.getFullYear();
-    const balance = await this.getLeaveBalance(leave.userId.toString(), year);
+    const balance = await this.getLeaveBalance(leave.userId._id.toString(), year);
 
     if (balance) {
       const leaveType = leave.leaveType.toLowerCase() + 'Leave';
