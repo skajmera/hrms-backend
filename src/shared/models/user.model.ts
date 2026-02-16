@@ -3,8 +3,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/user.interface';
 import { config } from '../../config/env';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIME,EMPLOYMENT_TYPE } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIMINGS,EMPLOYMENT_TYPE } from '../../config/constants';
 import { fillAndStroke } from 'pdfkit';
+const ShiftTimeSchema = new Schema({
+  startTime: { type: String, required: true }, // "HH:mm" format
+  endTime: { type: String, required: true },
+  gracePeriod: { type: Number, default: 15 }, // minutes
+  minimumHours: { type: Number, default: 8 }
+}, { _id: false });
 
 const AddressSchema = new Schema({
   street: { type: String, required: true },
@@ -64,7 +70,7 @@ const ProfessionalDetailsSchema = new Schema({
   employmentType: { 
     type: String, 
     enum: Object.values(EMPLOYMENT_TYPE),
-    default: EMPLOYMENT_TYPE.INTERN
+    default: EMPLOYMENT_TYPE.FULL_TIME
   },
   probationEndDate: { type: Date },
   reportingManager: { type: Schema.Types.ObjectId, ref: 'User' },
@@ -73,13 +79,8 @@ const ProfessionalDetailsSchema = new Schema({
     enum: Object.values(SHIFT_TYPES),
     default: SHIFT_TYPES.MORNING
   },
-  shiftTime: { 
-    startTime: { type: String },
-    endTime: { type: String, }
-    // type: String, 
-    // enum: Object.values(SHIFT_TIME),
-    // default: SHIFT_TYPES.MORNING
-  },
+
+  shiftTime: ShiftTimeSchema, // Custom shift time
 
   workLocation: { type: String, required: true },
   salaryDetails: SalaryDetailsSchema
@@ -220,6 +221,22 @@ UserSchema.post('findOneAndUpdate', async function(doc) {
     const departmentDAL = (await import('../dal/department.dal')).departmentDAL;
     await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
   }
+});
+
+// Pre-save middleware to set default shift time if not provided
+UserSchema.pre('save', function(next) {
+  if (this.professionalDetails.shift && !this.professionalDetails.shiftTime) {
+    const shiftType = this.professionalDetails.shift as keyof typeof SHIFT_TIMINGS;
+    const defaultTiming  = SHIFT_TIMINGS[shiftType]
+    
+    this.professionalDetails.shiftTime = {
+      startTime: defaultTiming.startTime,
+      endTime: defaultTiming.endTime,
+      gracePeriod: defaultTiming.gracePeriod,
+      minimumHours: defaultTiming.minimumHours
+    };
+  }
+  next();
 });
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);

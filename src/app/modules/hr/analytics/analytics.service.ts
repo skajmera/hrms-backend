@@ -28,7 +28,7 @@ export class AnalyticsService {
   ): Promise<AttendanceStats> {
     // Current month stats
     const currentStats = await this.calculateMonthStats(month, year, departmentId);
-    
+
     // Previous month stats for comparison
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
@@ -85,7 +85,7 @@ export class AnalyticsService {
     if (departmentId) {
       employeeFilters['professionalDetails.department'] = departmentId;
     }
-    
+
     const employees = await userDAL.findAll(employeeFilters, { limit: 10000 });
     const totalEmployees = employees.total;
 
@@ -114,7 +114,15 @@ export class AnalyticsService {
       0
     );
     const avgWorkingHours = totalWorkingHours / (totalPresent || 1);
+    // Get average shift minimum hours for comparison
+    const users = await userDAL.findAll(
+      departmentId ? { 'professionalDetails.department': departmentId, isActive: true } : { isActive: true },
+      { limit: 10000 }
+    );
 
+    const avgMinimumHours = users.users.reduce((sum, user) => {
+      return sum + (user.professionalDetails.shiftTime?.minimumHours || 8);
+    }, 0) / (users.total || 1);
     // Total Overtime Hours
     const totalOvertimeHours = attendanceRecords.reduce(
       (sum, record) => sum + (record.overtimeHours || 0),
@@ -136,6 +144,7 @@ export class AnalyticsService {
       avgAttendanceRate: parseFloat(avgAttendanceRate.toFixed(2)),
       avgWorkingHours: parseFloat(avgWorkingHours.toFixed(1)),
       totalOvertimeHours: parseFloat(totalOvertimeHours.toFixed(1)),
+      avgMinimumHours: parseFloat(avgMinimumHours.toFixed(1)),
       leavesTaken
     };
   }
@@ -166,7 +175,7 @@ export class AnalyticsService {
     for (let day = 1; day <= totalDays; day++) {
       const date = new Date(year, month - 1, day);
       const dayOfWeek = date.getDay();
-      
+
       // Exclude Sunday (0) and Saturday (6)
       if (dayOfWeek !== 0 && dayOfWeek !== 6) {
         workingDays++;
@@ -187,11 +196,11 @@ export class AnalyticsService {
 
     // Group employees by department
     const departmentMap = new Map();
-    
+
     departments.users.forEach(user => {
       const deptId = user.professionalDetails.department?._id?.toString();
       const deptName = user.professionalDetails.department?.name || 'Unassigned';
-      
+
       if (!departmentMap.has(deptId)) {
         departmentMap.set(deptId, {
           departmentId: deptId,
@@ -199,14 +208,14 @@ export class AnalyticsService {
           employeeCount: 0
         });
       }
-      
+
       const dept = departmentMap.get(deptId);
       dept.employeeCount++;
     });
 
     // Get stats for each department
     const departmentStats = [];
-    
+
     for (const [deptId, deptInfo] of departmentMap.entries()) {
       if (deptId) {
         const stats = await this.getAttendanceStatistics(month, year, deptId);

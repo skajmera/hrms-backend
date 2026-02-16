@@ -9,7 +9,7 @@ export class EmployeeDashboardController {
       const dashboard = await employeeDashboardService.getMyDashboard(
         req.user._id.toString(),
         req.user.role,
-        req.user.professionalDetails.department.toString()
+        req.user.professionalDetails.department._id.toString()
       );
       sendSuccessResponse(res, 'Dashboard retrieved successfully', dashboard);
     } catch (error: any) {

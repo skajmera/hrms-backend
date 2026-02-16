@@ -55,6 +55,18 @@ export interface IAttendanceCreateInput {
   checkInTime?: Date;
   checkOutTime?: Date;
   remarks?: string;
+  isLate?: boolean;
+  lateByMinutes?: number;
+  earlyExit?: boolean;
+  earlyExitByMinutes?: number;
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+    address?: string;
+  };
+  workingHours?: number;
+  breakHours?: number;
+  overtimeHours?: number;
 }
 
 export interface IAttendanceReport {

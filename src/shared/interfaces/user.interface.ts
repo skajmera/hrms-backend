@@ -1,9 +1,16 @@
 import { Document, Types } from 'mongoose';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,EMPLOYMENT_TYPE } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,EMPLOYMENT_TYPE,SHIFT_TIMINGS } from '../../config/constants';
 
 /**
  * User related interfaces
  */
+export interface IShiftTime {
+  startTime: string; // HH:mm format e.g., "09:00"
+  endTime: string;   // HH:mm format e.g., "18:00"
+  gracePeriod?: number; // minutes
+  minimumHours?: number;
+}
+
 
 export interface IAddress {
   street: string;
@@ -59,11 +66,8 @@ export interface IProfessionalDetails {
   employmentType?: keyof typeof EMPLOYMENT_TYPE;
   probationEndDate?: Date;
   reportingManager?: Types.ObjectId | string;
-  shift: keyof typeof SHIFT_TYPES;
-  shiftTime?:{
-    startTime: string; 
-    endTime: string; 
-  }
+  shift?: keyof typeof SHIFT_TYPES ;
+  shiftTime?: IShiftTime; // NEW - Custom shift timing
   workLocation: string;
   salaryDetails?: ISalaryDetails;
 }

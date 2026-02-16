@@ -42,17 +42,17 @@ export const USER_ROLES = {
     FLEXIBLE: 'FLEXIBLE'   // Flexible hours
   } as const;
   
-  export const SHIFT_TIME = {
-    startTime: {
-      type: String, 
-      required: true
-    },
-    endTime: {
-      type: String, 
-      required: true
-    }
+  // export const SHIFT_TIME = {
+  //   startTime: {
+  //     type: String, 
+  //     required: true
+  //   },
+  //   endTime: {
+  //     type: String, 
+  //     required: true
+  //   }
    
-  } as const;
+  // } as const;
   
   export const EMPLOYMENT_STATUS = {
     ACTIVE: 'ACTIVE',
@@ -103,9 +103,44 @@ export const USER_ROLES = {
     MAX_LIMIT: 100
   } as const;
 
-  export const EMPLOYMENT_TYPE = {
-    INTERN: 'INTERN',
-    PERMANENT: 'PERMANENT',
-    CONTRACT: 'CONTRACT'
+  // export const EMPLOYMENT_TYPE = {
+  //   INTERN: 'INTERN',
+  //   PERMANENT: 'PERMANENT',
+  //   CONTRACT: 'CONTRACT'
+  // } as const;
+  
+
+  export const SHIFT_TIMINGS = {
+    MORNING: {
+      startTime: '09:00',
+      endTime: '18:00',
+      gracePeriod: 15, // minutes
+      minimumHours: 8
+    },
+    EVENING: {
+      startTime: '14:00',
+      endTime: '23:00',
+      gracePeriod: 15,
+      minimumHours: 8
+    },
+    NIGHT: {
+      startTime: '22:00',
+      endTime: '07:00',
+      gracePeriod: 15,
+      minimumHours: 8
+    },
+    FLEXIBLE: {
+      startTime: '00:00',
+      endTime: '23:59',
+      gracePeriod: 0,
+      minimumHours: 8
+    }
   } as const;
   
+  export const EMPLOYMENT_TYPE = {
+    INTERN: 'INTERN',
+    FULL_TIME: 'FULL_TIME',
+    PART_TIME: 'PART_TIME',
+    CONTRACT: 'CONTRACT',
+    CONSULTANT: 'CONSULTANT'
+  } as const;
