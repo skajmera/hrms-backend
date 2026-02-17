@@ -6,32 +6,32 @@ import { config } from '../../config/env';
 import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIMINGS,EMPLOYMENT_TYPE } from '../../config/constants';
 import { fillAndStroke } from 'pdfkit';
 const ShiftTimeSchema = new Schema({
-  startTime: { type: String, required: true }, // "HH:mm" format
-  endTime: { type: String, required: true },
+  startTime: { type: String, required: false }, // "HH:mm" format
+  endTime: { type: String, required: false },
   gracePeriod: { type: Number, default: 15 }, // minutes
   minimumHours: { type: Number, default: 8 }
 }, { _id: false });
 
 const AddressSchema = new Schema({
-  street: { type: String, required: true },
-  city: { type: String, required: true },
-  state: { type: String, required: true },
-  country: { type: String, required: true, default: 'India' },
-  pincode: { type: String, required: true }
+  street: { type: String, required: false },
+  city: { type: String, required: false },
+  state: { type: String, required: false },
+  country: { type: String, required: false, default: 'India' },
+  pincode: { type: String, required: false }
 }, { _id: false });
 
 const EducationSchema = new Schema({
-  degree: { type: String, required: true },
-  institution: { type: String, required: true },
-  yearOfCompletion: { type: Number, required: true },
+  degree: { type: String, required: false },
+  institution: { type: String, required: false },
+  yearOfCompletion: { type: Number, required: false },
   percentage: { type: Number },
   grade: { type: String }
 }, { _id: false });
 
 const ExperienceSchema = new Schema({
-  company: { type: String, required: true },
-  position: { type: String, required: true },
-  startDate: { type: Date, required: true },
+  company: { type: String, required: false },
+  position: { type: String, required: false },
+  startDate: { type: Date, required: false },
   endDate: { type: Date },
   isCurrent: { type: Boolean, default: false },
   responsibilities: { type: String },
@@ -39,8 +39,8 @@ const ExperienceSchema = new Schema({
 }, { _id: false });
 
 const SalaryDetailsSchema = new Schema({
-  basic: { type: Number, required: true },
-  hra: { type: Number, required: true },
+  basic: { type: Number, required: false },
+  hra: { type: Number, required: false },
   allowances: {
     transport: { type: Number, default: 0 },
     medical: { type: Number, default: 0 },
@@ -53,8 +53,8 @@ const SalaryDetailsSchema = new Schema({
     professionalTax: { type: Number, default: 0 },
     other: { type: Number, default: 0 }
   },
-  grossSalary: { type: Number, required: true },
-  netSalary: { type: Number, required: true }
+  grossSalary: { type: Number, required: false },
+  netSalary: { type: Number, required: false }
 }, { _id: false });
 
 const ProfessionalDetailsSchema = new Schema({
@@ -82,7 +82,7 @@ const ProfessionalDetailsSchema = new Schema({
 
   shiftTime: ShiftTimeSchema, // Custom shift time
 
-  workLocation: { type: String, required: true },
+  workLocation: { type: String, required: false },
   salaryDetails: SalaryDetailsSchema
 }, { _id: false });
 

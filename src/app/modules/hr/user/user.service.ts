@@ -19,6 +19,12 @@ export class UserService {
     if (existingEmployeeId) {
       throw new Error('Employee ID already exists');
     }
+   
+    if(!userData?.password){
+      const GeneratedPassword = Math.random().toString(36).slice(-8) + 'A1@'; // Generate a random 8-character password with complexity
+      userData.password = GeneratedPassword; 
+    }
+    console.log(`Generated password for new user: ${userData.password}`);
   const user = await userDAL.create(userData);
  // ✅ CREATE INITIAL LEAVE BALANCE
  const currentYear = new Date().getFullYear();

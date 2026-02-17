@@ -37,7 +37,7 @@ export class AuthService {
       await sendWelcomeEmail( 
     user.getFullName(),
     user.email,      
-    userData.password);
+    userData.password as string);
 
     } catch (error) {
       console.error('Failed to send welcome email:', error);

@@ -130,7 +130,7 @@ export interface IUserCreateInput {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
+  password?: string;
   phone?: string;
   dateOfBirth?: Date;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
