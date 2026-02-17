@@ -18,9 +18,9 @@ export interface IAttendance extends Document {
   breakHours?: number;
   
   // Late/Early tracking
-  isLate: boolean;
+  isLate?: boolean;
   lateByMinutes?: number;
-  earlyExit: boolean;
+  earlyExit?: boolean;
   earlyExitByMinutes?: number;
   
   // Additional info
