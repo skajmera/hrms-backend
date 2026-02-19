@@ -1,7 +1,7 @@
 
 // import { Router } from 'express';
 // import { payrollController } from './payroll.controller';
-import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
+// import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 // import { validate } from '../../../../shared/middlewares/validation';
 // import { USER_ROLES } from '../../../../config/constants';
 // import { generatePayrollValidation } from './payroll.validation';
@@ -469,36 +469,673 @@ import { authenticate, authorize } from '../../../../shared/middlewares/auth.mid
 
 // export default router;
 
+
+//////////////////////////////////
+
+
+// import { Router } from 'express';
+// import { PayrollController } from './payroll.controller';
+// import { PayrollValidation } from './payroll.validation';
+// // import { authMiddleware } from '../../../../shared/middlewares/auth.middleware';
+// import { validate } from '../../../../shared/middlewares/validation';
+
+// const router = Router();
+
+// // All routes require authentication
+// router.use(authenticate);
+
+// // GET routes
+// router.get('/stats', PayrollController.getPayrollStats);
+// router.get('/drafts', PayrollController.getDrafts);
+// router.get('/pending', PayrollController.getPending);
+// router.get('/', validate(PayrollValidation.getPayrolls), PayrollController.getAllPayrolls);
+// router.get('/:id', validate(PayrollValidation.payrollId), PayrollController.getPayrollById);
+// router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollController.downloadPayslip);
+
+// // POST routes
+// router.post('/', validate(PayrollValidation.createPayroll), PayrollController.createPayroll);
+// router.post('/bulk-generate', validate(PayrollValidation.bulkGenerate), PayrollController.bulkGenerate);
+// router.post('/:id/generate', validate(PayrollValidation.generatePayslip), PayrollController.generatePayslip);
+// router.post('/:id/mark-paid', validate(PayrollValidation.payrollId), PayrollController.markAsPaid);
+// router.post('/:id/revise', validate(PayrollValidation.revisePayroll), PayrollController.revisePayroll);
+
+// // PUT routes
+// router.put('/:id', validate(PayrollValidation.updatePayroll), PayrollController.updatePayroll);
+
+// // DELETE routes
+// router.delete('/:id', validate(PayrollValidation.payrollId), PayrollController.deletePayroll);
+
+// export default router;
+
+
+//////////////
+
+
+
 import { Router } from 'express';
 import { PayrollController } from './payroll.controller';
 import { PayrollValidation } from './payroll.validation';
 // import { authMiddleware } from '../../../../shared/middlewares/auth.middleware';
 import { validate } from '../../../../shared/middlewares/validation';
+import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-// GET routes
+/**
+ * @swagger
+ * tags:
+ *   name: Payroll
+ *   description: Payroll management endpoints
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SalaryComponents:
+ *       type: object
+ *       properties:
+ *         basic:
+ *           type: number
+ *           example: 50000
+ *         hra:
+ *           type: number
+ *           example: 20000
+ *         allowances:
+ *           type: object
+ *           properties:
+ *             transport:
+ *               type: number
+ *               example: 2000
+ *             medical:
+ *               type: number
+ *               example: 1500
+ *             special:
+ *               type: number
+ *               example: 3000
+ *             statutoryBonus:
+ *               type: number
+ *               example: 2000
+ *             byodPayment:
+ *               type: number
+ *               example: 500
+ *             taskBasedIncentive:
+ *               type: number
+ *               example: 5000
+ *             arrearAmount:
+ *               type: number
+ *               example: 0
+ *             specialPay:
+ *               type: number
+ *               example: 0
+ *             miscellaneous:
+ *               type: number
+ *               example: 0
+ *             other:
+ *               type: number
+ *               example: 0
+ *         deductions:
+ *           type: object
+ *           properties:
+ *             providentFund:
+ *               type: number
+ *               example: 6000
+ *             professionalTax:
+ *               type: number
+ *               example: 200
+ *             incomeTax:
+ *               type: number
+ *               example: 5000
+ *             esi:
+ *               type: number
+ *               example: 750
+ *             leaveWithoutPay:
+ *               type: number
+ *               example: 0
+ *             lateArrivalDeductions:
+ *               type: number
+ *               example: 500
+ *             loanDeduction:
+ *               type: number
+ *               example: 2000
+ *             other:
+ *               type: number
+ *               example: 0
+ *         customEarnings:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               fieldName:
+ *                 type: string
+ *               fieldValue:
+ *                 type: number
+ *         customDeductions:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               fieldName:
+ *                 type: string
+ *               fieldValue:
+ *                 type: number
+ *     
+ *     Payroll:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *         userId:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439012"
+ *         employeeId:
+ *           type: string
+ *           example: "EMP001"
+ *         month:
+ *           type: integer
+ *           example: 1
+ *         year:
+ *           type: integer
+ *           example: 2026
+ *         salaryComponents:
+ *           $ref: '#/components/schemas/SalaryComponents'
+ *         grossSalary:
+ *           type: number
+ *           example: 85500
+ *         totalDeductions:
+ *           type: number
+ *           example: 14450
+ *         netSalary:
+ *           type: number
+ *           example: 71050
+ *         workingDays:
+ *           type: integer
+ *           example: 30
+ *         presentDays:
+ *           type: integer
+ *           example: 28
+ *         unpaidLeaveDays:
+ *           type: integer
+ *           example: 0
+ *         paymentStatus:
+ *           type: string
+ *           enum: [PENDING, PROCESSING, PAID, FAILED]
+ *           example: PENDING
+ *         isDraft:
+ *           type: boolean
+ *           example: true
+ *         isGenerated:
+ *           type: boolean
+ *           example: false
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/stats:
+ *   get:
+ *     summary: Get payroll statistics
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         description: Month (defaults to current month)
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *         description: Year (defaults to current year)
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Payroll statistics retrieved successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalPayroll:
+ *                       type: number
+ *                       example: 128000
+ *                     paidEmployees:
+ *                       type: integer
+ *                       example: 24
+ *                     pendingPayments:
+ *                       type: integer
+ *                       example: 1
+ *                     averageSalary:
+ *                       type: number
+ *                       example: 100000
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/stats', PayrollController.getPayrollStats);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/drafts:
+ *   get:
+ *     summary: Get draft payrolls
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Draft payrolls retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Payroll'
+ */
 router.get('/drafts', PayrollController.getDrafts);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/pending:
+ *   get:
+ *     summary: Get pending payrolls
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Pending payrolls retrieved successfully
+ */
 router.get('/pending', PayrollController.getPending);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll:
+ *   get:
+ *     summary: Get all payroll records
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *         description: Filter by month
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *         description: Filter by year
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, PROCESSING, PAID, FAILED]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *     responses:
+ *       200:
+ *         description: Payroll records retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Payroll'
+ *                 pagination:
+ *                   type: object
+ */
 router.get('/', validate(PayrollValidation.getPayrolls), PayrollController.getAllPayrolls);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}:
+ *   get:
+ *     summary: Get payroll by ID
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Payroll ID
+ *     responses:
+ *       200:
+ *         description: Payroll retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Payroll'
+ *       404:
+ *         description: Payroll not found
+ */
 router.get('/:id', validate(PayrollValidation.payrollId), PayrollController.getPayrollById);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}/download:
+ *   get:
+ *     summary: Download payslip
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payslip download link generated
+ */
 router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollController.downloadPayslip);
 
-// POST routes
+/**
+ * @swagger
+ * /api/v1/hr/payroll:
+ *   post:
+ *     summary: Create new payroll
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - month
+ *               - year
+ *               - salaryComponents
+ *               - workingDays
+ *               - presentDays
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: "507f1f77bcf86cd799439012"
+ *               month:
+ *                 type: integer
+ *                 example: 1
+ *               year:
+ *                 type: integer
+ *                 example: 2026
+ *               salaryComponents:
+ *                 $ref: '#/components/schemas/SalaryComponents'
+ *               workingDays:
+ *                 type: integer
+ *                 example: 30
+ *               presentDays:
+ *                 type: integer
+ *                 example: 28
+ *     responses:
+ *       201:
+ *         description: Payroll created successfully
+ *       400:
+ *         description: Bad request
+ */
 router.post('/', validate(PayrollValidation.createPayroll), PayrollController.createPayroll);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/bulk-generate:
+ *   post:
+ *     summary: Bulk generate payrolls
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *               - month
+ *               - year
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+ *               month:
+ *                 type: integer
+ *                 example: 1
+ *               year:
+ *                 type: integer
+ *                 example: 2026
+ *     responses:
+ *       201:
+ *         description: Payrolls generated successfully
+ */
 router.post('/bulk-generate', validate(PayrollValidation.bulkGenerate), PayrollController.bulkGenerate);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}/generate:
+ *   post:
+ *     summary: Generate payslip (move from draft to generated)
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payslip generated successfully
+ */
 router.post('/:id/generate', validate(PayrollValidation.generatePayslip), PayrollController.generatePayslip);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}/mark-paid:
+ *   post:
+ *     summary: Mark payroll as paid
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - paymentMode
+ *             properties:
+ *               paymentMode:
+ *                 type: string
+ *                 enum: [BANK_TRANSFER, CASH, CHEQUE]
+ *                 example: BANK_TRANSFER
+ *               transactionId:
+ *                 type: string
+ *                 example: "TXN123456789"
+ *               bankName:
+ *                 type: string
+ *                 example: "HDFC Bank"
+ *               accountNumber:
+ *                 type: string
+ *                 example: "****1234"
+ *     responses:
+ *       200:
+ *         description: Payroll marked as paid successfully
+ */
 router.post('/:id/mark-paid', validate(PayrollValidation.payrollId), PayrollController.markAsPaid);
+
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}/revise:
+ *   post:
+ *     summary: Revise payroll
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - revisionReason
+ *             properties:
+ *               revisionReason:
+ *                 type: string
+ *                 example: "Incorrect allowance calculation"
+ *               salaryComponents:
+ *                 $ref: '#/components/schemas/SalaryComponents'
+ *     responses:
+ *       200:
+ *         description: Payroll revised successfully
+ */
 router.post('/:id/revise', validate(PayrollValidation.revisePayroll), PayrollController.revisePayroll);
 
-// PUT routes
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}:
+ *   put:
+ *     summary: Update payroll
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               salaryComponents:
+ *                 $ref: '#/components/schemas/SalaryComponents'
+ *               paymentStatus:
+ *                 type: string
+ *                 enum: [PENDING, PROCESSING, PAID, FAILED]
+ *     responses:
+ *       200:
+ *         description: Payroll updated successfully
+ */
 router.put('/:id', validate(PayrollValidation.updatePayroll), PayrollController.updatePayroll);
 
-// DELETE routes
+/**
+ * @swagger
+ * /api/v1/hr/payroll/{id}:
+ *   delete:
+ *     summary: Delete payroll
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Payroll deleted successfully
+ */
 router.delete('/:id', validate(PayrollValidation.payrollId), PayrollController.deletePayroll);
 
 export default router;
