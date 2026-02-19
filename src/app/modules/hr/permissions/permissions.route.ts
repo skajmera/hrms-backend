@@ -135,7 +135,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/v1/hr/permissions/active:
+ * /hr/permissions/active:
  *   get:
  *     summary: Get all active users with permissions
  *     tags: [User Permissions]
@@ -161,7 +161,7 @@ router.get('/active', PermissionsController.getActiveUsers);
 
 /**
  * @swagger
- * /api/v1/hr/permissions/defaults/{role}:
+ * /hr/permissions/defaults/{role}:
  *   get:
  *     summary: Get default permissions by role
  *     tags: [User Permissions]
@@ -192,7 +192,7 @@ router.get('/defaults/:role', PermissionsController.getDefaultPermissions);
 
 /**
  * @swagger
- * /api/v1/hr/permissions:
+ * /hr/permissions:
  *   get:
  *     summary: Get all user permissions
  *     tags: [User Permissions]
@@ -246,7 +246,7 @@ router.get('/', validate(PermissionsValidation.getPermissions), PermissionsContr
 
 /**
  * @swagger
- * /api/v1/hr/permissions/{userId}:
+ * /hr/permissions/{userId}:
  *   get:
  *     summary: Get permission by user ID
  *     tags: [User Permissions]
@@ -278,7 +278,7 @@ router.get('/:userId', validate(PermissionsValidation.userId), PermissionsContro
 
 /**
  * @swagger
- * /api/v1/hr/permissions/invite:
+ * /hr/permissions/invite:
  *   post:
  *     summary: Invite user with permissions
  *     tags: [User Permissions]
@@ -329,7 +329,7 @@ router.post('/invite', validate(PermissionsValidation.inviteUser), PermissionsCo
 
 /**
  * @swagger
- * /api/v1/hr/permissions/check:
+ * /hr/permissions/check:
  *   post:
  *     summary: Check if user has specific permission
  *     tags: [User Permissions]
@@ -377,7 +377,7 @@ router.post('/check', PermissionsController.checkPermission);
 
 /**
  * @swagger
- * /api/v1/hr/permissions/{userId}/deactivate:
+ * /hr/permissions/{userId}/deactivate:
  *   post:
  *     summary: Deactivate user permissions
  *     tags: [User Permissions]
@@ -397,7 +397,7 @@ router.post('/:userId/deactivate', validate(PermissionsValidation.userId), Permi
 
 /**
  * @swagger
- * /api/v1/hr/permissions/{userId}/activate:
+ * /hr/permissions/{userId}/activate:
  *   post:
  *     summary: Activate user permissions
  *     tags: [User Permissions]
@@ -417,7 +417,7 @@ router.post('/:userId/activate', validate(PermissionsValidation.userId), Permiss
 
 /**
  * @swagger
- * /api/v1/hr/permissions/{userId}:
+ * /hr/permissions/{userId}:
  *   put:
  *     summary: Update user permissions
  *     tags: [User Permissions]
@@ -448,7 +448,7 @@ router.put('/:userId', validate(PermissionsValidation.updatePermissions), Permis
 
 /**
  * @swagger
- * /api/v1/hr/permissions/{userId}:
+ * /hr/permissions/{userId}:
  *   delete:
  *     summary: Delete user permissions
  *     tags: [User Permissions]

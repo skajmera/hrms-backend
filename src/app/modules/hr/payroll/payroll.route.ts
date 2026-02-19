@@ -511,7 +511,6 @@
 //////////////
 
 
-
 import { Router } from 'express';
 import { PayrollController } from './payroll.controller';
 import { PayrollValidation } from './payroll.validation';
@@ -519,6 +518,8 @@ import { PayrollValidation } from './payroll.validation';
 import { validate } from '../../../../shared/middlewares/validation';
 import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 
+import { PayrollImportController } from './payroll-import.controller';
+import { payrollUpload } from '../../../../shared/middlewares/upload.middleware';
 const router = Router();
 
 // All routes require authentication
@@ -681,7 +682,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/v1/hr/payroll/stats:
+ * /hr/payroll/stats:
  *   get:
  *     summary: Get payroll statistics
  *     tags: [Payroll]
@@ -736,7 +737,7 @@ router.get('/stats', PayrollController.getPayrollStats);
 
 /**
  * @swagger
- * /api/v1/hr/payroll/drafts:
+ * /hr/payroll/drafts:
  *   get:
  *     summary: Get draft payrolls
  *     tags: [Payroll]
@@ -771,7 +772,7 @@ router.get('/drafts', PayrollController.getDrafts);
 
 /**
  * @swagger
- * /api/v1/hr/payroll/pending:
+ * /hr/payroll/pending:
  *   get:
  *     summary: Get pending payrolls
  *     tags: [Payroll]
@@ -794,7 +795,7 @@ router.get('/pending', PayrollController.getPending);
 
 /**
  * @swagger
- * /api/v1/hr/payroll:
+ * /hr/payroll:
  *   get:
  *     summary: Get all payroll records
  *     tags: [Payroll]
@@ -858,7 +859,7 @@ router.get('/', validate(PayrollValidation.getPayrolls), PayrollController.getAl
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}:
+ * /hr/payroll/{id}:
  *   get:
  *     summary: Get payroll by ID
  *     tags: [Payroll]
@@ -890,7 +891,7 @@ router.get('/:id', validate(PayrollValidation.payrollId), PayrollController.getP
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}/download:
+ * /hr/payroll/{id}/download:
  *   get:
  *     summary: Download payslip
  *     tags: [Payroll]
@@ -910,7 +911,7 @@ router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollContro
 
 /**
  * @swagger
- * /api/v1/hr/payroll:
+ * /hr/payroll:
  *   post:
  *     summary: Create new payroll
  *     tags: [Payroll]
@@ -957,7 +958,7 @@ router.post('/', validate(PayrollValidation.createPayroll), PayrollController.cr
 
 /**
  * @swagger
- * /api/v1/hr/payroll/bulk-generate:
+ * /hr/payroll/bulk-generate:
  *   post:
  *     summary: Bulk generate payrolls
  *     tags: [Payroll]
@@ -993,7 +994,7 @@ router.post('/bulk-generate', validate(PayrollValidation.bulkGenerate), PayrollC
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}/generate:
+ * /hr/payroll/{id}/generate:
  *   post:
  *     summary: Generate payslip (move from draft to generated)
  *     tags: [Payroll]
@@ -1013,7 +1014,7 @@ router.post('/:id/generate', validate(PayrollValidation.generatePayslip), Payrol
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}/mark-paid:
+ * /hr/payroll/{id}/mark-paid:
  *   post:
  *     summary: Mark payroll as paid
  *     tags: [Payroll]
@@ -1055,7 +1056,7 @@ router.post('/:id/mark-paid', validate(PayrollValidation.payrollId), PayrollCont
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}/revise:
+ * /hr/payroll/{id}/revise:
  *   post:
  *     summary: Revise payroll
  *     tags: [Payroll]
@@ -1089,7 +1090,7 @@ router.post('/:id/revise', validate(PayrollValidation.revisePayroll), PayrollCon
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}:
+ * /hr/payroll/{id}:
  *   put:
  *     summary: Update payroll
  *     tags: [Payroll]
@@ -1120,7 +1121,7 @@ router.put('/:id', validate(PayrollValidation.updatePayroll), PayrollController.
 
 /**
  * @swagger
- * /api/v1/hr/payroll/{id}:
+ * /hr/payroll/{id}:
  *   delete:
  *     summary: Delete payroll
  *     tags: [Payroll]
@@ -1137,5 +1138,142 @@ router.put('/:id', validate(PayrollValidation.updatePayroll), PayrollController.
  *         description: Payroll deleted successfully
  */
 router.delete('/:id', validate(PayrollValidation.payrollId), PayrollController.deletePayroll);
+
+
+/**
+ * @swagger
+ * /hr/payroll/template:
+ *   get:
+ *     summary: Download sample payroll template
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Template file downloaded
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ */
+router.get('/template', PayrollImportController.downloadTemplate);
+
+/**
+ * @swagger
+ * /hr/payroll/import:
+ *   post:
+ *     summary: Import payroll from Excel/CSV file
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *               - importBasedOn
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Payroll file (.xls, .xlsx, or .csv) - Max 5MB
+ *               importBasedOn:
+ *                 type: string
+ *                 enum: [employeeName, employeeId]
+ *                 description: Import based on Employee Name or Employee ID
+ *                 example: employeeName
+ *     responses:
+ *       200:
+ *         description: Payroll import completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Payroll import completed. 10 successful, 2 failed
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalRecords:
+ *                           type: integer
+ *                           example: 12
+ *                         successfulRecords:
+ *                           type: integer
+ *                           example: 10
+ *                         failedRecords:
+ *                           type: integer
+ *                           example: 2
+ *                     errors:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           row:
+ *                             type: integer
+ *                           error:
+ *                             type: string
+ *       400:
+ *         description: Bad request - No file or invalid format
+ */
+router.post('/import', payrollUpload.single('file'), PayrollImportController.importPayroll);
+
+/**
+ * @swagger
+ * /hr/payroll/preview:
+ *   post:
+ *     summary: Preview payroll data before importing
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Payroll file to preview
+ *     responses:
+ *       200:
+ *         description: File preview generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalRecords:
+ *                       type: integer
+ *                     validRecords:
+ *                       type: integer
+ *                     invalidRecords:
+ *                       type: integer
+ *                     preview:
+ *                       type: array
+ *                       description: First 10 records
+ */
+router.post('/preview', payrollUpload.single('file'), PayrollImportController.previewPayroll);
+
 
 export default router;
