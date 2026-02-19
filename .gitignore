@@ -1,8 +1,8 @@
 
 ### **File: `.gitignore`**
 # Dependencies
-node_modules/
-package-lock.json
+# node_modules/
+# package-lock.json
 yarn.lock
 
 # Build output
