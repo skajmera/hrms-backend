@@ -183,6 +183,29 @@ export class LeaveDAL {
       }
     }
   }
+  /**
+ * Get leaves by date range
+ * Returns all leaves that overlap with the given date range
+ */
+ async findByDateRange(startDate: Date, endDate: Date): Promise<ILeave[]> {
+  return await LeaveModel.find({
+    $or: [
+      // Leave starts within the range
+      { startDate: { $gte: startDate, $lte: endDate } },
+      // Leave ends within the range
+      { endDate: { $gte: startDate, $lte: endDate } },
+      // Leave spans the entire range
+      { 
+        startDate: { $lte: startDate }, 
+        endDate: { $gte: endDate } 
+      }
+    ],
+    status: LEAVE_STATUS.APPROVED // Only count approved leaves
+  })
+    .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+    .populate('approvedBy', 'firstName lastName')
+    .sort({ startDate: 1 });
+}
 }
 
 export const leaveDAL = new LeaveDAL();

@@ -6,7 +6,7 @@ export class PayrollDAL {
   /**
    * Create payroll
    */
-  async create(payrollData: any): Promise<IPayroll> {
+  async create(payrollData: Partial<IPayroll>): Promise<IPayroll> {
     return await PayrollModel.create(payrollData);
   }
 
@@ -33,6 +33,7 @@ export class PayrollDAL {
     const records = await PayrollModel.find(filters)
       .populate('userId', 'firstName lastName email professionalDetails.employeeId')
       .populate('generatedBy', 'firstName lastName')
+      .populate('approvedBy', 'firstName lastName')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -53,7 +54,20 @@ export class PayrollDAL {
     )
       .populate('userId', 'firstName lastName email');
   }
-
+  async updateById(id: string, updateData: Partial<IPayroll>): Promise<IPayroll> {
+    const updatedPayroll = await PayrollModel.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).populate('userId', 'firstName lastName email');
+  
+    if (!updatedPayroll) {
+      throw new Error('Payroll not found');
+    }
+  
+    return updatedPayroll;
+  }
+  
   /**
    * Delete payroll
    */
@@ -69,6 +83,20 @@ export class PayrollDAL {
       .populate('userId', 'firstName lastName email professionalDetails.employeeId');
   }
 
+   async findByUserAndPeriod(
+    userId: string, 
+    month: number, 
+    year: number
+  ): Promise<IPayroll | null> {
+    return await PayrollModel.findOne({ 
+      userId, 
+      month, 
+      year 
+    })
+      .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+      .populate('generatedBy', 'firstName lastName')
+      .populate('approvedBy', 'firstName lastName');
+  }
   /**
    * Get payroll by month and year
    */
@@ -106,7 +134,65 @@ export class PayrollDAL {
       }
     ]);
   }
+/**
+   * Get payroll statistics for dashboard
+   */
+ async getPayrollStatsDashboard(month: number, year: number): Promise<any> {
+  const stats = await PayrollModel.aggregate([
+    {
+      $match: { month, year }
+    },
+    {
+      $group: {
+        _id: null,
+        totalPayroll: { $sum: '$netSalary' },
+        paidEmployees: {
+          $sum: { $cond: [{ $eq: ['$paymentStatus', 'PAID'] }, 1, 0] }
+        },
+        pendingPayments: {
+          $sum: { $cond: [{ $eq: ['$paymentStatus', 'PENDING'] }, 1, 0] }
+        },
+        averageSalary: { $avg: '$netSalary' },
+        totalEmployees: { $sum: 1 }
+      }
+    }
+  ]);
 
+  return stats[0] || {
+    totalPayroll: 0,
+    paidEmployees: 0,
+    pendingPayments: 0,
+    averageSalary: 0,
+    totalEmployees: 0
+  };
+}
+
+
+ /**
+   * Get draft payrolls
+   */
+  async getDrafts(month?: number, year?: number): Promise<IPayroll[]> {
+  const filter: any = { isDraft: true };
+  if (month) filter.month = month;
+  if (year) filter.year = year;
+
+  return await PayrollModel.find(filter)
+    .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+    .sort({ createdAt: -1 });
+}
+
+  /**
+   * Get pending payrolls
+   */
+   async getPending(month?: number, year?: number): Promise<IPayroll[]> {
+    const filter: any = { paymentStatus: 'PENDING', isGenerated: true };
+    if (month) filter.month = month;
+    if (year) filter.year = year;
+
+    return await PayrollModel.find(filter)
+      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .sort({ createdAt: -1 });
+  }
   /**
    * Mark payroll as paid
    */

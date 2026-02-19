@@ -1,6 +1,10 @@
 import { Document, Types } from 'mongoose';
 import { PAYMENT_STATUS } from '../../config/constants';
 
+export interface ICustomField {
+  fieldName?: string;
+  fieldValue?: number;
+}
 /**
  * Payroll related interfaces
  */
@@ -9,20 +13,33 @@ export interface ISalaryComponent {
   basic: number;
   hra: number;
   allowances: {
-    transport: number;
-    medical: number;
-    special: number;
-    foodAllowance: number;
-    other: number;
+    transport?: number;
+    medical?: number;
+    special?: number;
+    foodAllowance?: number;
+    statutoryBonus?: number;
+    byodPayment?: number;
+    taskBasedIncentive?: number;
+    arrearAmount?: number;
+    arrearMonth?: string;
+    specialPay?: number;
+    miscellaneous?: number;
+    nonWorkingDayCompensation?: number;
+    other?: number;
   };
   deductions: {
-    providentFund: number;
-    professionalTax: number;
-    incomeTax: number;
+    providentFund?: number;
+    professionalTax?: number;
+    incomeTax?: number;
     esi?: number;
+    leaveWithoutPay?: number;
+    lateWithoutPay?: number;
+    lateArrivalDeductions?: number;
     loanDeduction?: number;
-    other: number;
+    other?: number;
   };
+  customEarnings?: ICustomField[];
+  customDeductions?: ICustomField[];
 }
 
 export interface IPayroll extends Document {
@@ -30,7 +47,7 @@ export interface IPayroll extends Document {
   employeeId: string;
   month: number;
   year: number;
-  
+
   // Salary Components
   salaryComponents: ISalaryComponent;
   
@@ -54,6 +71,11 @@ export interface IPayroll extends Document {
   bonus?: number;
   incentives?: number;
   
+    // Revision
+    isRevised?: boolean;
+    revisionDate?: Date;
+    revisionReason?: string;
+  
   // Payment Details
   paymentDate?: Date;
   paymentStatus: keyof typeof PAYMENT_STATUS;
@@ -71,15 +93,24 @@ export interface IPayroll extends Document {
   approvedBy?: Types.ObjectId | string;
   approvedAt?: Date;
   
+
+  // Status tracking
+  isDraft?: boolean;
+  isGenerated?: boolean;
+  isPending?: boolean;
+
+
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IPayrollCreateInput {
   userId: string;
+  employeeId: string;
   month: number;
   year: number;
   salaryComponents: ISalaryComponent;
   workingDays: number;
   presentDays: number;
+  generatedBy: string;
 }

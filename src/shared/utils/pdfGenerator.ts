@@ -208,14 +208,25 @@ export class PDFGenerator {
       if (i < earnings.length) {
         doc
           .text(earnings[i].label, col1X + 10, currentY)
-          .text(earnings[i].value.toFixed(2), col2X + 10, currentY, { align: 'right', width: 80 });
+          .text(
+            (earnings[i]?.value ?? 0).toFixed(2),
+            col2X + 10,
+            currentY,
+            { align: 'right', width: 80 }
+          );
       }
 
       // Deductions
       if (i < deductions.length) {
         doc
           .text(deductions[i].label, col3X + 10, currentY)
-          .text(deductions[i].value.toFixed(2), col4X + 10, currentY, { align: 'right', width: 80 });
+          .text(
+            (deductions[i]?.value ?? 0).toFixed(2),
+            col4X + 10,
+            currentY,
+            { align: 'right', width: 80 }
+          );
+          
       }
 
       currentY += 20;
