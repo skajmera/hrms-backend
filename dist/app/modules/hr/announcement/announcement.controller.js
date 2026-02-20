@@ -1,0 +1,84 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.announcementController = exports.AnnouncementController = void 0;
+const announcement_service_1 = require("./announcement.service");
+const response_1 = require("../../../../shared/utils/response");
+const constants_1 = require("../../../../config/constants");
+class AnnouncementController {
+    async createAnnouncement(req, res, next) {
+        try {
+            const announcement = await announcement_service_1.announcementService.createAnnouncement({ ...req.body, createdBy: req.user._id });
+            (0, response_1.sendSuccessResponse)(res, 'Announcement created successfully', announcement, constants_1.HTTP_STATUS.CREATED);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
+        }
+    }
+    async getAnnouncementById(req, res, next) {
+        try {
+            const announcement = await announcement_service_1.announcementService.getAnnouncementById(req.params.id);
+            (0, response_1.sendSuccessResponse)(res, 'Announcement retrieved successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.NOT_FOUND);
+        }
+    }
+    async getAllAnnouncements(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
+            const result = await announcement_service_1.announcementService.getAllAnnouncements(filters, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder });
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async updateAnnouncement(req, res, next) {
+        try {
+            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, req.body);
+            (0, response_1.sendSuccessResponse)(res, 'Announcement updated successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
+        }
+    }
+    async deleteAnnouncement(req, res, next) {
+        try {
+            await announcement_service_1.announcementService.deleteAnnouncement(req.params.id);
+            (0, response_1.sendSuccessResponse)(res, 'Announcement deleted successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.NOT_FOUND);
+        }
+    }
+    async getMyAnnouncements(req, res, next) {
+        try {
+            const announcements = await announcement_service_1.announcementService.getActiveAnnouncementsForUser(req.user._id.toString(), req.user.role, req.user.professionalDetails.department.toString());
+            (0, response_1.sendSuccessResponse)(res, 'Your announcements retrieved successfully', announcements);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async markAsViewed(req, res, next) {
+        try {
+            await announcement_service_1.announcementService.markAsViewed(req.params.id, req.user._id.toString());
+            (0, response_1.sendSuccessResponse)(res, 'Announcement marked as viewed');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async togglePin(req, res, next) {
+        try {
+            const announcement = await announcement_service_1.announcementService.togglePin(req.params.id);
+            (0, response_1.sendSuccessResponse)(res, 'Announcement pin status updated', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+}
+exports.AnnouncementController = AnnouncementController;
+exports.announcementController = new AnnouncementController();
+//# sourceMappingURL=announcement.controller.js.map
