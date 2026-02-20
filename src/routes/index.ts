@@ -27,6 +27,7 @@ import holidaysRoutes from '../app/modules/hr/holidays/holidays.route';
 import analyticsRoutes from '../app/modules/hr/analytics/analytics.route';
 import shiftsRoutes from '../app/modules/hr/shifts/shifts.route';
 import permissionsRoutes from '../app/modules/hr/permissions/permissions.route'; // NEW
+import offboardingRoutes from '../app/modules/hr/offboarding/offboarding.route'; // NEW
 
 const router = Router();
 
@@ -57,6 +58,8 @@ router.use('/hr/holidays', holidaysRoutes);
 router.use('/hr/analytics', analyticsRoutes);
 router.use('/hr/shifts', shiftsRoutes);
 router.use('/hr/permissions', permissionsRoutes); // Permissions routes
+router.use('/hr/offboarding', offboardingRoutes); // NEW
+
 
 export default router;
 

@@ -110,11 +110,13 @@ export class PayrollImportService {
 
         // Create payroll data
         const payrollData: Partial<IPayroll> = {
-            //////  this is for calculation of gross salary, total deductions and net salary based on the components provided in the file.
-            grossSalary: (row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0),
-            totalDeductions: (row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0),
-            netSalary: ((row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0)) - ((row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0)), 
-
+            // //////  this is for calculation of gross salary, total deductions and net salary based on the components provided in the file.
+            // grossSalary: (row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0),
+            // totalDeductions: (row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0),
+            // netSalary: ((row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0)) - ((row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0)), 
+          grossSalary:0,
+          totalDeductions:0,
+          netSalary: 0,
             ////
           userId: user._id,
           employeeId: user.professionalDetails.employeeId,

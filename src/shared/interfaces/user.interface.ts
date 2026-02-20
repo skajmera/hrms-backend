@@ -157,6 +157,8 @@ export interface IUserUpdateInput {
     relationship: string;
     phone: string;
   };
+  isActive?: boolean;
+  professionalDetails?: IProfessionalDetails | any;
 }
 
 export interface ILoginInput {
