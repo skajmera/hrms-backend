@@ -19,7 +19,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/stats:
+ * /hr/offboarding/stats:
  *   get:
  *     summary: Get offboarding statistics
  *     tags: [Offboarding]
@@ -42,7 +42,7 @@ router.get('/stats', OffboardingController.getStats);
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/pending:
+ * /hr/offboarding/pending:
  *   get:
  *     summary: Get pending resignation requests
  *     tags: [Offboarding]
@@ -56,7 +56,7 @@ router.get('/pending', OffboardingController.getPendingResignations);
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/notice-period:
+ * /hr/offboarding/notice-period:
  *   get:
  *     summary: Get employees in notice period
  *     tags: [Offboarding]
@@ -70,7 +70,7 @@ router.get('/notice-period', OffboardingController.getNoticePeriodEmployees);
 
 /**
  * @swagger
- * /api/v1/hr/offboarding:
+ * /hr/offboarding:
  *   get:
  *     summary: Get all resignation requests
  *     tags: [Offboarding]
@@ -98,7 +98,7 @@ router.get('/', validate(OffboardingValidation.getResignations), OffboardingCont
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}:
+ * /hr/offboarding/{id}:
  *   get:
  *     summary: Get resignation by ID
  *     tags: [Offboarding]
@@ -118,7 +118,7 @@ router.get('/:id', validate(OffboardingValidation.offboardingId), OffboardingCon
 
 /**
  * @swagger
- * /api/v1/hr/offboarding:
+ * /hr/offboarding:
  *   post:
  *     summary: Create resignation request
  *     tags: [Offboarding]
@@ -159,7 +159,7 @@ router.post('/', validate(OffboardingValidation.createResignation), OffboardingC
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}/approve:
+ * /hr/offboarding/{id}/approve:
  *   post:
  *     summary: Approve resignation request
  *     tags: [Offboarding]
@@ -187,7 +187,7 @@ router.post('/:id/approve', validate(OffboardingValidation.approveResignation), 
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}/reject:
+ * /hr/offboarding/{id}/reject:
  *   post:
  *     summary: Reject resignation request
  *     tags: [Offboarding]
@@ -218,7 +218,7 @@ router.post('/:id/reject', validate(OffboardingValidation.rejectResignation), Of
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}/withdraw:
+ * /hr/offboarding/{id}/withdraw:
  *   post:
  *     summary: Withdraw resignation request
  *     tags: [Offboarding]
@@ -238,7 +238,7 @@ router.post('/:id/withdraw', validate(OffboardingValidation.offboardingId), Offb
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}/complete:
+ * /hr/offboarding/{id}/complete:
  *   post:
  *     summary: Complete offboarding process
  *     tags: [Offboarding]
@@ -258,7 +258,7 @@ router.post('/:id/complete', validate(OffboardingValidation.offboardingId), Offb
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}/clearance:
+ * /hr/offboarding/{id}/clearance:
  *   put:
  *     summary: Update clearance status
  *     tags: [Offboarding]
@@ -296,7 +296,7 @@ router.put('/:id/clearance', validate(OffboardingValidation.offboardingId), Offb
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}:
+ * /hr/offboarding/{id}:
  *   put:
  *     summary: Update resignation request
  *     tags: [Offboarding]
@@ -329,7 +329,7 @@ router.put('/:id', validate(OffboardingValidation.updateResignation), Offboardin
 
 /**
  * @swagger
- * /api/v1/hr/offboarding/{id}:
+ * /hr/offboarding/{id}:
  *   delete:
  *     summary: Delete resignation request
  *     tags: [Offboarding]
