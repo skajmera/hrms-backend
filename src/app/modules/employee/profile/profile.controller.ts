@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { employeeProfileService } from './profile.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
-import { sendSuccessResponse, sendErrorResponse } from '../../../../shared/utils/response';
+import { sendSuccessResponse, sendErrorResponse,sendPaginatedResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
 
 export class EmployeeProfileController {
@@ -32,6 +32,36 @@ export class EmployeeProfileController {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
     }
   }
+
+    /**
+     * Get all users
+     */
+    async getAllUsers(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters} = req.query;
+        
+        filters.role = 'employee'; 
+        filters.isActive = true as any; 
+        const result = await employeeProfileService.getAllUsers(filters, {
+          page: Number(page),
+          limit: Number(limit),
+          sortBy: sortBy as string,
+          sortOrder: sortOrder as 'asc' | 'desc'
+        });
+  
+        sendPaginatedResponse(
+          res,
+          result.users,
+          result.total,
+          Number(page),
+          Number(limit),
+          'Users retrieved successfully'
+        );
+      } catch (error: any) {
+        sendErrorResponse(res, error.message);
+      }
+    }
+  
 }
 
 export const employeeProfileController = new EmployeeProfileController();
