@@ -1,5 +1,6 @@
 import { userDAL } from '../../../../shared/dal/user.dal';
 import { IUserUpdateInput } from '../../../../shared/interfaces/user.interface';
+import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 
 export class EmployeeProfileService {
   /**
@@ -60,6 +61,14 @@ export class EmployeeProfileService {
     user.password = newPassword;
     await user.save();
   }
+
+    /**
+     * Get all users
+     */
+    async getAllUsers(filters: any = {}, options: IPaginationOptions) {
+      return await userDAL.findAll(filters, options);
+    }
+  
 }
 
 export const employeeProfileService = new EmployeeProfileService();

@@ -25,7 +25,8 @@ const EducationSchema = new Schema({
   institution: { type: String, required: false },
   yearOfCompletion: { type: Number, required: false },
   percentage: { type: Number },
-  grade: { type: String }
+  grade: { type: String },
+  specialisation: { type: String }
 }, { _id: false });
 
 const ExperienceSchema = new Schema({
@@ -91,6 +92,14 @@ const UserSchema = new Schema<IUser>({
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
   email: { 
+    type: String, 
+    required: true, 
+    unique: true, 
+    lowercase: true,
+    trim: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
+  },
+  personalEmail: { 
     type: String, 
     required: true, 
     unique: true, 

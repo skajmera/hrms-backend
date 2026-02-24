@@ -19,8 +19,8 @@ import { USER_ROLES } from '../../../../config/constants';
 
 const router = Router();
 
-// router.use(authenticate);
-// router.use(authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN));
+router.use(authenticate);
+router.use(authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN));
 
 // const router = Router();
 
