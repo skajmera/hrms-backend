@@ -115,7 +115,7 @@ export class OffboardingController {
     try {
       const { id } = req.params;
       const { hrNotes } = req.body;
-      const approvedBy = req.user?.id;
+      const approvedBy = req.user?._id;
 
       const offboarding = await OffboardingService.approveResignation(id, approvedBy, hrNotes);
 

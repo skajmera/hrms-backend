@@ -59,7 +59,9 @@ const SalaryDetailsSchema = new Schema({
 }, { _id: false });
 
 const ProfessionalDetailsSchema = new Schema({
+  sourceOfHire: { type: String, required: false },
   employeeId: { type: String, required: true, unique: true },
+  biometricId: { type: String, unique: true, sparse: true }, // NEW - For biometric attendance integration
   designation: { type: String, required: true },
   department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
   joiningDate: { type: Date, required: true },
@@ -88,6 +90,11 @@ const ProfessionalDetailsSchema = new Schema({
 }, { _id: false });
 
 const UserSchema = new Schema<IUser>({
+  organizationId: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Organization',
+    required: false // Make this required after migration
+  },
   // Personal Details
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
@@ -116,7 +123,9 @@ const UserSchema = new Schema<IUser>({
   maritalStatus: { type: String, enum: ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED'] },
   profilePicture: { type: String },
   anniversary: { type: Date, required: false },
-  
+  aboutMe: { type: String, required: false },
+  adhaarNumber: { type: String, required: false, unique: true, sparse: true },
+  panNumber: { type: String, required: false, unique: true, sparse: true },
   // Address
   currentAddress: { type: AddressSchema, required: false },
   permanentAddress: AddressSchema,
@@ -132,7 +141,8 @@ const UserSchema = new Schema<IUser>({
   emergencyContact: {
     name: { type: String },
     relationship: { type: String },
-    phone: { type: String }
+    phone: { type: String },
+    email: { type: String, match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'] }
   },
   
   // System Fields

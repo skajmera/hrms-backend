@@ -22,7 +22,15 @@ export class OffboardingDAL {
    */
   static async findById(offboardingId: string): Promise<IOffboarding | null> {
     return await OffboardingModel.findById(offboardingId)
-      .populate('userId', 'firstName lastName email professionalDetails profilePicture')
+    
+      .populate({
+        path: 'userId',
+        select: 'firstName lastName email professionalDetails profilePicture',
+        populate: {
+          path: 'professionalDetails.reportingManager',
+          select: 'firstName lastName email profilePicture'
+        }
+      })
       .populate('department', 'name code')
       .populate('approvedBy', 'firstName lastName')
       .populate('rejectedBy', 'firstName lastName')

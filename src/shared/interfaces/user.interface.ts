@@ -59,10 +59,12 @@ export interface ISalaryDetails {
 }
 
 export interface IProfessionalDetails {
-  employeeId: string;
-  designation: string;
-  department: any |Types.ObjectId | string;
-  joiningDate: Date;
+  sourceOfHire?: string;
+  employeeId?: string;
+  biometricId?: string; // NEW - For biometric attendance integration
+  designation?: string;
+  department?: any |Types.ObjectId | string;
+  joiningDate?: Date;
   employmentStatus?: keyof typeof EMPLOYMENT_STATUS;
   employmentType?: keyof typeof EMPLOYMENT_TYPE;
   probationEndDate?: Date;
@@ -75,6 +77,7 @@ export interface IProfessionalDetails {
 
 export interface IUser extends Document {
   // Personal Details
+  organizationId: Types.ObjectId | string;
   firstName: string;
   lastName: string;
   email: string;
@@ -105,8 +108,11 @@ export interface IUser extends Document {
     name: string;
     relationship: string;
     phone: string;
+    email?: string;
   };
-  
+  aboutMe?: string;
+  adhaarNumber?: string;
+  panNumber?: string; 
   // System Fields
   role: keyof typeof USER_ROLES;
   isActive?: boolean;

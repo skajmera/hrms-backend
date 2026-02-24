@@ -79,7 +79,7 @@ export class UserDAL {
     return await UserModel.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true, runValidators: false }
     )
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.reportingManager', 'firstName lastName email');

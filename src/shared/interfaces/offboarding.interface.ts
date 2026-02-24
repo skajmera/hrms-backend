@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
  */
 
 export interface IOffboarding extends Document {
-  userId: Types.ObjectId | string;
+  userId: Types.ObjectId | string | any;
   employeeId: string;
   employeeName: string;
   designation: string;

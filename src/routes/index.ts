@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 // Auth
 import authRoutes from '../app/modules/auth/auth.route';
-
+import organizationRoutes from '../app/modules/organization/organization.route';
 // Employee
 import employeeProfileRoutes from '../app/modules/employee/profile/profile.route';
 import employeeAttendanceRoutes from '../app/modules/employee/attendance/attendance.route';
@@ -33,7 +33,7 @@ const router = Router();
 
 // Auth routes
 router.use('/auth', authRoutes);
-
+router.use('/organization', organizationRoutes);
 // Employee routes (Self-service)
 router.use('/employee/profile', employeeProfileRoutes);
 router.use('/employee/attendance', employeeAttendanceRoutes);
