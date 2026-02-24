@@ -26,6 +26,7 @@ export interface IEducation {
   yearOfCompletion: number;
   percentage?: number;
   grade?: string;
+  specialisation?: string;
 }
 
 export interface IExperience {
@@ -77,6 +78,7 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   email: string;
+  personalEmail?: string;
   password: string;
   phone?: string;
   alternatePhone?: string;
@@ -131,6 +133,7 @@ export interface IUserCreateInput {
   lastName: string;
   email: string;
   password?: string;
+  personalEmail?: string;
   phone?: string;
   dateOfBirth?: Date;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
@@ -142,6 +145,7 @@ export interface IUserCreateInput {
 export interface IUserUpdateInput {
   firstName?: string;
   lastName?: string;
+  personalEmail?: string;
   phone?: string;
   alternatePhone?: string;
   dateOfBirth?: Date;
