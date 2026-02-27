@@ -12,7 +12,6 @@ import { swaggerSpec } from './config/swagger';
 
 const app: Application = express();
 
-// 👇 VERY IMPORTANT (rate-limit se pehle)
 app.set('trust proxy', 1);
 // Security Middleware
 app.use(helmet());
