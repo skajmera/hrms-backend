@@ -1,6 +1,6 @@
 // import { payrollDAL } from '../../../../shared/dal/payroll.dal';
 // import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
-// import { PDFGenerator } from '../../../../shared/utils/pdfGenerator';
+
 // import { userDAL } from '../../../../shared/dal/user.dal';
 // export class PayrollService {
 //   async generatePayroll(payrollData: any) {
@@ -161,7 +161,7 @@ import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { IPayroll } from '../../../../shared/interfaces/payroll.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 import { PAYMENT_STATUS } from '../../../../config/constants';
-
+import { PDFGenerator } from '../../../../shared/utils/pdfGenerator';
 /**
  * Payroll Service
  * Business logic for payroll operations
@@ -446,15 +446,69 @@ export class PayrollService {
   /**
    * Download payslip (generate PDF)
    */
-  static async downloadPayslip(payrollId: string): Promise<string> {
-    const payroll = await this.getPayrollById(payrollId);
+  // static async downloadPayslip(payrollId: string): Promise<string> {
+  //   const payroll = await this.getPayrollById(payrollId);
     
-    if (payroll.isDraft) {
-      throw new Error('Cannot download payslip for draft payroll');
+  //   if (payroll.isDraft) {
+  //     throw new Error('Cannot download payslip for draft payroll');
+  //   }
+
+  //   // Here you would implement PDF generation
+  //   // For now, returning a mock path
+  //   return `/payslips/${payrollId}.pdf`;
+  // }
+
+  /**
+   * Download payslip
+   */
+  static async downloadPayslip(payrollId: string): Promise<string> {
+    const payroll = await payrollDAL.findById(payrollId);
+    
+    if (!payroll) {
+      throw new Error('Payroll not found');
     }
 
-    // Here you would implement PDF generation
-    // For now, returning a mock path
-    return `/payslips/${payrollId}.pdf`;
+    if (!payroll.payslipPath) {
+      // Generate PDF if not exists
+      const user = await userDAL.findById(payroll.userId._id.toString());
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const pdfPath = await PDFGenerator.generateSalarySlip({ payroll, user });
+      payroll.payslipPath = pdfPath;
+      await payroll.save();
+      
+      return pdfPath;
+    }
+
+    return payroll.payslipPath;
+  }
+
+  /**
+   * Regenerate payslip
+   */
+  async regeneratePayslip(payrollId: string): Promise<string> {
+    const payroll = await payrollDAL.findById(payrollId);
+    
+    if (!payroll) {
+      throw new Error('Payroll not found');
+    }
+
+    const user = await userDAL.findById(payroll.userId.toString());
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const pdfPath = await PDFGenerator.generateSalarySlip({ payroll, user });
+    payroll.payslipPath = pdfPath;
+    await payroll.save();
+
+    return pdfPath;
+  }
+
+
+  static async getUserPayrollHistory(userId: string, limit: number = 12) {
+    return await payrollDAL.getUserPayrollHistory(userId, limit);
   }
 }

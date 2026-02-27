@@ -889,11 +889,31 @@ router.get('/', validate(PayrollValidation.getPayrolls), PayrollController.getAl
  */
 router.get('/:id', validate(PayrollValidation.payrollId), PayrollController.getPayrollById);
 
+// /**
+//  * @swagger
+//  * /hr/payroll/{id}/download:
+//  *   get:
+//  *     summary: Download payslip
+//  *     tags: [Payroll]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: Payslip download link generated
+//  */
+// router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollController.downloadPayslip);
+
 /**
  * @swagger
  * /hr/payroll/{id}/download:
  *   get:
- *     summary: Download payslip
+ *     summary: Download payslip PDF
  *     tags: [Payroll]
  *     security:
  *       - bearerAuth: []
@@ -905,9 +925,14 @@ router.get('/:id', validate(PayrollValidation.payrollId), PayrollController.getP
  *           type: string
  *     responses:
  *       200:
- *         description: Payslip download link generated
+ *         description: PDF file
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
  */
-router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollController.downloadPayslip);
+router.get('/:id/download', PayrollController.downloadPayslip);
 
 /**
  * @swagger
@@ -1274,6 +1299,47 @@ router.post('/import', payrollUpload.single('file'), PayrollImportController.imp
  *                       description: First 10 records
  */
 router.post('/preview', payrollUpload.single('file'), PayrollImportController.previewPayroll);
+
+/**
+ * @swagger
+ * /hr/payroll/user/{userId}:
+ *   get:
+ *     summary: Get payroll history for a specific user
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *         description: Number of records to retrieve
+ *     responses:
+ *       200:
+ *         description: Payroll history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Payroll'
+ */
+router.get('/user/:userId', PayrollController.getUserPayrollHistory);
 
 
 export default router;

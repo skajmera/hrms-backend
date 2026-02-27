@@ -10,7 +10,10 @@ export class UserController {
    */
   async createUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await userService.createUser(req.body);
+      const createData = req.body;
+      const userId = req.user._id.toString();
+      createData.createdBy = userId; 
+      const user = await userService.createUser(createData);
       sendSuccessResponse(res, 'User created successfully', user, HTTP_STATUS.CREATED);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
@@ -61,7 +64,10 @@ export class UserController {
    */
   async updateUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await userService.updateUser(req.params.id, req.body);
+      const updateData = req.body;
+      const userId = req.user._id.toString();
+      updateData.updatedBy = userId; 
+      const user = await userService.updateUser(req.params.id, updateData);
       sendSuccessResponse(res, 'User updated successfully', user);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);

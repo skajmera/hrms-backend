@@ -17,6 +17,7 @@ export class UserDAL {
   async findById(id: string, selectPassword = false): Promise<IUser | null> {
     const query = UserModel.findById(id)
       .populate('professionalDetails.department', 'name code')
+      .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email');
     
     if (selectPassword) {
@@ -45,6 +46,7 @@ export class UserDAL {
   async findByEmployeeId(employeeId: string): Promise<IUser | null> {
     return await UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
       .populate('professionalDetails.department', 'name code')
+      .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email');
   }
 
@@ -62,6 +64,7 @@ export class UserDAL {
 
     const users = await UserModel.find(query)
       .populate('professionalDetails.department', 'name code')
+      .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
@@ -81,8 +84,8 @@ export class UserDAL {
       { $set: updateData },
       { new: true, runValidators: false }
     )
-      .populate('professionalDetails.department', 'name code')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email');
+      // .populate('professionalDetails.department', 'name code')
+      // .populate('professionalDetails.reportingManager', 'firstName lastName email');
   }
 
   /**
@@ -116,7 +119,8 @@ export class UserDAL {
    */
   async findByRole(role: string): Promise<IUser[]> {
     return await UserModel.find({ role, isActive: true })
-      .populate('professionalDetails.department', 'name code');
+      .populate('professionalDetails.department', 'name code')
+      .populate('professionalDetails.designation', 'name code level');
   }
 
   /**
@@ -221,6 +225,14 @@ export class UserDAL {
       // 3️⃣ Department lookup (populate replacement)
       {
         $lookup: {
+          from: "designations",
+          localField: "professionalDetails.designation",
+          foreignField: "_id",
+          as: "designation"
+        }
+      },
+      {
+        $lookup: {
           from: "departments",
           localField: "professionalDetails.department",
           foreignField: "_id",
@@ -322,6 +334,7 @@ export class UserDAL {
       isActive: true
     })
       .populate('professionalDetails.department', 'name code')
+       .populate('professionalDetails.designation', 'name code level')
       .limit(20);
   }
 

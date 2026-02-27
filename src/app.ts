@@ -26,14 +26,14 @@ app.use(cors({
 
 
 // Rate Limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.maxRequests,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/', limiter);
+// const limiter = rateLimit({
+//   windowMs: config.rateLimit.windowMs,
+//   max: config.rateLimit.maxRequests,
+//   message: 'Too many requests from this IP, please try again later.',
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+// app.use('/api/', limiter);
 
 // Body Parsing Middleware
 app.use(express.json({ limit: '10mb' }));

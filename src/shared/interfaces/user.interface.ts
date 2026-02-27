@@ -62,7 +62,7 @@ export interface IProfessionalDetails {
   sourceOfHire?: string;
   employeeId?: string;
   biometricId?: string; // NEW - For biometric attendance integration
-  designation?: string;
+  designation: Types.ObjectId | string;
   department?: any |Types.ObjectId | string;
   joiningDate?: Date;
   employmentStatus?: keyof typeof EMPLOYMENT_STATUS;
@@ -135,6 +135,7 @@ export interface IUser extends Document {
 }
 
 export interface IUserCreateInput {
+  createdBy?: Types.ObjectId | string;
   firstName: string;
   lastName: string;
   email: string;
@@ -149,6 +150,8 @@ export interface IUserCreateInput {
 }
 
 export interface IUserUpdateInput {
+  password?: string;
+  updatedBy?: Types.ObjectId | string;
   firstName?: string;
   lastName?: string;
   personalEmail?: string;

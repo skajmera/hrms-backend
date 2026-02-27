@@ -148,7 +148,6 @@ router.get(
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
   leaveController.getEmployeesOnLeaveToday.bind(leaveController)
 );
-
 /**
  * @swagger
  * /hr/leave/balance/{userId}/{year}:
@@ -196,30 +195,28 @@ router.get(
  *                         total:
  *                           type: number
  *                         used:
- *                          type: number
- *                        remaining:
- *                          type: number
- *                    sickLeave:
- *                      type: object
- *                     properties:
- *                    total:
- *                      type: number
- *                    used:
- *                     type: number
- *                   remaining:
- *                    type: number
- *                    earnedLeave:
- *                     type: object
- *                    properties:
- *                     total:
- *                      type: number
- *                    used:
- *                    type: number
- *                   remaining:
- *                   type: number
- 
-                           
-*/ 
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ *                     sickLeave:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         used:
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ *                     earnedLeave:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         used:
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ */
 router.get('/balance/:userId/:year', leaveController.getLeaveBalance.bind(leaveController));
 
 /**

@@ -36,7 +36,7 @@ export class OffboardingValidation {
    */
   static rejectResignation = [
     param('id').isMongoId().withMessage('Invalid offboarding ID'),
-    body('rejectionReason').notEmpty().withMessage('Rejection reason is required')
+    // body('rejectionReason').notEmpty().withMessage('Rejection reason is required')
   ];
 
   /**

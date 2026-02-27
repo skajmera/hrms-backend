@@ -118,6 +118,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PayrollService } from './payroll.service';
 import { sendSuccessResponse, sendErrorResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
+import path from 'path';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 /**
  * Payroll Controller
@@ -372,16 +373,47 @@ export class PayrollController {
    * Download payslip
    * GET /api/v1/hr/payroll/:id/download
    */
-  static async downloadPayslip(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id } = req.params;
-      const filePath = await PayrollService.downloadPayslip(id);
+  // static async downloadPayslip(req: Request, res: Response, next: NextFunction): Promise<void> {
+  //   try {
+  //     const { id } = req.params;
+  //     const filePath = await PayrollService.downloadPayslip(id);
 
-      sendSuccessResponse(res, 'Payslip download link generated',
-       { filePath }
-      );
-    } catch (error) {
-      next(error);
+  //     sendSuccessResponse(res, 'Payslip download link generated',
+  //      { filePath }
+  //     );
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
+
+
+  /**
+   * Download payslip PDF
+   */
+  static async downloadPayslip(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const pdfPath = await PayrollService.downloadPayslip(req.params.id);
+      const fullPath = path.join(process.cwd(), pdfPath);
+      
+      res.download(fullPath, (err) => {
+        if (err) {
+          sendErrorResponse(res, 'Failed to download payslip', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        }
+      });
+    } catch (error: any) {
+      sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
     }
   }
+
+ static async getUserPayrollHistory(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { limit = 12 } = req.query;
+      const history = await PayrollService.getUserPayrollHistory(userId, Number(limit));
+      sendSuccessResponse(res, 'Payroll history retrieved successfully', history);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
 }

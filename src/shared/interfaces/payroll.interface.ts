@@ -43,7 +43,7 @@ export interface ISalaryComponent {
 }
 
 export interface IPayroll extends Document {
-  userId: Types.ObjectId | string;
+  userId: Types.ObjectId | string | any;
   employeeId: string;
   month: number;
   year: number;
