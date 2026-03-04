@@ -95,7 +95,7 @@ class OffboardingService {
             hrNotes
         };
         // Update user status to resigned
-        await user_dal_1.userDAL.update(offboarding.userId.toString(), {
+        await user_dal_1.userDAL.update(offboarding.userId?._id.toString(), {
             //   'professionalDetails.employmentStatus': 'RESIGNED'
             professionalDetails: {
                 employmentStatus: 'RESIGNED'

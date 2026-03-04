@@ -12,3 +12,14 @@ export const approveRejectLeaveValidation = [
   param('id').isMongoId().withMessage('Valid leave ID is required'),
   body('rejectionReason').optional().trim().notEmpty()
 ];
+
+export const getEmployeeLeavesValidation = [
+  param('userId').isMongoId().withMessage('Valid user ID is required'),
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1 }).withMessage('Limit must be a positive integer')
+];
+
+export const getLeaveBalanceValidation = [
+  param('userId').isMongoId().withMessage('Valid user ID is required'),
+  param('year').optional().isInt({ min: 2000, max: 2100 }).withMessage('Valid year is required')
+];

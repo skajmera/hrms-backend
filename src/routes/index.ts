@@ -51,6 +51,7 @@ router.use('/manager/leave', managerLeaveRoutes);
 router.use('/hr/users', userRoutes);
 router.use('/hr/attendance', attendanceRoutes);
 router.use('/hr/leave', leaveRoutes);
+router.use('/leaves', leaveRoutes);
 router.use('/hr/payroll', payrollRoutes);
 router.use('/hr/announcements', announcementRoutes);
 router.use('/hr/departments', departmentRoutes);
@@ -61,6 +62,7 @@ router.use('/hr/analytics', analyticsRoutes);
 router.use('/hr/shifts', shiftsRoutes);
 router.use('/hr/permissions', permissionsRoutes); // Permissions routes
 router.use('/hr/offboarding', offboardingRoutes); // NEW
+router.use('/attendance', attendanceRoutes);
 
 
 export default router;

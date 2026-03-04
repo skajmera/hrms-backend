@@ -26,7 +26,7 @@ export class LeaveController {
   async getAllLeaves(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...filters } = req.query;
-      
+
       const result = await leaveService.getAllLeaves(filters, {
         page: Number(page),
         limit: Number(limit),
@@ -79,8 +79,27 @@ export class LeaveController {
   async getLeaveBalance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId, year } = req.params;
-      const balance = await leaveService.getLeaveBalance(userId, Number(year));
+      const balanceYear = year ? Number(year) : new Date().getFullYear();
+      const balance = await leaveService.getLeaveBalance(userId, balanceYear);
       sendSuccessResponse(res, 'Leave balance retrieved successfully', balance);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async getEmployeeLeaves(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...filters } = req.query;
+
+      const result = await leaveService.getAllLeaves({ ...filters, userId }, {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      });
+
+      sendPaginatedResponse(res, result.leaves, result.total, Number(page), Number(limit), 'Employee leaves retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

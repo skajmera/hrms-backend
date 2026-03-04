@@ -1,5 +1,5 @@
 import { Document, Types } from 'mongoose';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,EMPLOYMENT_TYPE,SHIFT_TIMINGS } from '../../config/constants';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES, EMPLOYMENT_TYPE, SHIFT_TIMINGS } from '../../config/constants';
 
 /**
  * User related interfaces
@@ -63,13 +63,13 @@ export interface IProfessionalDetails {
   employeeId?: string;
   biometricId?: string; // NEW - For biometric attendance integration
   designation: Types.ObjectId | string;
-  department?: any |Types.ObjectId | string;
+  department?: any | Types.ObjectId | string;
   joiningDate?: Date;
   employmentStatus?: keyof typeof EMPLOYMENT_STATUS;
   employmentType?: keyof typeof EMPLOYMENT_TYPE;
   probationEndDate?: Date;
   reportingManager?: Types.ObjectId | string;
-  shift?: keyof typeof SHIFT_TYPES ;
+  shift?: keyof typeof SHIFT_TYPES;
   shiftTime?: IShiftTime; // NEW - Custom shift timing
   workLocation: string;
   salaryDetails?: ISalaryDetails;
@@ -91,18 +91,18 @@ export interface IUser extends Document {
   bloodGroup?: string;
   maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
   profilePicture?: string;
-  
+
   // Address
   currentAddress?: IAddress;
   permanentAddress?: IAddress;
-  
+
   // Professional Details
   professionalDetails?: IProfessionalDetails | any;
-  
+
   // Education & Experience
   education?: IEducation[];
   experience?: IExperience[];
-  
+
   // Emergency Contact
   emergencyContact?: {
     name: string;
@@ -112,7 +112,7 @@ export interface IUser extends Document {
   };
   aboutMe?: string;
   adhaarNumber?: string;
-  panNumber?: string; 
+  panNumber?: string;
   // System Fields
   role: keyof typeof USER_ROLES;
   isActive?: boolean;
@@ -121,13 +121,15 @@ export interface IUser extends Document {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   lastLogin?: Date;
-  
+  registeredDeviceId?: string;
+  azurePersonId?: string;
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
   createdBy?: Types.ObjectId | string;
   updatedBy?: Types.ObjectId | string;
-  
+
   // Methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   generateAuthToken(): string;

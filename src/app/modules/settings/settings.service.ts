@@ -28,12 +28,18 @@ export class SettingsService {
    */
   static async updateLocaleSettings(organizationId: string, localeData: any): Promise<IOrganization> {
     const updateData: any = {};
-    
-    if (localeData.country) updateData['address.country'] = localeData.country;
-    if (localeData.timezone) updateData['settings.timezone'] = localeData.timezone;
-    if (localeData.timeFormat) updateData['settings.timeFormat'] = localeData.timeFormat;
-    if (localeData.dateFormat) updateData['settings.dateFormat'] = localeData.dateFormat;
-    if (localeData.nameFormat) updateData['settings.nameFormat'] = localeData.nameFormat;
+
+    if (localeData.country) updateData['settings.locale.country'] = localeData.country;
+    if (localeData.timezone) updateData['settings.locale.timezone'] = localeData.timezone;
+    if (localeData.timeFormat) updateData['settings.locale.timeFormat'] = localeData.timeFormat;
+    if (localeData.dateFormat) updateData['settings.locale.dateFormat'] = localeData.dateFormat;
+
+    if (localeData.nameFormat) {
+      let format = localeData.nameFormat.toUpperCase().replace('-', '_');
+      if (['FIRST_LAST', 'LAST_FIRST'].includes(format)) {
+        updateData['settings.locale.nameFormat'] = format;
+      }
+    }
 
     const organization = await OrganizationDAL.updateById(organizationId, updateData);
     if (!organization) {
@@ -108,7 +114,7 @@ export class SettingsService {
    */
   static async getNotificationSettings(organizationId: string, userId: string): Promise<INotificationSettings> {
     let settings = await NotificationSettingsModel.findOne({ organizationId, userId });
-    
+
     if (!settings) {
       // Create default settings
       settings = await NotificationSettingsModel.create({
@@ -116,7 +122,7 @@ export class SettingsService {
         userId
       });
     }
-    
+
     return settings;
   }
 
@@ -124,8 +130,8 @@ export class SettingsService {
    * Update notification settings
    */
   static async updateNotificationSettings(
-    organizationId: string, 
-    userId: string, 
+    organizationId: string,
+    userId: string,
     updateData: Partial<INotificationSettings>
   ): Promise<INotificationSettings> {
     const settings = await NotificationSettingsModel.findOneAndUpdate(
@@ -133,7 +139,7 @@ export class SettingsService {
       { $set: updateData },
       { new: true, upsert: true }
     );
-    
+
     return settings;
   }
 
@@ -228,6 +234,76 @@ export class SettingsService {
 
     // Update password
     await userDAL.update(userId, { password: hashedPassword });
+  }
+
+  /**
+   * Get security settings
+   */
+  static async getSecuritySettings(organizationId: string, userId: string): Promise<any> {
+    console.log('Fetching security settings for organizationId:', organizationId);
+    const [organization, user] = await Promise.all([
+      OrganizationDAL.findById(organizationId),
+      userDAL.findById(userId)
+    ]);
+
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
+    const securitySettings = organization.settings?.securitySettings || {};
+
+    return {
+      requireFaceCapture: securitySettings.requireFaceCapture || false,
+      blockMockLocations: securitySettings.blockMockLocations || true,
+      isFaceRegistered: !!user?.azurePersonId,
+      officeLocations: securitySettings.officeLocations || [],
+      allowedWifiNetworks: securitySettings.allowedWifiNetworks || [],
+      registeredDeviceId: user?.registeredDeviceId || null
+    };
+
+  }
+
+  /**
+   * Update security settings
+   */
+  static async updateSecuritySettings(organizationId: string, securityData: any): Promise<IOrganization> {
+    const updateData: any = {};
+    if (securityData.requireFaceCapture !== undefined) {
+      updateData['settings.securitySettings.requireFaceCapture'] = securityData.requireFaceCapture;
+    }
+    if (securityData.blockMockLocations !== undefined) {
+      updateData['settings.securitySettings.blockMockLocations'] = securityData.blockMockLocations;
+    }
+
+    // Handle office locations
+    if (securityData.officeLocations !== undefined) {
+      updateData['settings.securitySettings.officeLocations'] = securityData.officeLocations.map((loc: any) => {
+        const { _id, ...rest } = loc;
+        // Strip temporary frontend IDs
+        if (_id && _id.startsWith('local_')) {
+          return rest;
+        }
+        return loc;
+      });
+    }
+
+    // Handle WiFi networks
+    if (securityData.allowedWifiNetworks !== undefined) {
+      updateData['settings.securitySettings.allowedWifiNetworks'] = securityData.allowedWifiNetworks.map((wifi: any) => {
+        const { _id, ...rest } = wifi;
+        // Strip temporary frontend IDs
+        if (_id && _id.startsWith('local_')) {
+          return rest;
+        }
+        return wifi;
+      });
+    }
+
+    const organization = await OrganizationDAL.updateById(organizationId, updateData);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return organization;
   }
 }
 

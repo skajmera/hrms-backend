@@ -24,7 +24,10 @@ import { attendanceController } from './attendance.controller';
 import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 import { validate } from '../../../../shared/middlewares/validation';
 import { USER_ROLES } from '../../../../config/constants';
-import { markAttendanceValidation, updateAttendanceValidation, getAttendanceValidation } from './attendance.validation';
+import { markAttendanceValidation, updateAttendanceValidation, getAttendanceValidation, registerDeviceValidation } from './attendance.validation';
+import { attendanceUpload } from '../../../../shared/middlewares/upload.middleware';
+
+
 
 const router = Router();
 
@@ -132,6 +135,31 @@ router.get(
 
 /**
  * @swagger
+ * /hr/attendance/employee/{userId}/today:
+ *   get:
+ *     summary: Get today's attendance for a specific employee
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Today's attendance retrieved successfully
+ */
+router.get(
+  '/employee/:userId/today',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  attendanceController.getEmployeeTodayAttendance.bind(attendanceController)
+);
+
+/**
+ * @swagger
  * /hr/attendance/report/{userId}/{month}/{year}:
  *   get:
  *     summary: Get attendance report for a user
@@ -224,6 +252,43 @@ router.get('/:id', attendanceController.getAttendanceById.bind(attendanceControl
 
 /**
  * @swagger
+ * /hr/attendance/register-device:
+ *   post:
+ *     summary: Register device and face for attendance (One-time setup)
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - deviceId
+ *               - selfie
+ *             properties:
+ *               deviceId:
+ *                 type: string
+ *                 example: 'UNIQUE_HARDWARE_ID_123'
+ *               wifiBSSID:
+ *                 type: string
+ *               gpsLatitude:
+ *                 type: number
+ *               gpsLongitude:
+ *                 type: number
+ *               selfie:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Device and face registered successfully
+ */
+router.post('/register-device', attendanceUpload.single('selfie'), validate(registerDeviceValidation), attendanceController.registerDevice.bind(attendanceController));
+
+
+/**
+ * @swagger
  * /hr/attendance/mark:
  *   post:
  *     summary: Mark attendance
@@ -279,24 +344,37 @@ router.get('/:id', attendanceController.getAttendanceById.bind(attendanceControl
  *                   address:
  *                     type: string
  *                     example: 'Indore Office'
+ *               deviceId:
+ *                 type: string
+ *               gpsLatitude:
+ *                 type: number
+ *               gpsLongitude:
+ *                 type: number
+ *               wifiBSSID:
+ *                 type: string
+ *               isMockLocation:
+ *                 type: boolean
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               shift:
+ *                 type: string
+ *               selfie:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Attendance marked successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/Attendance'
- *       400:
- *         description: Attendance already marked or validation error
  */
-router.post('/mark', validate(markAttendanceValidation), attendanceController.markAttendance.bind(attendanceController));
+router.post('/mark', attendanceUpload.single('selfie'), validate(markAttendanceValidation), attendanceController.markAttendance.bind(attendanceController));
+
 
 /**
  * @swagger

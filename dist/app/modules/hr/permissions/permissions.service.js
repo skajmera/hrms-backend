@@ -51,7 +51,18 @@ class PermissionsService {
     async getPermissionByUserId(userId) {
         const permission = await permission_dal_1.permissionDAL.findByUserId(userId);
         if (!permission) {
-            throw new Error('User permissions not found');
+            // If no custom permissions found, fetch user to get role and return defaults
+            const user = await user_dal_1.userDAL.findById(userId);
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return {
+                userId: user._id,
+                role: user.role,
+                email: user.email,
+                modules: this.getDefaultPermissionsByRole(user.role),
+                isActive: true
+            };
         }
         return permission;
     }

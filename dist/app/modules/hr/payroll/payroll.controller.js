@@ -14,10 +14,15 @@
 //       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
 //     }
 //   }
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PayrollController = void 0;
 const payroll_service_1 = require("./payroll.service");
 const response_1 = require("../../../../shared/utils/response");
+const constants_1 = require("../../../../config/constants");
+const path_1 = __importDefault(require("path"));
 /**
  * Payroll Controller
  * Handles HTTP requests for payroll operations
@@ -217,14 +222,43 @@ class PayrollController {
      * Download payslip
      * GET /api/v1/hr/payroll/:id/download
      */
+    // static async downloadPayslip(req: Request, res: Response, next: NextFunction): Promise<void> {
+    //   try {
+    //     const { id } = req.params;
+    //     const filePath = await PayrollService.downloadPayslip(id);
+    //     sendSuccessResponse(res, 'Payslip download link generated',
+    //      { filePath }
+    //     );
+    //   } catch (error) {
+    //     next(error);
+    //   }
+    // }
+    /**
+     * Download payslip PDF
+     */
     static async downloadPayslip(req, res, next) {
         try {
-            const { id } = req.params;
-            const filePath = await payroll_service_1.PayrollService.downloadPayslip(id);
-            (0, response_1.sendSuccessResponse)(res, 'Payslip download link generated', { filePath });
+            const pdfPath = await payroll_service_1.PayrollService.downloadPayslip(req.params.id);
+            const fullPath = path_1.default.join(process.cwd(), pdfPath);
+            res.download(fullPath, (err) => {
+                if (err) {
+                    (0, response_1.sendErrorResponse)(res, 'Failed to download payslip', constants_1.HTTP_STATUS.INTERNAL_SERVER_ERROR);
+                }
+            });
         }
         catch (error) {
-            next(error);
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.NOT_FOUND);
+        }
+    }
+    static async getUserPayrollHistory(req, res, next) {
+        try {
+            const { userId } = req.params;
+            const { limit = 12 } = req.query;
+            const history = await payroll_service_1.PayrollService.getUserPayrollHistory(userId, Number(limit));
+            (0, response_1.sendSuccessResponse)(res, 'Payroll history retrieved successfully', history);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
         }
     }
 }

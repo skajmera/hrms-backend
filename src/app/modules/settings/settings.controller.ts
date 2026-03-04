@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { SettingsService } from './settings.service';
 import { sendSuccessResponse } from '../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../config/constants';
-import {AuthRequest} from "../../../shared/middlewares/auth.middleware";
+import { AuthRequest } from "../../../shared/middlewares/auth.middleware";
 /**
  * Settings Controller
  */
@@ -19,8 +19,8 @@ export class SettingsController {
 
       const organization = await SettingsService.updateCompanyInfo(organizationId, updateData);
 
-      sendSuccessResponse(res,  'Company information updated successfully',
-       organization
+      sendSuccessResponse(res, 'Company information updated successfully',
+        organization
       );
     } catch (error) {
       next(error);
@@ -59,7 +59,7 @@ export class SettingsController {
       const schedule = await SettingsService.createWorkSchedule(scheduleData, createdBy);
 
       sendSuccessResponse(res, 'Work schedule created successfully',
-         schedule
+        schedule
       );
     } catch (error) {
       next(error);
@@ -75,7 +75,7 @@ export class SettingsController {
       const organizationId = req.user?.organizationId;
       const schedules = await SettingsService.getWorkSchedules(organizationId);
 
-      sendSuccessResponse(res,'Work schedules retrieved successfully',
+      sendSuccessResponse(res, 'Work schedules retrieved successfully',
         schedules
       );
     } catch (error) {
@@ -92,8 +92,8 @@ export class SettingsController {
       const { id } = req.params;
       const schedule = await SettingsService.getWorkScheduleById(id);
 
-      sendSuccessResponse(res,'Work schedule retrieved successfully',
-         schedule
+      sendSuccessResponse(res, 'Work schedule retrieved successfully',
+        schedule
       );
     } catch (error) {
       next(error);
@@ -146,8 +146,8 @@ export class SettingsController {
 
       const settings = await SettingsService.getNotificationSettings(organizationId, userId);
 
-      sendSuccessResponse(res,  'Notification settings retrieved successfully',
-         settings
+      sendSuccessResponse(res, 'Notification settings retrieved successfully',
+        settings
       );
     } catch (error) {
       next(error);
@@ -166,8 +166,8 @@ export class SettingsController {
 
       const settings = await SettingsService.updateNotificationSettings(organizationId, userId, updateData);
 
-      sendSuccessResponse(res,'Notification settings updated successfully',
-         settings
+      sendSuccessResponse(res, 'Notification settings updated successfully',
+        settings
       );
     } catch (error) {
       next(error);
@@ -187,7 +187,7 @@ export class SettingsController {
       const designation = await SettingsService.createDesignation(designationData, createdBy);
 
       sendSuccessResponse(res, 'Designation created successfully',
-         designation
+        designation
       );
     } catch (error) {
       next(error);
@@ -204,7 +204,7 @@ export class SettingsController {
       const designations = await SettingsService.getDesignations(organizationId);
 
       sendSuccessResponse(res, 'Designations retrieved successfully',
-         designations
+        designations
       );
     } catch (error) {
       next(error);
@@ -220,8 +220,8 @@ export class SettingsController {
       const { id } = req.params;
       const designation = await SettingsService.getDesignationById(id);
 
-      sendSuccessResponse(res,'Designation retrieved successfully',
-         designation
+      sendSuccessResponse(res, 'Designation retrieved successfully',
+        designation
       );
     } catch (error) {
       next(error);
@@ -239,7 +239,7 @@ export class SettingsController {
 
       const designation = await SettingsService.updateDesignation(id, updateData);
 
-      sendSuccessResponse(res,'Designation updated successfully',
+      sendSuccessResponse(res, 'Designation updated successfully',
         designation
       );
     } catch (error) {
@@ -256,7 +256,7 @@ export class SettingsController {
       const { id } = req.params;
       await SettingsService.deleteDesignation(id);
 
-      sendSuccessResponse(res, 
+      sendSuccessResponse(res,
         'Designation deleted successfully'
       );
     } catch (error) {
@@ -275,8 +275,42 @@ export class SettingsController {
 
       await SettingsService.changePassword(userId, currentPassword, newPassword);
 
-      sendSuccessResponse(res,  'Password changed successfully'
+      sendSuccessResponse(res, 'Password changed successfully'
       );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get security settings
+   * GET /api/v1/settings/security
+   */
+  static async getSecuritySettings(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
+
+      const settings = await SettingsService.getSecuritySettings(organizationId, userId);
+
+      sendSuccessResponse(res, 'Security settings retrieved successfully', settings);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update security settings
+   * PUT /api/v1/settings/security
+   */
+  static async updateSecuritySettings(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organizationId = req.user?.organizationId;
+      const securityData = req.body;
+
+      const organization = await SettingsService.updateSecuritySettings(organizationId, securityData);
+
+      sendSuccessResponse(res, 'Security settings updated successfully', organization.settings.securitySettings);
     } catch (error) {
       next(error);
     }

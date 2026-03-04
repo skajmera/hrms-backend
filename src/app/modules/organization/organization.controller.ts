@@ -19,8 +19,8 @@ export class OrganizationController {
 
       const organization = await OrganizationService.createOrganization(organizationData, ownerId);
 
-      sendSuccessResponse(res,'Organization created successfully',
-       organization
+      sendSuccessResponse(res, 'Organization created successfully',
+        organization
       );
     } catch (error) {
       next(error);
@@ -53,8 +53,8 @@ export class OrganizationController {
       const result = await OrganizationService.getAllOrganizations(filters, options);
 
       sendSuccessResponse(res, 'Organizations retrieved successfully',
-      result,
-       );
+        result,
+      );
     } catch (error) {
       next(error);
     }
@@ -69,8 +69,8 @@ export class OrganizationController {
       const { id } = req.params;
       const organization = await OrganizationService.getOrganizationById(id);
 
-      sendSuccessResponse(res,'Organization retrieved successfully',
-       organization
+      sendSuccessResponse(res, 'Organization retrieved successfully',
+        organization
       );
     } catch (error) {
       next(error);
@@ -86,8 +86,8 @@ export class OrganizationController {
       const userId = req.user?.id;
       const organization = await OrganizationService.getUserOrganization(userId);
 
-      sendSuccessResponse(res,'Organization retrieved successfully',
-      organization
+      sendSuccessResponse(res, 'Organization retrieved successfully',
+        organization
       );
     } catch (error) {
       next(error);
@@ -105,8 +105,8 @@ export class OrganizationController {
 
       const organization = await OrganizationService.updateOrganization(id, updateData);
 
-      sendSuccessResponse(res,  'Organization updated successfully',
-       organization
+      sendSuccessResponse(res, 'Organization updated successfully',
+        organization
       );
     } catch (error) {
       next(error);
@@ -122,7 +122,7 @@ export class OrganizationController {
       const { id } = req.params;
       await OrganizationService.deleteOrganization(id);
 
-      sendSuccessResponse(res,'Organization deleted successfully'
+      sendSuccessResponse(res, 'Organization deleted successfully'
       );
     } catch (error) {
       next(error);
@@ -160,7 +160,7 @@ export class OrganizationController {
       const organization = await OrganizationService.addAdmin(id, adminId);
 
       sendSuccessResponse(res, 'Admin added successfully',
-       organization
+        organization
       );
     } catch (error) {
       next(error);
@@ -178,9 +178,85 @@ export class OrganizationController {
       const organization = await OrganizationService.removeAdmin(id, adminId);
 
       sendSuccessResponse(res, 'Admin removed successfully',
-      organization
+        organization
       );
     } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Security Settings: Office Locations ---
+
+  /**
+   * Add office location
+   */
+  static async addOfficeLocation(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.addOfficeLocation(req.user.organizationId as string, req.body);
+      sendSuccessResponse(res, 'Office location added successfully', organization.settings.securitySettings.officeLocations);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update office location
+   */
+  static async updateOfficeLocation(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.updateOfficeLocation(req.user.organizationId as string, req.params.id, req.body);
+      sendSuccessResponse(res, 'Office location updated successfully', organization.settings.securitySettings.officeLocations);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * Remove office location
+   */
+  static async removeOfficeLocation(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.removeOfficeLocation(req.user.organizationId as string, req.params.id);
+      sendSuccessResponse(res, 'Office location removed successfully', organization.settings.securitySettings.officeLocations);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  // --- Security Settings: WiFi Networks ---
+
+  /**
+   * Add WiFi network
+   */
+  static async addWifiNetwork(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.addWifiNetwork(req.user.organizationId as string, req.body);
+      sendSuccessResponse(res, 'WiFi network added successfully', organization.settings.securitySettings.allowedWifiNetworks);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update WiFi network
+   */
+  static async updateWifiNetwork(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.updateWifiNetwork(req.user.organizationId as string, req.params.id, req.body);
+      sendSuccessResponse(res, 'WiFi network updated successfully', organization.settings.securitySettings.allowedWifiNetworks);
+    } catch (error: any) {
+      next(error);
+    }
+  }
+
+  /**
+   * Remove WiFi network
+   */
+  static async removeWifiNetwork(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const organization = await OrganizationService.removeWifiNetwork(req.user.organizationId as string, req.params.id);
+      sendSuccessResponse(res, 'WiFi network removed successfully', organization.settings.securitySettings.allowedWifiNetworks);
+    } catch (error: any) {
       next(error);
     }
   }
@@ -197,7 +273,7 @@ export class OrganizationController {
       const organization = await OrganizationService.updateSubscription(id, subscription);
 
       sendSuccessResponse(res, 'Subscription updated successfully',
-         organization
+        organization
       );
     } catch (error) {
       next(error);
@@ -215,7 +291,7 @@ export class OrganizationController {
       const organization = await OrganizationService.verifyOrganization(id);
 
       sendSuccessResponse(res, 'Organization verified successfully',
-     organization
+        organization
       );
     } catch (error) {
       next(error);

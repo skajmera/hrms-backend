@@ -55,6 +55,12 @@ class EmployeeProfileService {
         user.password = newPassword;
         await user.save();
     }
+    /**
+     * Get all users
+     */
+    async getAllUsers(filters = {}, options) {
+        return await user_dal_1.userDAL.findAll(filters, options);
+    }
 }
 exports.EmployeeProfileService = EmployeeProfileService;
 exports.employeeProfileService = new EmployeeProfileService();

@@ -76,6 +76,14 @@ export declare class PayrollService {
     /**
      * Download payslip (generate PDF)
      */
+    /**
+     * Download payslip
+     */
     static downloadPayslip(payrollId: string): Promise<string>;
+    /**
+     * Regenerate payslip
+     */
+    regeneratePayslip(payrollId: string): Promise<string>;
+    static getUserPayrollHistory(userId: string, limit?: number): Promise<IPayroll[]>;
 }
 //# sourceMappingURL=payroll.service.d.ts.map

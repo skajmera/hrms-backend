@@ -26,7 +26,7 @@ import { announcementController } from './announcement.controller';
 import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 import { validate } from '../../../../shared/middlewares/validation';
 import { USER_ROLES } from '../../../../config/constants';
-import { createAnnouncementValidation } from './announcement.validation';
+import { createAnnouncementValidation, queryAnnouncementsValidation } from './announcement.validation';
 
 const router = Router();
 
@@ -69,6 +69,24 @@ router.use(authenticate);
  *         schema:
  *           type: boolean
  *         description: Filter by pinned status
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Return announcements with startDate >= provided date
+ *       - in: query
+ *         name: expiryDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Return announcements with expiryDate <= provided date
+ *       - in: query
+ *         name: announcementType
+ *         schema:
+ *           type: string
+ *           enum: [GENERAL, BIRTHDAY, ANNIVERSARY]
+ *         description: Filter by announcement type
  *     responses:
  *       200:
  *         description: Announcements retrieved successfully
@@ -87,7 +105,7 @@ router.use(authenticate);
  *                           items:
  *                             $ref: '#/components/schemas/Announcement'
  */
-router.get('/', announcementController.getAllAnnouncements.bind(announcementController));
+router.get('/', validate(queryAnnouncementsValidation), announcementController.getAllAnnouncements.bind(announcementController));
 
 /**
  * @swagger
@@ -374,5 +392,109 @@ router.post('/:id/view', announcementController.markAsViewed.bind(announcementCo
  *         description: Announcement not found
  */
 router.put('/:id/toggle-pin', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), announcementController.togglePin.bind(announcementController));
+
+/**
+ * @swagger
+ * /hr/announcements/{id}/like:
+ *   post:
+ *     summary: Toggle like status of announcement (Like/Unlike)
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Like status toggled successfully
+ */
+router.post('/:id/like', announcementController.toggleLike.bind(announcementController));
+
+/**
+ * @swagger
+ * /hr/announcements/{id}/comments:
+ *   post:
+ *     summary: Add comment to announcement
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Comment added
+ */
+router.post('/:id/comments', announcementController.addComment.bind(announcementController));
+
+/**
+ * @swagger
+ * /hr/announcements/{id}/comments/{commentId}/like:
+ *   post:
+ *     summary: Toggle like status of a comment
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     responses:
+ *       200:
+ *         description: Comment like toggled successfully
+ */
+router.post('/:id/comments/:commentId/like', announcementController.toggleCommentLike.bind(announcementController));
+
+/**
+ * @swagger
+ * /hr/announcements/{id}/comments/{commentId}:
+ *   delete:
+ *     summary: Delete comment
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Comment deleted
+ */
+router.delete('/:id/comments/:commentId', announcementController.deleteComment.bind(announcementController));
 
 export default router;

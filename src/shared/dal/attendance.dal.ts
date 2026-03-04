@@ -1,5 +1,5 @@
 import { AttendanceModel } from '../models/attendance.model';
-import { IAttendance, IAttendanceCreateInput,IAttendanceReport } from '../interfaces/attendance.interface';
+import { IAttendance, IAttendanceCreateInput, IAttendanceReport } from '../interfaces/attendance.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
 
 export class AttendanceDAL {
@@ -24,7 +24,7 @@ export class AttendanceDAL {
   async findByUserAndDate(userId: string, date: Date): Promise<IAttendance | null> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
@@ -44,7 +44,7 @@ export class AttendanceDAL {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
     const records = await AttendanceModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime' )
+      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
       .populate('approvedBy', 'firstName lastName')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
@@ -94,7 +94,7 @@ export class AttendanceDAL {
   async getTodayAttendance(): Promise<IAttendance[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -108,13 +108,14 @@ export class AttendanceDAL {
    * Get attendance statistics for a user
    */
   async getUserAttendanceStats(userId: string, month: number, year: number): Promise<any> {
+    const mongoose = require('mongoose');
     const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
     return await AttendanceModel.aggregate([
       {
         $match: {
-          userId: userId,
+          userId: new mongoose.Types.ObjectId(userId),
           date: { $gte: startDate, $lte: endDate }
         }
       },
@@ -145,7 +146,7 @@ export class AttendanceDAL {
   async getDepartmentAttendance(departmentId: string, date: Date): Promise<any> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
@@ -190,120 +191,120 @@ export class AttendanceDAL {
   /**
  * Get late arrivals count for a specific month and year
  */
- async getLateArrivalsCount(
-  userId: string, 
-  month: number, 
-  year: number
-): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+  async getLateArrivalsCount(
+    userId: string,
+    month: number,
+    year: number
+  ): Promise<number> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  return await AttendanceModel.countDocuments({
-    userId,
-    date: { $gte: startDate, $lte: endDate },
-    isLate: true
-  });
-}
-
-/**
- * Get late arrivals details for a specific month and year
- */
- async getLateArrivalsWithUser(
-  userId: string, 
-  month: number, 
-  year: number
-): Promise<IAttendance[]> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-  return await AttendanceModel.find({
-    userId,
-    date: { $gte: startDate, $lte: endDate },
-    isLate: true
-  })
-    .sort({ date: 1 })
-    .select('date checkInTime lateByMinutes status');
-}
-
- /**
-   * Get daily attendance summary
-   */
- static async getDailySummary(date: Date): Promise<any> {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const summary = await AttendanceModel.aggregate([
-    {
-      $match: {
-        date: { $gte: startOfDay, $lte: endOfDay }
-      }
-    },
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 }
-      }
-    }
-  ]);
-
-  return summary;
-}
-
-
- /**
-   * Get monthly attendance report
-   */
-  async getMonthlyReport(userId: string, month: number, year: number): Promise<IAttendanceReport> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-  const attendances = await this.findByUserAndDateRange(userId, startDate, endDate);
-
-  const report: IAttendanceReport = {
-    userId,
-    userName: '',
-    totalDays: endDate.getDate(),
-    presentDays: 0,
-    absentDays: 0,
-    lateDays: 0,
-    wfhDays: 0,
-    halfDays: 0,
-    totalWorkingHours: 0,
-    averageWorkingHours: 0
-  };
-
-  attendances.forEach(att => {
-    if (att.status === 'PRESENT') report.presentDays++;
-    if (att.status === 'ABSENT') report.absentDays++;
-    if (att.status === 'WFH') report.wfhDays++;
-    if (att.status === 'HALF_DAY') report.halfDays++;
-    if (att.isLate) report.lateDays++;
-    if (att.workingHours) report.totalWorkingHours += att.workingHours;
-  });
-
-  if (report.presentDays > 0) {
-    report.averageWorkingHours = report.totalWorkingHours / report.presentDays;
+    return await AttendanceModel.countDocuments({
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+      isLate: true
+    });
   }
 
-  return report;
-}
-
-/**
-   * Get WFH count for month
+  /**
+   * Get late arrivals details for a specific month and year
    */
-static async getWFHCount(userId: string, month: number, year: number): Promise<number> {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+  async getLateArrivalsWithUser(
+    userId: string,
+    month: number,
+    year: number
+  ): Promise<IAttendance[]> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-  return await AttendanceModel.countDocuments({
-    userId,
-    date: { $gte: startDate, $lte: endDate },
-    status: 'WFH'
-  });
-}
+    return await AttendanceModel.find({
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+      isLate: true
+    })
+      .sort({ date: 1 })
+      .select('date checkInTime lateByMinutes status');
+  }
+
+  /**
+    * Get daily attendance summary
+    */
+  static async getDailySummary(date: Date): Promise<any> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const summary = await AttendanceModel.aggregate([
+      {
+        $match: {
+          date: { $gte: startOfDay, $lte: endOfDay }
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    return summary;
+  }
+
+
+  /**
+    * Get monthly attendance report
+    */
+  async getMonthlyReport(userId: string, month: number, year: number): Promise<IAttendanceReport> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const attendances = await this.findByUserAndDateRange(userId, startDate, endDate);
+
+    const report: IAttendanceReport = {
+      userId,
+      userName: '',
+      totalDays: endDate.getDate(),
+      presentDays: 0,
+      absentDays: 0,
+      lateDays: 0,
+      wfhDays: 0,
+      halfDays: 0,
+      totalWorkingHours: 0,
+      averageWorkingHours: 0
+    };
+
+    attendances.forEach(att => {
+      if (att.status === 'PRESENT') report.presentDays++;
+      if (att.status === 'ABSENT') report.absentDays++;
+      if (att.status === 'WFH') report.wfhDays++;
+      if (att.status === 'HALF_DAY') report.halfDays++;
+      if (att.isLate) report.lateDays++;
+      if (att.workingHours) report.totalWorkingHours += att.workingHours;
+    });
+
+    if (report.presentDays > 0) {
+      report.averageWorkingHours = report.totalWorkingHours / report.presentDays;
+    }
+
+    return report;
+  }
+
+  /**
+     * Get WFH count for month
+     */
+  static async getWFHCount(userId: string, month: number, year: number): Promise<number> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    return await AttendanceModel.countDocuments({
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+      status: 'WFH'
+    });
+  }
 
 }
 

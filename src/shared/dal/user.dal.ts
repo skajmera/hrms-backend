@@ -19,11 +19,11 @@ export class UserDAL {
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email');
-    
+
     if (selectPassword) {
       query.select('+password');
     }
-    
+
     return await query.exec();
   }
 
@@ -32,11 +32,11 @@ export class UserDAL {
    */
   async findByEmail(email: string, selectPassword = false): Promise<IUser | null> {
     const query = UserModel.findOne({ email });
-    
+
     if (selectPassword) {
       query.select('+password');
     }
-    
+
     return await query.exec();
   }
 
@@ -78,14 +78,27 @@ export class UserDAL {
   /**
    * Update user by ID
    */
-  async update(id: string, updateData: IUserUpdateInput): Promise<IUser | null> {
+  async update(id: string, updateData: any): Promise<IUser | null> {
+    // Sanitize empty strings for ObjectId and other fields
+    if (updateData.professionalDetails) {
+      const pd = updateData.professionalDetails;
+
+      // Fields that should be null if empty
+      if (pd.reportingManager === '') pd.reportingManager = null;
+      if (pd.department === '') pd.department = null;
+      if (pd.designation === '') pd.designation = null;
+
+      // Clean up other potential empty strings that might cause issues
+      if (updateData.adhaarNumber === '') updateData.adhaarNumber = undefined;
+      if (updateData.panNumber === '') updateData.panNumber = undefined;
+      if (updateData.profilePicture === '') updateData.profilePicture = undefined;
+    }
+
     return await UserModel.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: false }
-    )
-      // .populate('professionalDetails.department', 'name code')
-      // .populate('professionalDetails.reportingManager', 'firstName lastName email');
+    );
   }
 
   /**
@@ -179,14 +192,14 @@ export class UserDAL {
                 content: 1,
                 priority: 1,
                 isPinned: 1,
-                attachments:1
+                attachments: 1
               }
             }
           ],
           as: "birthdayAnnouncements"
         }
       },
-  
+
       // 4️⃣ Clean response
       {
         $project: {
@@ -202,10 +215,10 @@ export class UserDAL {
    */
   async getNewHires(days: number = 30): Promise<any[]> {
     const today = new Date();
-  
+
     const dateThreshold = new Date();
     dateThreshold.setDate(dateThreshold.getDate() - days);
-  
+
     return await UserModel.aggregate([
       // 1️⃣ Only active users
       {
@@ -214,14 +227,14 @@ export class UserDAL {
           "professionalDetails.joiningDate": { $gte: dateThreshold }
         }
       },
-  
+
       // 2️⃣ Sort by joining date
       {
         $sort: {
           "professionalDetails.joiningDate": -1
         }
       },
-  
+
       // 3️⃣ Department lookup (populate replacement)
       {
         $lookup: {
@@ -245,7 +258,7 @@ export class UserDAL {
           preserveNullAndEmptyArrays: true
         }
       },
-  
+
       // 4️⃣ Lookup New Hire Announcements
       {
         $lookup: {
@@ -288,7 +301,7 @@ export class UserDAL {
           as: "newHireAnnouncements"
         }
       },
-  
+
       // 5️⃣ Final response shape
       {
         $project: {
@@ -300,7 +313,7 @@ export class UserDAL {
       }
     ]);
   }
-  
+
   // async getNewHires(days: number = 30): Promise<IUser[]> {
   //   const dateThreshold = new Date();
   //   dateThreshold.setDate(dateThreshold.getDate() - days);
@@ -334,7 +347,7 @@ export class UserDAL {
       isActive: true
     })
       .populate('professionalDetails.department', 'name code')
-       .populate('professionalDetails.designation', 'name code level')
+      .populate('professionalDetails.designation', 'name code level')
       .limit(20);
   }
 
@@ -405,7 +418,7 @@ export class UserDAL {
                 content: 1,
                 priority: 1,
                 isPinned: 1,
-                attachments:1
+                attachments: 1
               }
             }
           ],
@@ -424,10 +437,10 @@ export class UserDAL {
   // async getTodayAttendanceOverview(): Promise<any[]> {
   //   const today = new Date();
   //   today.setHours(0, 0, 0, 0);
-  
+
   //   const tomorrow = new Date(today);
   //   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   //   return await UserModel.aggregate([
   //     {
   //       $match: {
@@ -435,7 +448,7 @@ export class UserDAL {
   //         role: "EMPLOYEE"
   //       }
   //     },
-  
+
   //     {
   //       $lookup: {
   //         from: "attendances",
@@ -456,13 +469,13 @@ export class UserDAL {
   //         as: "todayAttendance"
   //       }
   //     },
-  
+
   //     {
   //       $addFields: {
   //         todayAttendance: { $arrayElemAt: ["$todayAttendance", 0] }
   //       }
   //     },
-  
+
   //     {
   //       $addFields: {
   //         shiftStartTime: {
@@ -479,7 +492,7 @@ export class UserDAL {
   //         }
   //       }
   //     },
-  
+
   //     {
   //       $addFields: {
   //         attendanceStatus: {
@@ -497,7 +510,7 @@ export class UserDAL {
   //         }
   //       }
   //     },
-  
+
   //     {
   //       $project: {
   //         firstName: 1,
@@ -514,10 +527,10 @@ export class UserDAL {
   async getTodayAttendanceOverview(): Promise<any[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-  
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
     return await UserModel.aggregate([
       // 1️⃣ Active employees only
       {
@@ -526,7 +539,7 @@ export class UserDAL {
           role: "EMPLOYEE"
         }
       },
-  
+
       // 2️⃣ Lookup today's attendance
       {
         $lookup: {
@@ -554,14 +567,14 @@ export class UserDAL {
           as: "todayAttendance"
         }
       },
-  
+
       // 3️⃣ Flatten attendance array
       {
         $addFields: {
           todayAttendance: { $arrayElemAt: ["$todayAttendance", 0] }
         }
       },
-  
+
       // 4️⃣ Attendance status (USING isLate FLAG)
       {
         $addFields: {
@@ -580,7 +593,7 @@ export class UserDAL {
           }
         }
       },
-  
+
       // 5️⃣ Final response
       {
         $project: {
@@ -595,8 +608,8 @@ export class UserDAL {
       }
     ]);
   }
-  
-   async getYetToCheckInCount(): Promise<number> {
+
+  async getYetToCheckInCount(): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

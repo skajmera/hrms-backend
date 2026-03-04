@@ -15,7 +15,6 @@ const errorHandler_1 = require("./shared/middlewares/errorHandler");
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_1 = require("./config/swagger");
 const app = (0, express_1.default)();
-// 👇 VERY IMPORTANT (rate-limit se pehle)
 app.set('trust proxy', 1);
 // Security Middleware
 app.use((0, helmet_1.default)());

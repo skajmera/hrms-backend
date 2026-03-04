@@ -9,6 +9,10 @@ export declare class AnnouncementController {
     getMyAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     markAsViewed(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     togglePin(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    toggleLike(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    toggleCommentLike(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    addComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    deleteComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const announcementController: AnnouncementController;
 //# sourceMappingURL=announcement.controller.d.ts.map

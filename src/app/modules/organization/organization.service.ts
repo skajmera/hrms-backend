@@ -177,4 +177,74 @@ export class OrganizationService {
   static async checkUserAccess(organizationId: string, userId: string): Promise<boolean> {
     return await OrganizationDAL.isUserInOrganization(organizationId, userId);
   }
+
+  // --- Security Settings: Office Locations ---
+
+  /**
+   * Add office location
+   */
+  static async addOfficeLocation(organizationId: string, location: any): Promise<IOrganization> {
+    const organization = await OrganizationDAL.addOfficeLocation(organizationId, location);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return organization;
+  }
+
+  /**
+   * Update office location
+   */
+  static async updateOfficeLocation(organizationId: string, locationId: string, locationData: any): Promise<IOrganization> {
+    const organization = await OrganizationDAL.updateOfficeLocation(organizationId, locationId, locationData);
+    if (!organization) {
+      throw new Error('Organization or Location not found');
+    }
+    return organization;
+  }
+
+  /**
+   * Remove office location
+   */
+  static async removeOfficeLocation(organizationId: string, locationId: string): Promise<IOrganization> {
+    const organization = await OrganizationDAL.removeOfficeLocation(organizationId, locationId);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return organization;
+  }
+
+  // --- Security Settings: WiFi Networks ---
+
+  /**
+   * Add WiFi network
+   */
+  static async addWifiNetwork(organizationId: string, wifi: any): Promise<IOrganization> {
+    const organization = await OrganizationDAL.addWifiNetwork(organizationId, wifi);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return organization;
+  }
+
+  /**
+   * Update WiFi network
+   */
+  static async updateWifiNetwork(organizationId: string, wifiId: string, wifiData: any): Promise<IOrganization> {
+    const organization = await OrganizationDAL.updateWifiNetwork(organizationId, wifiId, wifiData);
+    if (!organization) {
+      throw new Error('Organization or WiFi network not found');
+    }
+    return organization;
+  }
+
+  /**
+   * Remove WiFi network
+   */
+  static async removeWifiNetwork(organizationId: string, wifiId: string): Promise<IOrganization> {
+    const organization = await OrganizationDAL.removeWifiNetwork(organizationId, wifiId);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+    return organization;
+  }
 }

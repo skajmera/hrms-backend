@@ -37,7 +37,7 @@ OffboardingValidation.approveResignation = [
  */
 OffboardingValidation.rejectResignation = [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid offboarding ID'),
-    (0, express_validator_1.body)('rejectionReason').notEmpty().withMessage('Rejection reason is required')
+    // body('rejectionReason').notEmpty().withMessage('Rejection reason is required')
 ];
 /**
  * Validation for offboarding ID param

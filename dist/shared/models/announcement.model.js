@@ -79,6 +79,14 @@ const AnnouncementSchema = new mongoose_1.Schema({
     viewedBy: [{
             userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
             viewedAt: { type: Date, default: Date.now }
+        }],
+    // Engagement
+    likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+    comments: [{
+            userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
+            content: { type: String, required: true },
+            likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+            createdAt: { type: Date, default: Date.now }
         }]
 }, {
     timestamps: true

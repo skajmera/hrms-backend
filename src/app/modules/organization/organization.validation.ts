@@ -47,4 +47,49 @@ export class OrganizationValidation {
     param('id').isMongoId().withMessage('Invalid organization ID'),
     body('adminId').notEmpty().withMessage('Admin ID is required').isMongoId().withMessage('Invalid admin ID')
   ];
+
+  /**
+   * Validation for adding office location
+   */
+  static addOfficeLocation = [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('latitude').isFloat().withMessage('Latitude must be a number'),
+    body('longitude').isFloat().withMessage('Longitude must be a number'),
+    body('radius').optional().isFloat().withMessage('Radius must be a number')
+  ];
+
+  /**
+   * Validation for updating office location
+   */
+  static updateOfficeLocation = [
+    param('id').isMongoId().withMessage('Invalid location ID'),
+    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
+    body('latitude').optional().isFloat().withMessage('Latitude must be a number'),
+    body('longitude').optional().isFloat().withMessage('Longitude must be a number'),
+    body('radius').optional().isFloat().withMessage('Radius must be a number')
+  ];
+
+  /**
+   * Validation for adding WiFi network
+   */
+  static addWifiNetwork = [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('bssid').notEmpty().withMessage('BSSID is required')
+  ];
+
+  /**
+   * Validation for updating WiFi network
+   */
+  static updateWifiNetwork = [
+    param('id').isMongoId().withMessage('Invalid WiFi ID'),
+    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
+    body('bssid').optional().notEmpty().withMessage('BSSID cannot be empty')
+  ];
+
+  /**
+   * Generic Mongo ID validation for params
+   */
+  static paramId = [
+    param('id').isMongoId().withMessage('Invalid ID')
+  ];
 }

@@ -11,30 +11,30 @@ export interface TokenPayload {
  * Generate access token
  */
 export const generateAccessToken = (payload: TokenPayload): string => {
-    const options: any = {
-        expiresIn: config.jwt.expiresIn
-      };
-  return jwt.sign(payload, config.jwt.secret, 
+  const options: any = {
+    expiresIn: config.jwt.expiresIn
+  };
+  return jwt.sign(payload, config.jwt.secret,
     options
-//     {
-//     expiresIn: config.jwt.expiresIn
-//   }
-);
+    //     {
+    //     expiresIn: config.jwt.expiresIn
+    //   }
+  );
 };
 
 /**
  * Generate refresh token
  */
 export const generateRefreshToken = (payload: TokenPayload): string => {
-    const options: any = {
-        expiresIn: config.jwt.refreshExpiresIn
-      };
+  const options: any = {
+    expiresIn: config.jwt.refreshExpiresIn
+  };
   return jwt.sign(payload, config.jwt.refreshSecret,
     options
-//      {
-//     expiresIn: config.jwt.refreshExpiresIn
-//   }
-);
+    //      {
+    //     expiresIn: config.jwt.refreshExpiresIn
+    //   }
+  );
 };
 
 /**

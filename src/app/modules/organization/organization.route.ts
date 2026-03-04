@@ -280,4 +280,74 @@ router.post('/:id/verify', validate(OrganizationValidation.organizationId), Orga
  */
 router.delete('/:id', validate(OrganizationValidation.organizationId), OrganizationController.deleteOrganization);
 
+// --- Security Settings: Office Locations ---
+
+/**
+ * @swagger
+ * /organization/settings/locations:
+ *   post:
+ *     summary: Add office location
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/settings/locations', validate(OrganizationValidation.addOfficeLocation), OrganizationController.addOfficeLocation);
+
+/**
+ * @swagger
+ * /organization/settings/locations/{id}:
+ *   put:
+ *     summary: Update office location
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/settings/locations/:id', validate(OrganizationValidation.updateOfficeLocation), OrganizationController.updateOfficeLocation);
+
+/**
+ * @swagger
+ * /organization/settings/locations/{id}:
+ *   delete:
+ *     summary: Remove office location
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.delete('/settings/locations/:id', validate(OrganizationValidation.paramId), OrganizationController.removeOfficeLocation);
+
+// --- Security Settings: WiFi Networks ---
+
+/**
+ * @swagger
+ * /organization/settings/wifi:
+ *   post:
+ *     summary: Add WiFi network
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/settings/wifi', validate(OrganizationValidation.addWifiNetwork), OrganizationController.addWifiNetwork);
+
+/**
+ * @swagger
+ * /organization/settings/wifi/{id}:
+ *   put:
+ *     summary: Update WiFi network
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/settings/wifi/:id', validate(OrganizationValidation.updateWifiNetwork), OrganizationController.updateWifiNetwork);
+
+/**
+ * @swagger
+ * /organization/settings/wifi/{id}:
+ *   delete:
+ *     summary: Remove WiFi network
+ *     tags: [Organization Security]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.delete('/settings/wifi/:id', validate(OrganizationValidation.paramId), OrganizationController.removeWifiNetwork);
+
 export default router;

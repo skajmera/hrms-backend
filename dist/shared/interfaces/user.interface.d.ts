@@ -22,6 +22,7 @@ export interface IEducation {
     yearOfCompletion: number;
     percentage?: number;
     grade?: string;
+    specialisation?: string;
 }
 export interface IExperience {
     company: string;
@@ -51,10 +52,12 @@ export interface ISalaryDetails {
     netSalary: number;
 }
 export interface IProfessionalDetails {
-    employeeId: string;
-    designation: string;
-    department: any | Types.ObjectId | string;
-    joiningDate: Date;
+    sourceOfHire?: string;
+    employeeId?: string;
+    biometricId?: string;
+    designation: Types.ObjectId | string;
+    department?: any | Types.ObjectId | string;
+    joiningDate?: Date;
     employmentStatus?: keyof typeof EMPLOYMENT_STATUS;
     employmentType?: keyof typeof EMPLOYMENT_TYPE;
     probationEndDate?: Date;
@@ -65,9 +68,11 @@ export interface IProfessionalDetails {
     salaryDetails?: ISalaryDetails;
 }
 export interface IUser extends Document {
+    organizationId: Types.ObjectId | string;
     firstName: string;
     lastName: string;
     email: string;
+    personalEmail?: string;
     password: string;
     phone?: string;
     alternatePhone?: string;
@@ -86,7 +91,11 @@ export interface IUser extends Document {
         name: string;
         relationship: string;
         phone: string;
+        email?: string;
     };
+    aboutMe?: string;
+    adhaarNumber?: string;
+    panNumber?: string;
     role: keyof typeof USER_ROLES;
     isActive?: boolean;
     isEmailVerified?: boolean;
@@ -94,6 +103,8 @@ export interface IUser extends Document {
     passwordResetToken?: string;
     passwordResetExpires?: Date;
     lastLogin?: Date;
+    registeredDeviceId?: string;
+    azurePersonId?: string;
     createdAt: Date;
     updatedAt: Date;
     createdBy?: Types.ObjectId | string;
@@ -103,10 +114,12 @@ export interface IUser extends Document {
     getFullName(): string;
 }
 export interface IUserCreateInput {
+    createdBy?: Types.ObjectId | string;
     firstName: string;
     lastName: string;
     email: string;
     password?: string;
+    personalEmail?: string;
     phone?: string;
     dateOfBirth?: Date;
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
@@ -115,8 +128,11 @@ export interface IUserCreateInput {
     professionalDetails?: IProfessionalDetails | any;
 }
 export interface IUserUpdateInput {
+    password?: string;
+    updatedBy?: Types.ObjectId | string;
     firstName?: string;
     lastName?: string;
+    personalEmail?: string;
     phone?: string;
     alternatePhone?: string;
     dateOfBirth?: Date;

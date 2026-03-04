@@ -7,7 +7,7 @@ export declare class EmployeeLeaveService {
     /**
      * Get own leaves
      */
-    getMyLeaves(userId: string): Promise<{
+    getMyLeaves(userId: string, filters?: any, options?: any): Promise<{
         leaves: import("../../../../shared/interfaces/leave.interface").ILeave[];
         total: number;
     }>;

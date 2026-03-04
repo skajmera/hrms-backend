@@ -16,8 +16,14 @@ class EmployeeLeaveController {
     }
     async getMyLeaves(req, res, next) {
         try {
-            const leaves = await leave_service_1.employeeLeaveService.getMyLeaves(req.user._id.toString());
-            (0, response_1.sendSuccessResponse)(res, 'Leaves retrieved successfully', leaves);
+            const { startDate, endDate, page, limit, leaveType, status } = req.query;
+            const result = await leave_service_1.employeeLeaveService.getMyLeaves(req.user._id.toString(), {
+                startDate: startDate,
+                endDate: endDate,
+                leaveType: leaveType,
+                status: status
+            }, { page: Number(page) || 1, limit: Number(limit) || 10 });
+            (0, response_1.sendSuccessResponse)(res, 'Leaves retrieved successfully', result);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

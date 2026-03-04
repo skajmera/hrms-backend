@@ -851,11 +851,30 @@ router.get('/', (0, validation_1.validate)(payroll_validation_1.PayrollValidatio
  *         description: Payroll not found
  */
 router.get('/:id', (0, validation_1.validate)(payroll_validation_1.PayrollValidation.payrollId), payroll_controller_1.PayrollController.getPayrollById);
+// /**
+//  * @swagger
+//  * /hr/payroll/{id}/download:
+//  *   get:
+//  *     summary: Download payslip
+//  *     tags: [Payroll]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: Payslip download link generated
+//  */
+// router.get('/:id/download', validate(PayrollValidation.payrollId), PayrollController.downloadPayslip);
 /**
  * @swagger
  * /hr/payroll/{id}/download:
  *   get:
- *     summary: Download payslip
+ *     summary: Download payslip PDF
  *     tags: [Payroll]
  *     security:
  *       - bearerAuth: []
@@ -867,9 +886,14 @@ router.get('/:id', (0, validation_1.validate)(payroll_validation_1.PayrollValida
  *           type: string
  *     responses:
  *       200:
- *         description: Payslip download link generated
+ *         description: PDF file
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
  */
-router.get('/:id/download', (0, validation_1.validate)(payroll_validation_1.PayrollValidation.payrollId), payroll_controller_1.PayrollController.downloadPayslip);
+router.get('/:id/download', payroll_controller_1.PayrollController.downloadPayslip);
 /**
  * @swagger
  * /hr/payroll:
@@ -1225,5 +1249,45 @@ router.post('/import', upload_middleware_1.payrollUpload.single('file'), payroll
  *                       description: First 10 records
  */
 router.post('/preview', upload_middleware_1.payrollUpload.single('file'), payroll_import_controller_1.PayrollImportController.previewPayroll);
+/**
+ * @swagger
+ * /hr/payroll/user/{userId}:
+ *   get:
+ *     summary: Get payroll history for a specific user
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *         description: Number of records to retrieve
+ *     responses:
+ *       200:
+ *         description: Payroll history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Payroll'
+ */
+router.get('/user/:userId', payroll_controller_1.PayrollController.getUserPayrollHistory);
 exports.default = router;
 //# sourceMappingURL=payroll.route.js.map

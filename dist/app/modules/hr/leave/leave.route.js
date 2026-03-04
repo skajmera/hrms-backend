@@ -179,31 +179,75 @@ router.get('/on-leave-today', (0, auth_middleware_1.authorize)(constants_1.USER_
  *                         total:
  *                           type: number
  *                         used:
- *                          type: number
- *                        remaining:
- *                          type: number
- *                    sickLeave:
- *                      type: object
- *                     properties:
- *                    total:
- *                      type: number
- *                    used:
- *                     type: number
- *                   remaining:
- *                    type: number
- *                    earnedLeave:
- *                     type: object
- *                    properties:
- *                     total:
- *                      type: number
- *                    used:
- *                    type: number
- *                   remaining:
- *                   type: number
- 
-                           
-*/
-router.get('/balance/:userId/:year', leave_controller_1.leaveController.getLeaveBalance.bind(leave_controller_1.leaveController));
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ *                     sickLeave:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         used:
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ *                     earnedLeave:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         used:
+ *                           type: number
+ *                         remaining:
+ *                           type: number
+ */
+router.get('/balance/:userId/:year', (0, validation_1.validate)(leave_validation_1.getLeaveBalanceValidation), leave_controller_1.leaveController.getLeaveBalance.bind(leave_controller_1.leaveController));
+/**
+ * @swagger
+ * /leaves/employee/{userId}:
+ *   get:
+ *     summary: Get all leaves for a specific employee
+ *     tags: [Leave]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ */
+router.get('/employee/:userId', (0, validation_1.validate)(leave_validation_1.getEmployeeLeavesValidation), leave_controller_1.leaveController.getEmployeeLeaves.bind(leave_controller_1.leaveController));
+/**
+ * @swagger
+ * /leaves/employee/{userId}/balance:
+ *   get:
+ *     summary: Get leave balance for a specific employee
+ *     tags: [Leave]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ */
+router.get('/employee/:userId/balance', (0, validation_1.validate)(leave_validation_1.getLeaveBalanceValidation), leave_controller_1.leaveController.getLeaveBalance.bind(leave_controller_1.leaveController));
 /**
 
 @swagger

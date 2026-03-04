@@ -42,6 +42,22 @@ export declare class AnnouncementDAL {
      * Get pinned announcements
      */
     getPinnedAnnouncements(): Promise<IAnnouncement[]>;
+    /**
+     * Toggle Like on announcement (Add if not present, remove if present)
+     */
+    toggleLike(id: string, userId: string): Promise<IAnnouncement | null>;
+    /**
+     * Toggle Like on a comment
+     */
+    toggleCommentLike(announcementId: string, commentId: string, userId: string): Promise<IAnnouncement | null>;
+    /**
+     * Add comment to announcement
+     */
+    addComment(id: string, userId: string, content: string): Promise<IAnnouncement | null>;
+    /**
+     * Delete comment from announcement
+     */
+    deleteComment(id: string, commentId: string, userId: string): Promise<IAnnouncement | null>;
 }
 export declare const announcementDAL: AnnouncementDAL;
 //# sourceMappingURL=announcement.dal.d.ts.map

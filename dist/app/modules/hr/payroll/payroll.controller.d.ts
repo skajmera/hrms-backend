@@ -69,6 +69,10 @@ export declare class PayrollController {
      * Download payslip
      * GET /api/v1/hr/payroll/:id/download
      */
-    static downloadPayslip(req: Request, res: Response, next: NextFunction): Promise<void>;
+    /**
+     * Download payslip PDF
+     */
+    static downloadPayslip(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    static getUserPayrollHistory(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 //# sourceMappingURL=payroll.controller.d.ts.map

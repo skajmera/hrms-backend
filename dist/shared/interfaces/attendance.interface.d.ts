@@ -23,11 +23,17 @@ export interface IAttendance extends Document {
         coordinates: [number, number];
         address?: string;
     };
-    isApproved: boolean;
+    isApproved?: boolean;
     approvedBy?: Types.ObjectId | string;
     approvedAt?: Date;
     overtimeHours?: number;
     overtimeApproved?: boolean;
+    deviceId?: string;
+    gpsLatitude?: number;
+    gpsLongitude?: number;
+    wifiBSSID?: string;
+    isMockLocation?: boolean;
+    selfie?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -51,6 +57,13 @@ export interface IAttendanceCreateInput {
     workingHours?: number;
     breakHours?: number;
     overtimeHours?: number;
+    isApproved?: boolean;
+    deviceId?: string;
+    gpsLatitude?: number;
+    gpsLongitude?: number;
+    wifiBSSID?: string;
+    isMockLocation?: boolean;
+    selfie?: string;
 }
 export interface IAttendanceReport {
     userId: string;

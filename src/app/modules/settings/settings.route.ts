@@ -44,6 +44,10 @@
 // // Change Password
 // router.post('/change-password', validate(SettingsValidation.changePassword), SettingsController.changePassword);
 
+// // Security Settings
+// router.get('/security', SettingsController.getSecuritySettings);
+// router.put('/security', authorize(USER_ROLES.SUPER_ADMIN as any), validate(SettingsValidation.updateSecurity), SettingsController.updateSecuritySettings);
+
 // export default router;
 
 
@@ -54,6 +58,7 @@ import { Router } from 'express';
 import { SettingsController } from './settings.controller';
 import { SettingsValidation } from './settings.validation';
 import { authenticate, authorize } from '../../../shared/middlewares/auth.middleware';
+import { USER_ROLES } from '../../../config/constants';
 
 import { validate } from '../../../shared/middlewares/validation';
 
@@ -964,6 +969,11 @@ router.delete('/designations/:id', SettingsController.deleteDesignation);
  *       401:
  *         description: Unauthorized
  */
+// Change Password
 router.post('/change-password', validate(SettingsValidation.changePassword), SettingsController.changePassword);
+
+// Security Settings
+router.get('/security', SettingsController.getSecuritySettings);
+router.put('/security', authorize(USER_ROLES.SUPER_ADMIN as any), validate(SettingsValidation.updateSecurity), SettingsController.updateSecuritySettings);
 
 export default router;

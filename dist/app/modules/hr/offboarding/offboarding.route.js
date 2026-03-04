@@ -190,7 +190,7 @@ router.post('/:id/approve', (0, validation_1.validate)(offboarding_validation_1.
  *         schema:
  *           type: string
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:

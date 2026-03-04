@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // export default router;
 const express_1 = require("express");
 const dashboard_controller_1 = require("./dashboard.controller");
+const auth_middleware_1 = require("../../../../shared/middlewares/auth.middleware");
+const constants_1 = require("../../../../config/constants");
 const router = (0, express_1.Router)();
-// router.use(authenticate);
-// router.use(authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN));
+router.use(auth_middleware_1.authenticate);
+router.use((0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN));
 // const router = Router();
 // router.use(authenticate);
 /**

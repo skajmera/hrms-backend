@@ -15,11 +15,11 @@ export class SettingsValidation {
    * Update locale settings
    */
   static updateLocale = [
-    body('country').optional().notEmpty(),
-    body('timezone').optional().notEmpty(),
+    body('country').optional(),
+    body('timezone').optional(),
     body('timeFormat').optional().isIn(['12', '24']),
-    body('dateFormat').optional().notEmpty(),
-    body('nameFormat').optional().isIn(['FIRST_LAST', 'LAST_FIRST'])
+    body('dateFormat').optional(),
+    body('nameFormat').optional()
   ];
 
   /**
@@ -65,5 +65,21 @@ export class SettingsValidation {
         }
         return true;
       })
+  ];
+
+  /**
+   * Update security settings
+   */
+  static updateSecurity = [
+    body('requireFaceCapture').optional().isBoolean().withMessage('requireFaceCapture must be a boolean'),
+    body('blockMockLocations').optional().isBoolean().withMessage('blockMockLocations must be a boolean'),
+    body('officeLocations').optional().isArray().withMessage('officeLocations must be an array'),
+    body('officeLocations.*.name').optional().notEmpty().withMessage('Location name is required'),
+    body('officeLocations.*.latitude').optional().isFloat().withMessage('Latitude must be a number'),
+    body('officeLocations.*.longitude').optional().isFloat().withMessage('Longitude must be a number'),
+    body('officeLocations.*.radius').optional().isFloat().withMessage('Radius must be a number'),
+    body('allowedWifiNetworks').optional().isArray().withMessage('allowedWifiNetworks must be an array'),
+    body('allowedWifiNetworks.*.name').optional().notEmpty().withMessage('WiFi name is required'),
+    body('allowedWifiNetworks.*.bssid').optional().notEmpty().withMessage('BSSID is required')
   ];
 }

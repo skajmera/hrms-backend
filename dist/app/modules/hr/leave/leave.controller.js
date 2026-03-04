@@ -77,8 +77,25 @@ class LeaveController {
     async getLeaveBalance(req, res, next) {
         try {
             const { userId, year } = req.params;
-            const balance = await leave_service_1.leaveService.getLeaveBalance(userId, Number(year));
+            const balanceYear = year ? Number(year) : new Date().getFullYear();
+            const balance = await leave_service_1.leaveService.getLeaveBalance(userId, balanceYear);
             (0, response_1.sendSuccessResponse)(res, 'Leave balance retrieved successfully', balance);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getEmployeeLeaves(req, res, next) {
+        try {
+            const { userId } = req.params;
+            const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...filters } = req.query;
+            const result = await leave_service_1.leaveService.getAllLeaves({ ...filters, userId }, {
+                page: Number(page),
+                limit: Number(limit),
+                sortBy: sortBy,
+                sortOrder: sortOrder
+            });
+            (0, response_1.sendPaginatedResponse)(res, result.leaves, result.total, Number(page), Number(limit), 'Employee leaves retrieved successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

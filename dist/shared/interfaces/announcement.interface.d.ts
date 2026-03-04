@@ -29,6 +29,14 @@ export interface IAnnouncement extends Document {
         userId: Types.ObjectId | string;
         viewedAt: Date;
     }[];
+    likes: (Types.ObjectId | string)[];
+    comments: {
+        _id: Types.ObjectId | string;
+        userId: Types.ObjectId | string;
+        content: string;
+        likes: (Types.ObjectId | string)[];
+        createdAt: Date;
+    }[];
     createdAt: Date;
     updatedAt: Date;
 }

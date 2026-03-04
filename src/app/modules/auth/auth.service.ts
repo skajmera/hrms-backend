@@ -20,24 +20,24 @@ export class AuthService {
     // }
 
     const user = await userDAL.create(userData);
- // ✅ CREATE INITIAL LEAVE BALANCE
- const currentYear = new Date().getFullYear();
- await leaveDAL.upsertLeaveBalance(user._id.toString(), currentYear, {
-   userId: user._id.toString(),
-   year: currentYear,
-   casualLeave: { total: 12, used: 0, remaining: 12 },
-   sickLeave: { total: 10, used: 0, remaining: 10 },
-   earnedLeave: { total: 15, used: 0, remaining: 15 },
-   maternityLeave: { total: 180, used: 0, remaining: 180 },
-   paternityLeave: { total: 15, used: 0, remaining: 15 }
- } as any);
+    // ✅ CREATE INITIAL LEAVE BALANCE
+    const currentYear = new Date().getFullYear();
+    await leaveDAL.upsertLeaveBalance(user._id.toString(), currentYear, {
+      userId: user._id.toString(),
+      year: currentYear,
+      casualLeave: { total: 12, used: 0, remaining: 12 },
+      sickLeave: { total: 10, used: 0, remaining: 10 },
+      earnedLeave: { total: 15, used: 0, remaining: 15 },
+      maternityLeave: { total: 180, used: 0, remaining: 180 },
+      paternityLeave: { total: 15, used: 0, remaining: 15 }
+    } as any);
 
- console.log(`✅ Leave balance created for user: ${user._id}`);
+    console.log(`✅ Leave balance created for user: ${user._id}`);
     try {
-      await sendWelcomeEmail( 
-    user.getFullName(),
-    user.email,      
-    userData.password as string);
+      await sendWelcomeEmail(
+        user.getFullName(),
+        user.email,
+        userData.password as string);
 
     } catch (error) {
       console.error('Failed to send welcome email:', error);
@@ -73,7 +73,7 @@ export class AuthService {
   async login(loginData: ILoginInput): Promise<IAuthResponse> {
     // Find user with password
     const user = await userDAL.findByEmail(loginData.email, true);
-    
+
     if (!user) {
       throw new Error('Invalid email or password');
     }
@@ -132,7 +132,7 @@ export class AuthService {
    */
   async forgotPassword(email: string): Promise<void> {
     const user = await userDAL.findByEmail(email);
-    
+
     if (!user) {
       // Don't reveal if user exists
       return;
@@ -220,7 +220,7 @@ export class AuthService {
    */
   async getProfile(userId: string): Promise<any> {
     const user = await userDAL.findById(userId);
-    
+
     if (!user) {
       throw new Error('User not found');
     }

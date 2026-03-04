@@ -16,7 +16,7 @@ export class AnnouncementController {
 
   async getAnnouncementById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.getAnnouncementById(req.params.id);
+      const announcement = await announcementService.getAnnouncementById(req.params.id, req.user._id.toString());
       sendSuccessResponse(res, 'Announcement retrieved successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
@@ -25,8 +25,15 @@ export class AnnouncementController {
 
   async getAllAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      // Keep controller minimal: extract paging/sort and forward remaining query params
       const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
-      const result = await announcementService.getAllAnnouncements(filters, { page: Number(page), limit: Number(limit), sortBy: sortBy as string, sortOrder: sortOrder as 'asc' | 'desc' });
+
+      const result = await announcementService.getAllAnnouncements(filters, {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      }, req.user._id.toString());
       sendPaginatedResponse(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -35,7 +42,7 @@ export class AnnouncementController {
 
   async updateAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.updateAnnouncement(req.params.id, req.body);
+      const announcement = await announcementService.updateAnnouncement(req.params.id, req.body, req.user._id.toString());
       sendSuccessResponse(res, 'Announcement updated successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
@@ -53,10 +60,13 @@ export class AnnouncementController {
 
   async getMyAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const department = req.user.professionalDetails.department;
+      const departmentId = department?._id ? department._id.toString() : department?.toString();
+
       const announcements = await announcementService.getActiveAnnouncementsForUser(
         req.user._id.toString(),
         req.user.role,
-        req.user.professionalDetails.department.toString()
+        departmentId
       );
       sendSuccessResponse(res, 'Your announcements retrieved successfully', announcements);
     } catch (error: any) {
@@ -75,8 +85,47 @@ export class AnnouncementController {
 
   async togglePin(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.togglePin(req.params.id);
+      const announcement = await announcementService.togglePin(req.params.id, req.user._id.toString());
       sendSuccessResponse(res, 'Announcement pin status updated', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async toggleLike(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const announcement = await announcementService.toggleLikeAnnouncement(req.params.id, req.user._id.toString());
+      sendSuccessResponse(res, 'Announcement like toggled', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async toggleCommentLike(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id, commentId } = req.params;
+      const announcement = await announcementService.toggleCommentLikeAnnouncement(id, commentId, req.user._id.toString());
+      sendSuccessResponse(res, 'Comment like toggled', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async addComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { content } = req.body;
+      const announcement = await announcementService.addComment(req.params.id, req.user._id.toString(), content);
+      sendSuccessResponse(res, 'Comment added successfully', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async deleteComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id, commentId } = req.params;
+      const announcement = await announcementService.deleteComment(id, commentId, req.user._id.toString());
+      sendSuccessResponse(res, 'Comment deleted successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

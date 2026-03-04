@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupFile = exports.payrollUpload = void 0;
+exports.cleanupFile = exports.attendanceUpload = exports.payrollUpload = void 0;
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
@@ -39,12 +39,43 @@ const fileFilter = (req, file, cb) => {
         cb(new Error('Only .xls, .xlsx and .csv formats are supported'));
     }
 };
-// Configure multer
+// Configure multer for payroll
 exports.payrollUpload = (0, multer_1.default)({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024 // 5MB
+    }
+});
+// --- Attendance Selfie Upload ---
+const attendanceDir = './uploads/attendance';
+if (!fs_1.default.existsSync(attendanceDir)) {
+    fs_1.default.mkdirSync(attendanceDir, { recursive: true });
+}
+const attendanceStorage = multer_1.default.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, attendanceDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path_1.default.extname(file.originalname);
+        cb(null, `selfie-${uniqueSuffix}${ext}`);
+    }
+});
+const imageFilter = (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+    }
+    else {
+        cb(new Error('Only .jpg, .jpeg and .png formats are supported'));
+    }
+};
+exports.attendanceUpload = (0, multer_1.default)({
+    storage: attendanceStorage,
+    fileFilter: imageFilter,
+    limits: {
+        fileSize: 2 * 1024 * 1024 // 2MB
     }
 });
 // Cleanup uploaded file helper

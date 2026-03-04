@@ -25,7 +25,7 @@ import { leaveController } from './leave.controller';
 import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 import { validate } from '../../../../shared/middlewares/validation';
 import { USER_ROLES } from '../../../../config/constants';
-import { applyLeaveValidation, approveRejectLeaveValidation } from './leave.validation';
+import { applyLeaveValidation, approveRejectLeaveValidation, getEmployeeLeavesValidation, getLeaveBalanceValidation } from './leave.validation';
 
 const router = Router();
 
@@ -217,7 +217,63 @@ router.get(
  *                         remaining:
  *                           type: number
  */
-router.get('/balance/:userId/:year', leaveController.getLeaveBalance.bind(leaveController));
+router.get('/balance/:userId/:year', validate(getLeaveBalanceValidation), leaveController.getLeaveBalance.bind(leaveController));
+
+/**
+ * @swagger
+ * /leaves/employee/{userId}:
+ *   get:
+ *     summary: Get all leaves for a specific employee
+ *     tags: [Leave]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ */
+router.get(
+  '/employee/:userId',
+  validate(getEmployeeLeavesValidation),
+  leaveController.getEmployeeLeaves.bind(leaveController)
+);
+
+/**
+ * @swagger
+ * /leaves/employee/{userId}/balance:
+ *   get:
+ *     summary: Get leave balance for a specific employee
+ *     tags: [Leave]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ */
+router.get(
+  '/employee/:userId/balance',
+  validate(getLeaveBalanceValidation),
+  leaveController.getLeaveBalance.bind(leaveController)
+);
 
 /**
 
@@ -362,7 +418,7 @@ responses:
               $ref: '#/components/schemas/Leave'
   404:
     description: Leave not found
-*/ router.put( '/:id/approve', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER), validate(approveRejectLeaveValidation), leaveController.approveLeave.bind(leaveController) );
+*/ router.put('/:id/approve', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER), validate(approveRejectLeaveValidation), leaveController.approveLeave.bind(leaveController));
 
 /**
 
@@ -397,6 +453,6 @@ responses:
     description: Leave rejected successfully
   404:
     description: Leave not found
-*/ router.put( '/:id/reject', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER), validate(approveRejectLeaveValidation), leaveController.rejectLeave.bind(leaveController) );
+*/ router.put('/:id/reject', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER), validate(approveRejectLeaveValidation), leaveController.rejectLeave.bind(leaveController));
 
 export default router;

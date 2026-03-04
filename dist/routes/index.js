@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 // Auth
 const auth_route_1 = __importDefault(require("../app/modules/auth/auth.route"));
+const organization_route_1 = __importDefault(require("../app/modules/organization/organization.route"));
+const settings_route_1 = __importDefault(require("../app/modules/settings/settings.route"));
 // Employee
 const profile_route_1 = __importDefault(require("../app/modules/employee/profile/profile.route"));
 const attendance_route_1 = __importDefault(require("../app/modules/employee/attendance/attendance.route"));
@@ -32,6 +34,8 @@ const offboarding_route_1 = __importDefault(require("../app/modules/hr/offboardi
 const router = (0, express_1.Router)();
 // Auth routes
 router.use('/auth', auth_route_1.default);
+router.use('/organization', organization_route_1.default);
+router.use('/settings', settings_route_1.default);
 // Employee routes (Self-service)
 router.use('/employee/profile', profile_route_1.default);
 router.use('/employee/attendance', attendance_route_1.default);
@@ -45,6 +49,7 @@ router.use('/manager/leave', leave_route_2.default);
 router.use('/hr/users', user_route_1.default);
 router.use('/hr/attendance', attendance_route_2.default);
 router.use('/hr/leave', leave_route_3.default);
+router.use('/leaves', leave_route_3.default);
 router.use('/hr/payroll', payroll_route_2.default);
 router.use('/hr/announcements', announcement_route_1.default);
 router.use('/hr/departments', department_route_1.default);
@@ -55,5 +60,6 @@ router.use('/hr/analytics', analytics_route_1.default);
 router.use('/hr/shifts', shifts_route_1.default);
 router.use('/hr/permissions', permissions_route_1.default); // Permissions routes
 router.use('/hr/offboarding', offboarding_route_1.default); // NEW
+router.use('/attendance', attendance_route_2.default);
 exports.default = router;
 //# sourceMappingURL=index.js.map

@@ -1,7 +1,8 @@
 "use strict";
 // import { payrollDAL } from '../../../../shared/dal/payroll.dal';
 // import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
-// import { PDFGenerator } from '../../../../shared/utils/pdfGenerator';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PayrollService = void 0;
 // import { userDAL } from '../../../../shared/dal/user.dal';
 // export class PayrollService {
 //   async generatePayroll(payrollData: any) {
@@ -10,8 +11,6 @@
 //     if (existing) {
 //       throw new Error('Payroll already generated for this month');
 //     }
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PayrollService = void 0;
 //     return await payrollDAL.create(payrollData);
 //   }
 //   async getPayrollById(id: string) {
@@ -132,6 +131,7 @@ const user_dal_1 = require("../../../../shared/dal/user.dal");
 const attendance_dal_1 = require("../../../../shared/dal/attendance.dal");
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
 const constants_1 = require("../../../../config/constants");
+const pdfGenerator_1 = require("../../../../shared/utils/pdfGenerator");
 /**
  * Payroll Service
  * Business logic for payroll operations
@@ -354,14 +354,55 @@ class PayrollService {
     /**
      * Download payslip (generate PDF)
      */
+    // static async downloadPayslip(payrollId: string): Promise<string> {
+    //   const payroll = await this.getPayrollById(payrollId);
+    //   if (payroll.isDraft) {
+    //     throw new Error('Cannot download payslip for draft payroll');
+    //   }
+    //   // Here you would implement PDF generation
+    //   // For now, returning a mock path
+    //   return `/payslips/${payrollId}.pdf`;
+    // }
+    /**
+     * Download payslip
+     */
     static async downloadPayslip(payrollId) {
-        const payroll = await this.getPayrollById(payrollId);
-        if (payroll.isDraft) {
-            throw new Error('Cannot download payslip for draft payroll');
+        const payroll = await payroll_dal_1.payrollDAL.findById(payrollId);
+        if (!payroll) {
+            throw new Error('Payroll not found');
         }
-        // Here you would implement PDF generation
-        // For now, returning a mock path
-        return `/payslips/${payrollId}.pdf`;
+        if (!payroll.payslipPath) {
+            // Generate PDF if not exists
+            const user = await user_dal_1.userDAL.findById(payroll.userId._id.toString());
+            if (!user) {
+                throw new Error('User not found');
+            }
+            const pdfPath = await pdfGenerator_1.PDFGenerator.generateSalarySlip({ payroll, user });
+            payroll.payslipPath = pdfPath;
+            await payroll.save();
+            return pdfPath;
+        }
+        return payroll.payslipPath;
+    }
+    /**
+     * Regenerate payslip
+     */
+    async regeneratePayslip(payrollId) {
+        const payroll = await payroll_dal_1.payrollDAL.findById(payrollId);
+        if (!payroll) {
+            throw new Error('Payroll not found');
+        }
+        const user = await user_dal_1.userDAL.findById(payroll.userId.toString());
+        if (!user) {
+            throw new Error('User not found');
+        }
+        const pdfPath = await pdfGenerator_1.PDFGenerator.generateSalarySlip({ payroll, user });
+        payroll.payslipPath = pdfPath;
+        await payroll.save();
+        return pdfPath;
+    }
+    static async getUserPayrollHistory(userId, limit = 12) {
+        return await payroll_dal_1.payrollDAL.getUserPayrollHistory(userId, limit);
     }
 }
 exports.PayrollService = PayrollService;

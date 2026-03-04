@@ -3,8 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../interfaces/user.interface';
 import { config } from '../../config/env';
-import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES,SHIFT_TIMINGS,EMPLOYMENT_TYPE } from '../../config/constants';
-import { fillAndStroke } from 'pdfkit';
+import { USER_ROLES, EMPLOYMENT_STATUS, SHIFT_TYPES, SHIFT_TIMINGS, EMPLOYMENT_TYPE } from '../../config/constants';
 const ShiftTimeSchema = new Schema({
   startTime: { type: String, required: false }, // "HH:mm" format
   endTime: { type: String, required: false },
@@ -65,20 +64,20 @@ const ProfessionalDetailsSchema = new Schema({
   designation: { type: String, required: true },
   department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
   joiningDate: { type: Date, required: true },
-  employmentStatus: { 
-    type: String, 
+  employmentStatus: {
+    type: String,
     enum: Object.values(EMPLOYMENT_STATUS),
     default: EMPLOYMENT_STATUS.PROBATION
   },
-  employmentType: { 
-    type: String, 
+  employmentType: {
+    type: String,
     enum: Object.values(EMPLOYMENT_TYPE),
     default: EMPLOYMENT_TYPE.FULL_TIME
   },
   probationEndDate: { type: Date },
   reportingManager: { type: Schema.Types.ObjectId, ref: 'User' },
-  shift: { 
-    type: String, 
+  shift: {
+    type: String,
     enum: Object.values(SHIFT_TYPES),
     default: SHIFT_TYPES.MORNING
   },
@@ -90,32 +89,32 @@ const ProfessionalDetailsSchema = new Schema({
 }, { _id: false });
 
 const UserSchema = new Schema<IUser>({
-  organizationId: { 
-    type: Schema.Types.ObjectId, 
+  organizationId: {
+    type: Schema.Types.ObjectId,
     ref: 'Organization',
     required: false // Make this required after migration
   },
   // Personal Details
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true, 
+  email: {
+    type: String,
+    required: true,
+    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
-  personalEmail: { 
-    type: String, 
-    required: true, 
-    unique: true, 
+  personalEmail: {
+    type: String,
+    required: false,
+    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
   password: { type: String, required: true, minlength: 6, select: false },
-  phone: { type: String, required: fillAndStroke },
+  phone: { type: String, required: false },
   alternatePhone: { type: String },
   dateOfBirth: { type: Date, required: false },
   gender: { type: String, enum: ['MALE', 'FEMALE', 'OTHER'], required: false },
@@ -129,14 +128,14 @@ const UserSchema = new Schema<IUser>({
   // Address
   currentAddress: { type: AddressSchema, required: false },
   permanentAddress: AddressSchema,
-  
+
   // Professional Details
   professionalDetails: { type: ProfessionalDetailsSchema, required: false },
-  
+
   // Education & Experience
   education: [EducationSchema],
   experience: [ExperienceSchema],
-  
+
   // Emergency Contact
   emergencyContact: {
     name: { type: String },
@@ -144,10 +143,10 @@ const UserSchema = new Schema<IUser>({
     phone: { type: String },
     email: { type: String, match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'] }
   },
-  
+
   // System Fields
-  role: { 
-    type: String, 
+  role: {
+    type: String,
     enum: Object.values(USER_ROLES),
     default: USER_ROLES.EMPLOYEE
   },
@@ -157,7 +156,9 @@ const UserSchema = new Schema<IUser>({
   passwordResetToken: { type: String, select: false },
   passwordResetExpires: { type: Date, select: false },
   lastLogin: { type: Date },
-  
+  registeredDeviceId: { type: String, unique: true, sparse: true },
+  azurePersonId: { type: String, unique: true, sparse: true },
+
   // Metadata
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   updatedBy: { type: Schema.Types.ObjectId, ref: 'User' }
@@ -174,16 +175,16 @@ UserSchema.index({ 'professionalDetails.department': 1 });
 UserSchema.index({ role: 1 });
 
 // Virtual for full name
-UserSchema.virtual('fullName').get(function() {
+UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
 // Pre-save middleware to hash password
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -194,7 +195,7 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
@@ -203,15 +204,15 @@ UserSchema.methods.comparePassword = async function(candidatePassword: string): 
 };
 
 // Method to generate auth token
-UserSchema.methods.generateAuthToken = function(): string {
-       const options: any = {
-        expiresIn: config.jwt.expiresIn
-          };
+UserSchema.methods.generateAuthToken = function (): string {
+  const options: any = {
+    expiresIn: config.jwt.expiresIn
+  };
   return jwt.sign(
-    { 
-      id: this._id, 
-      email: this.email, 
-      role: this.role 
+    {
+      id: this._id,
+      email: this.email,
+      role: this.role
     },
     config.jwt.secret,
     options
@@ -220,34 +221,42 @@ UserSchema.methods.generateAuthToken = function(): string {
 };
 
 // Method to get full name
-UserSchema.methods.getFullName = function(): string {
+UserSchema.methods.getFullName = function (): string {
   return `${this.firstName} ${this.lastName}`;
 };
 
 
 // Sync department employees when user department changes
-UserSchema.post('save', async function(doc) {
+UserSchema.post('save', async function (doc) {
   const departmentDAL = (await import('../dal/department.dal')).departmentDAL;
-  
-  if (doc.professionalDetails?.department) {
-    await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+
+  const dept = doc.professionalDetails?.department;
+  const departmentId = dept?._id ? dept._id.toString() : dept?.toString();
+
+  if (departmentId && departmentId !== '[object Object]') {
+    await departmentDAL.syncEmployees(departmentId);
   }
 });
 
 // Sync when user is updated
-UserSchema.post('findOneAndUpdate', async function(doc) {
+UserSchema.post('findOneAndUpdate', async function (doc) {
   if (doc && doc.professionalDetails?.department) {
     const departmentDAL = (await import('../dal/department.dal')).departmentDAL;
-    await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+    const dept = doc.professionalDetails.department;
+    const departmentId = dept?._id ? dept._id.toString() : dept?.toString();
+
+    if (departmentId && departmentId !== '[object Object]') {
+      await departmentDAL.syncEmployees(departmentId);
+    }
   }
 });
 
 // Pre-save middleware to set default shift time if not provided
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   if (this.professionalDetails.shift && !this.professionalDetails.shiftTime) {
     const shiftType = this.professionalDetails.shift as keyof typeof SHIFT_TIMINGS;
-    const defaultTiming  = SHIFT_TIMINGS[shiftType]
-    
+    const defaultTiming = SHIFT_TIMINGS[shiftType]
+
     this.professionalDetails.shiftTime = {
       startTime: defaultTiming.startTime,
       endTime: defaultTiming.endTime,

@@ -1,4 +1,4 @@
-import { IUser, IUserCreateInput, IUserUpdateInput } from '../interfaces/user.interface';
+import { IUser, IUserCreateInput } from '../interfaces/user.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
 export declare class UserDAL {
     /**
@@ -27,7 +27,7 @@ export declare class UserDAL {
     /**
      * Update user by ID
      */
-    update(id: string, updateData: IUserUpdateInput): Promise<IUser | null>;
+    update(id: string, updateData: any): Promise<IUser | null>;
     /**
      * Delete user by ID (soft delete)
      */

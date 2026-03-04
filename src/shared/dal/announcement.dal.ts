@@ -15,9 +15,12 @@ export class AnnouncementDAL {
    */
   async findById(id: string): Promise<IAnnouncement | null> {
     return await AnnouncementModel.findById(id)
-      .populate('createdBy', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('targetAudience.departments', 'name code')
-      .populate('targetAudience.specificUsers', 'firstName lastName email');
+      .populate('targetAudience.specificUsers', 'firstName lastName email')
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture');
   }
 
   /**
@@ -31,8 +34,9 @@ export class AnnouncementDAL {
     const skip = (page - 1) * limit;
 
     const announcements = await AnnouncementModel.find(filters)
-      .populate('createdBy', 'firstName lastName')
+      .populate('createdBy', 'firstName lastName profilePicture')
       .populate('targetAudience.departments', 'name code')
+      .populate('likes', 'firstName lastName profilePicture')
       .sort({ isPinned: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -51,7 +55,7 @@ export class AnnouncementDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('createdBy', 'firstName lastName');
+      .populate('createdBy', 'firstName lastName profilePicture');
   }
 
   /**
@@ -71,27 +75,30 @@ export class AnnouncementDAL {
   ): Promise<IAnnouncement[]> {
     const now = new Date();
     return await AnnouncementModel.find({
-        isActive: true,
-        startDate: { $lte: now },
-      
-        $and: [
-          {
-            $or: [
-              { expiryDate: { $exists: false } },
-              { expiryDate: { $gte: now } }
-            ]
-          },
-          {
-            $or: [
-              { "targetAudience.isGlobal": true },
-              { "targetAudience.roles": userRole },
-              { "targetAudience.departments": userDepartmentId },
-              { "targetAudience.specificUsers": userId }
-            ]
-          }
-        ]
-      })
-      .populate('createdBy', 'firstName lastName')
+      isActive: true,
+      startDate: { $lte: now },
+
+      $and: [
+        {
+          $or: [
+            { expiryDate: { $exists: false } },
+            { expiryDate: { $gte: now } }
+          ]
+        },
+        {
+          $or: [
+            { "targetAudience.isGlobal": true },
+            { "targetAudience.roles": userRole },
+            { "targetAudience.departments": userDepartmentId },
+            { "targetAudience.specificUsers": userId }
+          ]
+        }
+      ]
+    })
+      .populate('createdBy', 'firstName lastName profilePicture')
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture')
       .sort({ isPinned: -1, priority: -1, createdAt: -1 });
   }
 
@@ -126,8 +133,100 @@ export class AnnouncementDAL {
    */
   async getPinnedAnnouncements(): Promise<IAnnouncement[]> {
     return await AnnouncementModel.find({ isPinned: true, isActive: true })
-      .populate('createdBy', 'firstName lastName')
+      .populate('createdBy', 'firstName lastName profilePicture')
+      .populate('likes', 'firstName lastName profilePicture')
       .sort({ createdAt: -1 });
+  }
+
+  /**
+   * Toggle Like on announcement (Add if not present, remove if present)
+   */
+  async toggleLike(id: string, userId: string): Promise<IAnnouncement | null> {
+    const announcement = await AnnouncementModel.findById(id);
+    if (!announcement) return null;
+
+    const isLiked = announcement.likes.some(id => id.toString() === userId.toString());
+    const update = isLiked
+      ? { $pull: { likes: userId } }
+      : { $addToSet: { likes: userId } };
+
+    return await AnnouncementModel.findByIdAndUpdate(
+      id,
+      update,
+      { new: true }
+    )
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture');
+  }
+
+  /**
+   * Toggle Like on a comment
+   */
+  async toggleCommentLike(announcementId: string, commentId: string, userId: string): Promise<IAnnouncement | null> {
+    const announcement = await AnnouncementModel.findById(announcementId);
+    if (!announcement) return null;
+
+    const comment = announcement.comments.find(c => c._id.toString() === commentId.toString());
+    if (!comment) throw new Error('Comment not found');
+
+    const isLiked = comment.likes.some(id => id.toString() === userId.toString());
+    const update = isLiked
+      ? { $pull: { "comments.$.likes": userId } }
+      : { $addToSet: { "comments.$.likes": userId } };
+
+    return await AnnouncementModel.findOneAndUpdate(
+      { _id: announcementId, "comments._id": commentId },
+      update as any,
+      { new: true }
+    )
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture');
+  }
+
+  /**
+   * Add comment to announcement
+   */
+  async addComment(id: string, userId: string, content: string): Promise<IAnnouncement | null> {
+    return await AnnouncementModel.findByIdAndUpdate(
+      id,
+      {
+        $push: {
+          comments: {
+            userId,
+            content,
+            likes: [],
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    )
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture');
+  }
+
+  /**
+   * Delete comment from announcement
+   */
+  async deleteComment(id: string, commentId: string, userId: string): Promise<IAnnouncement | null> {
+    return await AnnouncementModel.findByIdAndUpdate(
+      id,
+      {
+        $pull: {
+          comments: {
+            _id: commentId,
+            userId: userId // Ensure user can only delete their own comment
+          }
+        }
+      },
+      { new: true }
+    )
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture');
   }
 }
 

@@ -9,7 +9,7 @@ export interface IAnnouncement extends Document {
   title: string;
   content: string;
   priority: keyof typeof ANNOUNCEMENT_PRIORITY;
-  
+
   // Dates
   startDate: Date;
   expiryDate?: Date;
@@ -21,7 +21,7 @@ export interface IAnnouncement extends Document {
     specificUsers?: Types.ObjectId[] | string[];
     isGlobal: boolean;
   };
-  
+
   // Attachments
   attachments?: {
     name: string;
@@ -29,20 +29,30 @@ export interface IAnnouncement extends Document {
     type: string;
     size: number;
   }[];
-  
+
   // Status
   isPinned: boolean;
   isActive: boolean;
-  
+
   // Creator
   createdBy: Types.ObjectId | string;
-  
+
   // Tracking
   viewedBy: {
     userId: Types.ObjectId | string;
     viewedAt: Date;
   }[];
-  
+
+  // Engagement
+  likes: (Types.ObjectId | string)[];
+  comments: {
+    _id: Types.ObjectId | string;
+    userId: Types.ObjectId | string;
+    content: string;
+    likes: (Types.ObjectId | string)[];
+    createdAt: Date;
+  }[];
+
   createdAt: Date;
   updatedAt: Date;
 }

@@ -42,7 +42,6 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const env_1 = require("../../config/env");
 const constants_1 = require("../../config/constants");
-const pdfkit_1 = require("pdfkit");
 const ShiftTimeSchema = new mongoose_1.Schema({
     startTime: { type: String, required: false }, // "HH:mm" format
     endTime: { type: String, required: false },
@@ -61,7 +60,8 @@ const EducationSchema = new mongoose_1.Schema({
     institution: { type: String, required: false },
     yearOfCompletion: { type: Number, required: false },
     percentage: { type: Number },
-    grade: { type: String }
+    grade: { type: String },
+    specialisation: { type: String }
 }, { _id: false });
 const ExperienceSchema = new mongoose_1.Schema({
     company: { type: String, required: false },
@@ -91,7 +91,9 @@ const SalaryDetailsSchema = new mongoose_1.Schema({
     netSalary: { type: Number, required: false }
 }, { _id: false });
 const ProfessionalDetailsSchema = new mongoose_1.Schema({
+    sourceOfHire: { type: String, required: false },
     employeeId: { type: String, required: true, unique: true },
+    biometricId: { type: String, unique: true, sparse: true }, // NEW - For biometric attendance integration
     designation: { type: String, required: true },
     department: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Department', required: true },
     joiningDate: { type: Date, required: true },
@@ -117,6 +119,11 @@ const ProfessionalDetailsSchema = new mongoose_1.Schema({
     salaryDetails: SalaryDetailsSchema
 }, { _id: false });
 const UserSchema = new mongoose_1.Schema({
+    organizationId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Organization',
+        required: false // Make this required after migration
+    },
     // Personal Details
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
@@ -128,8 +135,16 @@ const UserSchema = new mongoose_1.Schema({
         trim: true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
     },
+    personalEmail: {
+        type: String,
+        required: false,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
+    },
     password: { type: String, required: true, minlength: 6, select: false },
-    phone: { type: String, required: pdfkit_1.fillAndStroke },
+    phone: { type: String, required: false },
     alternatePhone: { type: String },
     dateOfBirth: { type: Date, required: false },
     gender: { type: String, enum: ['MALE', 'FEMALE', 'OTHER'], required: false },
@@ -137,6 +152,9 @@ const UserSchema = new mongoose_1.Schema({
     maritalStatus: { type: String, enum: ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED'] },
     profilePicture: { type: String },
     anniversary: { type: Date, required: false },
+    aboutMe: { type: String, required: false },
+    adhaarNumber: { type: String, required: false, unique: true, sparse: true },
+    panNumber: { type: String, required: false, unique: true, sparse: true },
     // Address
     currentAddress: { type: AddressSchema, required: false },
     permanentAddress: AddressSchema,
@@ -149,7 +167,8 @@ const UserSchema = new mongoose_1.Schema({
     emergencyContact: {
         name: { type: String },
         relationship: { type: String },
-        phone: { type: String }
+        phone: { type: String },
+        email: { type: String, match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'] }
     },
     // System Fields
     role: {
@@ -163,6 +182,8 @@ const UserSchema = new mongoose_1.Schema({
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
     lastLogin: { type: Date },
+    registeredDeviceId: { type: String, unique: true, sparse: true },
+    azurePersonId: { type: String, unique: true, sparse: true },
     // Metadata
     createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
     updatedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }
@@ -223,15 +244,21 @@ UserSchema.methods.getFullName = function () {
 // Sync department employees when user department changes
 UserSchema.post('save', async function (doc) {
     const departmentDAL = (await Promise.resolve().then(() => __importStar(require('../dal/department.dal')))).departmentDAL;
-    if (doc.professionalDetails?.department) {
-        await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+    const dept = doc.professionalDetails?.department;
+    const departmentId = dept?._id ? dept._id.toString() : dept?.toString();
+    if (departmentId && departmentId !== '[object Object]') {
+        await departmentDAL.syncEmployees(departmentId);
     }
 });
 // Sync when user is updated
 UserSchema.post('findOneAndUpdate', async function (doc) {
     if (doc && doc.professionalDetails?.department) {
         const departmentDAL = (await Promise.resolve().then(() => __importStar(require('../dal/department.dal')))).departmentDAL;
-        await departmentDAL.syncEmployees(doc.professionalDetails.department.toString());
+        const dept = doc.professionalDetails.department;
+        const departmentId = dept?._id ? dept._id.toString() : dept?.toString();
+        if (departmentId && departmentId !== '[object Object]') {
+            await departmentDAL.syncEmployees(departmentId);
+        }
     }
 });
 // Pre-save middleware to set default shift time if not provided

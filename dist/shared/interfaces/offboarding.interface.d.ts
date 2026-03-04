@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
  * Offboarding/Resignation related interfaces
  */
 export interface IOffboarding extends Document {
-    userId: Types.ObjectId | string;
+    userId: Types.ObjectId | string | any;
     employeeId: string;
     employeeName: string;
     designation: string;

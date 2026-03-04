@@ -5,18 +5,18 @@ import { ANNOUNCEMENT_PRIORITY } from '../../config/constants';
 const AnnouncementSchema = new Schema<IAnnouncement>({
   title: { type: String, required: true, trim: true },
   content: { type: String, required: true },
-  priority: { 
-    type: String, 
+  priority: {
+    type: String,
     enum: Object.values(ANNOUNCEMENT_PRIORITY),
     default: ANNOUNCEMENT_PRIORITY.MEDIUM
   },
-  
+
   // Dates
   startDate: { type: Date, required: true, default: Date.now },
   expiryDate: { type: Date },
   announcementType: {
     type: String,
-    enum: ["GENERAL", "BIRTHDAY", "ANNIVERSARY", "EVENT", "EMERGENCY", "OTHER","NEWHIRE"],
+    enum: ["GENERAL", "BIRTHDAY", "ANNIVERSARY", "EVENT", "EMERGENCY", "OTHER", "NEWHIRE"],
     required: true
   },
   // Target Audience
@@ -26,7 +26,7 @@ const AnnouncementSchema = new Schema<IAnnouncement>({
     specificUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isGlobal: { type: Boolean, default: false }
   },
-  
+
   // Attachments
   attachments: [{
     name: { type: String },
@@ -34,22 +34,31 @@ const AnnouncementSchema = new Schema<IAnnouncement>({
     type: { type: String },
     size: { type: Number }
   }],
-  
+
   // Status
   isPinned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
-  
+
   // Creator
-  createdBy: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  
+
   // Tracking
   viewedBy: [{
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     viewedAt: { type: Date, default: Date.now }
+  }],
+
+  // Engagement
+  likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  comments: [{
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    content: { type: String, required: true },
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    createdAt: { type: Date, default: Date.now }
   }]
 }, {
   timestamps: true

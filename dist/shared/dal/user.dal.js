@@ -16,6 +16,7 @@ class UserDAL {
     async findById(id, selectPassword = false) {
         const query = user_model_1.UserModel.findById(id)
             .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level')
             .populate('professionalDetails.reportingManager', 'firstName lastName email');
         if (selectPassword) {
             query.select('+password');
@@ -38,6 +39,7 @@ class UserDAL {
     async findByEmployeeId(employeeId) {
         return await user_model_1.UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
             .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level')
             .populate('professionalDetails.reportingManager', 'firstName lastName email');
     }
     /**
@@ -49,6 +51,7 @@ class UserDAL {
         const query = { ...filters };
         const users = await user_model_1.UserModel.find(query)
             .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level')
             .populate('professionalDetails.reportingManager', 'firstName lastName email')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
@@ -60,9 +63,25 @@ class UserDAL {
      * Update user by ID
      */
     async update(id, updateData) {
-        return await user_model_1.UserModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
-            .populate('professionalDetails.department', 'name code')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email');
+        // Sanitize empty strings for ObjectId and other fields
+        if (updateData.professionalDetails) {
+            const pd = updateData.professionalDetails;
+            // Fields that should be null if empty
+            if (pd.reportingManager === '')
+                pd.reportingManager = null;
+            if (pd.department === '')
+                pd.department = null;
+            if (pd.designation === '')
+                pd.designation = null;
+            // Clean up other potential empty strings that might cause issues
+            if (updateData.adhaarNumber === '')
+                updateData.adhaarNumber = undefined;
+            if (updateData.panNumber === '')
+                updateData.panNumber = undefined;
+            if (updateData.profilePicture === '')
+                updateData.profilePicture = undefined;
+        }
+        return await user_model_1.UserModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: false });
     }
     /**
      * Delete user by ID (soft delete)
@@ -88,7 +107,8 @@ class UserDAL {
      */
     async findByRole(role) {
         return await user_model_1.UserModel.find({ role, isActive: true })
-            .populate('professionalDetails.department', 'name code');
+            .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level');
     }
     /**
      * Get users with birthdays today
@@ -183,6 +203,14 @@ class UserDAL {
                 }
             },
             // 3️⃣ Department lookup (populate replacement)
+            {
+                $lookup: {
+                    from: "designations",
+                    localField: "professionalDetails.designation",
+                    foreignField: "_id",
+                    as: "designation"
+                }
+            },
             {
                 $lookup: {
                     from: "departments",
@@ -280,6 +308,7 @@ class UserDAL {
             isActive: true
         })
             .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level')
             .limit(20);
     }
     /**

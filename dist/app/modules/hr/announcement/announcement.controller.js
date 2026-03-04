@@ -16,7 +16,7 @@ class AnnouncementController {
     }
     async getAnnouncementById(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.getAnnouncementById(req.params.id);
+            const announcement = await announcement_service_1.announcementService.getAnnouncementById(req.params.id, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcement retrieved successfully', announcement);
         }
         catch (error) {
@@ -25,8 +25,14 @@ class AnnouncementController {
     }
     async getAllAnnouncements(req, res, next) {
         try {
+            // Keep controller minimal: extract paging/sort and forward remaining query params
             const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
-            const result = await announcement_service_1.announcementService.getAllAnnouncements(filters, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder });
+            const result = await announcement_service_1.announcementService.getAllAnnouncements(filters, {
+                page: Number(page),
+                limit: Number(limit),
+                sortBy: sortBy,
+                sortOrder: sortOrder
+            }, req.user._id.toString());
             (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
         }
         catch (error) {
@@ -35,7 +41,7 @@ class AnnouncementController {
     }
     async updateAnnouncement(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, req.body);
+            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, req.body, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcement updated successfully', announcement);
         }
         catch (error) {
@@ -53,7 +59,9 @@ class AnnouncementController {
     }
     async getMyAnnouncements(req, res, next) {
         try {
-            const announcements = await announcement_service_1.announcementService.getActiveAnnouncementsForUser(req.user._id.toString(), req.user.role, req.user.professionalDetails.department.toString());
+            const department = req.user.professionalDetails.department;
+            const departmentId = department?._id ? department._id.toString() : department?.toString();
+            const announcements = await announcement_service_1.announcementService.getActiveAnnouncementsForUser(req.user._id.toString(), req.user.role, departmentId);
             (0, response_1.sendSuccessResponse)(res, 'Your announcements retrieved successfully', announcements);
         }
         catch (error) {
@@ -71,8 +79,47 @@ class AnnouncementController {
     }
     async togglePin(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.togglePin(req.params.id);
+            const announcement = await announcement_service_1.announcementService.togglePin(req.params.id, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcement pin status updated', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async toggleLike(req, res, next) {
+        try {
+            const announcement = await announcement_service_1.announcementService.toggleLikeAnnouncement(req.params.id, req.user._id.toString());
+            (0, response_1.sendSuccessResponse)(res, 'Announcement like toggled', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async toggleCommentLike(req, res, next) {
+        try {
+            const { id, commentId } = req.params;
+            const announcement = await announcement_service_1.announcementService.toggleCommentLikeAnnouncement(id, commentId, req.user._id.toString());
+            (0, response_1.sendSuccessResponse)(res, 'Comment like toggled', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async addComment(req, res, next) {
+        try {
+            const { content } = req.body;
+            const announcement = await announcement_service_1.announcementService.addComment(req.params.id, req.user._id.toString(), content);
+            (0, response_1.sendSuccessResponse)(res, 'Comment added successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async deleteComment(req, res, next) {
+        try {
+            const { id, commentId } = req.params;
+            const announcement = await announcement_service_1.announcementService.deleteComment(id, commentId, req.user._id.toString());
+            (0, response_1.sendSuccessResponse)(res, 'Comment deleted successfully', announcement);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

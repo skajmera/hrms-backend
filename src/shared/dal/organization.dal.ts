@@ -89,7 +89,7 @@ export class OrganizationDAL {
   static async updateById(organizationId: string, updateData: Partial<IOrganization>): Promise<IOrganization | null> {
     return await OrganizationModel.findByIdAndUpdate(
       organizationId,
-      updateData,
+      { $set: updateData },
       { new: true }
     ).populate('owner', 'firstName lastName email');
   }
@@ -124,12 +124,26 @@ export class OrganizationDAL {
   }
 
   /**
-   * Update settings
+   * Update settings (supports partial updates)
    */
-  static async updateSettings(organizationId: string, settings: Partial<IOrganization['settings']>): Promise<IOrganization | null> {
+  static async updateSettings(organizationId: string, settings: any): Promise<IOrganization | null> {
+    const updateData: any = {};
+
+    // Convert flat settings object to dotted notation for partial updates
+    Object.keys(settings).forEach(key => {
+      if (key === 'locale' && typeof settings[key] === 'object') {
+        // Deep handle locale for partial updates
+        Object.keys(settings[key]).forEach(subKey => {
+          updateData[`settings.locale.${subKey}`] = settings[key][subKey];
+        });
+      } else {
+        updateData[`settings.${key}`] = settings[key];
+      }
+    });
+
     return await OrganizationModel.findByIdAndUpdate(
       organizationId,
-      { $set: { settings } },
+      { $set: updateData },
       { new: true }
     );
   }
@@ -138,7 +152,7 @@ export class OrganizationDAL {
    * Update subscription
    */
   static async updateSubscription(
-    organizationId: string, 
+    organizationId: string,
     subscription: Partial<IOrganization['subscription']>
   ): Promise<IOrganization | null> {
     return await OrganizationModel.findByIdAndUpdate(
@@ -159,7 +173,7 @@ export class OrganizationDAL {
         { admins: userId }
       ]
     });
-    
+
     return !!org;
   }
 
@@ -170,5 +184,75 @@ export class OrganizationDAL {
     const UserModel = require('./user.dal').UserDAL;
     // This would need to be implemented based on how you link users to organizations
     return 0; // Placeholder
+  }
+
+  // --- Security Settings: Office Locations ---
+
+  /**
+   * Add office location
+   */
+  static async addOfficeLocation(organizationId: string, location: any): Promise<IOrganization | null> {
+    return await OrganizationModel.findByIdAndUpdate(
+      organizationId,
+      { $push: { 'settings.securitySettings.officeLocations': location } },
+      { new: true }
+    );
+  }
+
+  /**
+   * Update office location
+   */
+  static async updateOfficeLocation(organizationId: string, locationId: string, locationData: any): Promise<IOrganization | null> {
+    return await OrganizationModel.findOneAndUpdate(
+      { _id: organizationId, 'settings.securitySettings.officeLocations._id': locationId },
+      { $set: { 'settings.securitySettings.officeLocations.$': { ...locationData, _id: locationId } } },
+      { new: true }
+    );
+  }
+
+  /**
+   * Remove office location
+   */
+  static async removeOfficeLocation(organizationId: string, locationId: string): Promise<IOrganization | null> {
+    return await OrganizationModel.findByIdAndUpdate(
+      organizationId,
+      { $pull: { 'settings.securitySettings.officeLocations': { _id: locationId } } },
+      { new: true }
+    );
+  }
+
+  // --- Security Settings: WiFi Networks ---
+
+  /**
+   * Add WiFi network
+   */
+  static async addWifiNetwork(organizationId: string, wifi: any): Promise<IOrganization | null> {
+    return await OrganizationModel.findByIdAndUpdate(
+      organizationId,
+      { $push: { 'settings.securitySettings.allowedWifiNetworks': wifi } },
+      { new: true }
+    );
+  }
+
+  /**
+   * Update WiFi network
+   */
+  static async updateWifiNetwork(organizationId: string, wifiId: string, wifiData: any): Promise<IOrganization | null> {
+    return await OrganizationModel.findOneAndUpdate(
+      { _id: organizationId, 'settings.securitySettings.allowedWifiNetworks._id': wifiId },
+      { $set: { 'settings.securitySettings.allowedWifiNetworks.$': { ...wifiData, _id: wifiId } } },
+      { new: true }
+    );
+  }
+
+  /**
+   * Remove WiFi network
+   */
+  static async removeWifiNetwork(organizationId: string, wifiId: string): Promise<IOrganization | null> {
+    return await OrganizationModel.findByIdAndUpdate(
+      organizationId,
+      { $pull: { 'settings.securitySettings.allowedWifiNetworks': { _id: wifiId } } },
+      { new: true }
+    );
   }
 }

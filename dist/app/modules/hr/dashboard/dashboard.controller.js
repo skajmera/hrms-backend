@@ -34,7 +34,7 @@ class DashboardController {
     }
     async getRecentAnnouncements(req, res, next) {
         try {
-            const announcements = await dashboard_service_1.dashboardService.getRecentAnnouncements(req.user._id.toString(), req.user.role, req.user.professionalDetails?.department._id.toString());
+            const announcements = await dashboard_service_1.dashboardService.getRecentAnnouncements(req.user._id.toString(), req.user.role, req.user.professionalDetails?.department?._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcements retrieved successfully', announcements);
         }
         catch (error) {

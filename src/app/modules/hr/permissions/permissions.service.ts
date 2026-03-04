@@ -12,7 +12,7 @@ export class PermissionsService {
   /**
    * Invite user and set permissions
    */
-   async inviteUser(inviteData: IInviteUserInput, invitedBy: string): Promise<IUserPermission> {
+  async inviteUser(inviteData: IInviteUserInput, invitedBy: string): Promise<IUserPermission> {
     // Check if user exists
     const user = await userDAL.findById(inviteData.userId);
     if (!user) {
@@ -20,7 +20,7 @@ export class PermissionsService {
     }
 
     // Check if permission already exists
-    const existingPermission = await  permissionDAL.findByUserId(inviteData.userId);
+    const existingPermission = await permissionDAL.findByUserId(inviteData.userId);
     if (existingPermission) {
       throw new Error('User permissions already exist. Use update instead.');
     }
@@ -40,13 +40,13 @@ export class PermissionsService {
   /**
    * Get all user permissions
    */
-   async getAllPermissions(filters: any = {}, options: IPaginationOptions) {
+  async getAllPermissions(filters: any = {}, options: IPaginationOptions) {
     const queryFilters: any = {};
-    
+
     if (filters.role) {
       queryFilters.role = filters.role;
     }
-    
+
     if (filters.status) {
       queryFilters.isActive = filters.status === 'active';
     }
@@ -57,10 +57,22 @@ export class PermissionsService {
   /**
    * Get permission by user ID
    */
-   async getPermissionByUserId(userId: string): Promise<IUserPermission> {
+  async getPermissionByUserId(userId: string): Promise<IUserPermission | any> {
     const permission = await permissionDAL.findByUserId(userId);
     if (!permission) {
-      throw new Error('User permissions not found');
+      // If no custom permissions found, fetch user to get role and return defaults
+      const user = await userDAL.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return {
+        userId: user._id,
+        role: user.role,
+        email: user.email,
+        modules: this.getDefaultPermissionsByRole(user.role),
+        isActive: true
+      };
     }
     return permission;
   }
@@ -68,7 +80,7 @@ export class PermissionsService {
   /**
    * Update user permissions
    */
-   async updatePermissions(userId: string, updateData: Partial<IUserPermission>): Promise<IUserPermission> {
+  async updatePermissions(userId: string, updateData: Partial<IUserPermission>): Promise<IUserPermission> {
     const permission = await permissionDAL.updateByUserId(userId, updateData);
     if (!permission) {
       throw new Error('User permissions not found');
@@ -79,7 +91,7 @@ export class PermissionsService {
   /**
    * Delete user permissions
    */
-   async deletePermissions(userId: string): Promise<void> {
+  async deletePermissions(userId: string): Promise<void> {
     const permission = await permissionDAL.deleteByUserId(userId);
     if (!permission) {
       throw new Error('User permissions not found');
@@ -89,7 +101,7 @@ export class PermissionsService {
   /**
    * Check if user has specific permission
    */
-   async checkPermission(
+  async checkPermission(
     userId: string,
     module: string,
     action: 'view' | 'edit' | 'fullAccess'
@@ -100,7 +112,7 @@ export class PermissionsService {
   /**
    * Deactivate user permissions
    */
-   async deactivateUser(userId: string): Promise<IUserPermission> {
+  async deactivateUser(userId: string): Promise<IUserPermission> {
     const permission = await permissionDAL.deactivate(userId);
     if (!permission) {
       throw new Error('User permissions not found');
@@ -111,7 +123,7 @@ export class PermissionsService {
   /**
    * Activate user permissions
    */
-   async activateUser(userId: string): Promise<IUserPermission> {
+  async activateUser(userId: string): Promise<IUserPermission> {
     const permission = await permissionDAL.activate(userId);
     if (!permission) {
       throw new Error('User permissions not found');
@@ -122,14 +134,14 @@ export class PermissionsService {
   /**
    * Get all active users with permissions
    */
-   async getActiveUsers() {
+  async getActiveUsers() {
     return await permissionDAL.getActiveUsers();
   }
 
   /**
    * Get default permissions by role
    */
-   getDefaultPermissionsByRole(role: string): IUserPermission['modules'] {
+  getDefaultPermissionsByRole(role: string): IUserPermission['modules'] {
     const basePermissions = {
       employees: {
         employeesList: { view: false, edit: false, fullAccess: false },

@@ -16,7 +16,7 @@ export declare class PermissionsService {
     /**
      * Get permission by user ID
      */
-    getPermissionByUserId(userId: string): Promise<IUserPermission>;
+    getPermissionByUserId(userId: string): Promise<IUserPermission | any>;
     /**
      * Update user permissions
      */

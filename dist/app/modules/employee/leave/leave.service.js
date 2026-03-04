@@ -26,8 +26,30 @@ class EmployeeLeaveService {
     /**
      * Get own leaves
      */
-    async getMyLeaves(userId) {
-        return await leave_dal_1.leaveDAL.findAll({ userId }, {});
+    async getMyLeaves(userId, filters = {}, options = {}) {
+        const query = { userId };
+        if (filters.startDate && filters.endDate) {
+            const start = new Date(filters.startDate);
+            const end = new Date(filters.endDate);
+            end.setHours(23, 59, 59, 999);
+            query.$or = [
+                { startDate: { $gte: start, $lte: end } },
+                { endDate: { $gte: start, $lte: end } },
+                {
+                    $and: [
+                        { startDate: { $lte: start } },
+                        { endDate: { $gte: end } }
+                    ]
+                }
+            ];
+        }
+        if (filters.leaveType) {
+            query.leaveType = Array.isArray(filters.leaveType) ? { $in: filters.leaveType } : filters.leaveType;
+        }
+        if (filters.status) {
+            query.status = Array.isArray(filters.status) ? { $in: filters.status } : filters.status;
+        }
+        return await leave_dal_1.leaveDAL.findAll(query, options);
     }
     /**
      * Get leave balance

@@ -88,7 +88,14 @@ const AttendanceSchema = new mongoose_1.Schema({
     approvedAt: { type: Date },
     // Overtime
     overtimeHours: { type: Number, default: 0 },
-    overtimeApproved: { type: Boolean, default: false }
+    overtimeApproved: { type: Boolean, default: false },
+    // Zero-Trust Fields
+    deviceId: { type: String },
+    gpsLatitude: { type: Number },
+    gpsLongitude: { type: Number },
+    wifiBSSID: { type: String },
+    isMockLocation: { type: Boolean, default: false },
+    selfie: { type: String }
 }, {
     timestamps: true
 });

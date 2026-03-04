@@ -10,39 +10,47 @@ export interface IAttendance extends Document {
   date: Date;
   status: keyof typeof ATTENDANCE_STATUS;
   shift: keyof typeof SHIFT_TYPES;
-  
+
   // Time tracking
   checkInTime?: Date;
   checkOutTime?: Date;
   workingHours?: number;
   breakHours?: number;
-  
+
   // Late/Early tracking
   isLate?: boolean;
   lateByMinutes?: number;
   earlyExit?: boolean;
   earlyExitByMinutes?: number;
-  
+
   // Additional info
   remarks?: string;
   biometricId?: string;
-  
+
   // Location tracking (for WFH/Field work)
   location?: {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
     address?: string;
   };
-  
+
   // Approval
-  isApproved: boolean;
+  isApproved?: boolean;
   approvedBy?: Types.ObjectId | string;
   approvedAt?: Date;
-  
+
   // Overtime
   overtimeHours?: number;
   overtimeApproved?: boolean;
-  
+
+  // Zero-Trust Fields
+  deviceId?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  wifiBSSID?: string;
+  isMockLocation?: boolean;
+  selfie?: string; // URL or path
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +75,15 @@ export interface IAttendanceCreateInput {
   workingHours?: number;
   breakHours?: number;
   overtimeHours?: number;
+  isApproved?: boolean;
+
+  // Zero-Trust Payload Fields
+  deviceId?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  wifiBSSID?: string;
+  isMockLocation?: boolean;
+  selfie?: string;
 }
 
 export interface IAttendanceReport {

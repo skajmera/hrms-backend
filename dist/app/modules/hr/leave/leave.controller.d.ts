@@ -9,6 +9,7 @@ export declare class LeaveController {
     getPendingLeaves(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     getEmployeesOnLeaveToday(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     getLeaveBalance(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    getEmployeeLeaves(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const leaveController: LeaveController;
 //# sourceMappingURL=leave.controller.d.ts.map

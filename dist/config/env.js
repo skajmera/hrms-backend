@@ -30,8 +30,8 @@ exports.config = {
         uploadPath: process.env.UPLOAD_PATH || './uploads'
     },
     rateLimit: {
-        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes 900000
+        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000')
     },
     cors: {
         origin: process.env.CORS_ORIGIN || 'http://localhost:5173' || 'https://hrms-backend-khq1.onrender.com/'

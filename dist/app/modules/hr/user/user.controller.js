@@ -10,7 +10,10 @@ class UserController {
      */
     async createUser(req, res, next) {
         try {
-            const user = await user_service_1.userService.createUser(req.body);
+            const createData = req.body;
+            const userId = req.user._id.toString();
+            createData.createdBy = userId;
+            const user = await user_service_1.userService.createUser(createData);
             (0, response_1.sendSuccessResponse)(res, 'User created successfully', user, constants_1.HTTP_STATUS.CREATED);
         }
         catch (error) {
@@ -52,7 +55,10 @@ class UserController {
      */
     async updateUser(req, res, next) {
         try {
-            const user = await user_service_1.userService.updateUser(req.params.id, req.body);
+            const updateData = req.body;
+            const userId = req.user._id.toString();
+            updateData.updatedBy = userId;
+            const user = await user_service_1.userService.updateUser(req.params.id, updateData);
             (0, response_1.sendSuccessResponse)(res, 'User updated successfully', user);
         }
         catch (error) {
