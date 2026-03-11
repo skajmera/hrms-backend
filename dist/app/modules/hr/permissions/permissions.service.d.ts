@@ -18,11 +18,15 @@ export declare class PermissionsService {
      */
     getPermissionByUserId(userId: string): Promise<IUserPermission | any>;
     /**
-     * Update user permissions
+     * Get exact assigned permission by user ID (Returns object, empty object if not found)
      */
-    updatePermissions(userId: string, updateData: Partial<IUserPermission>): Promise<IUserPermission>;
+    getAssignedPermissionByUserId(userId: string): Promise<any>;
     /**
-     * Delete user permissions
+     * Update or create user permissions (Atomic Upsert)
+     */
+    updatePermissions(userId: string, updateData: any): Promise<IUserPermission>;
+    /**
+     * Delete user permissions (Gracefully handles non-existent permissions)
      */
     deletePermissions(userId: string): Promise<void>;
     /**
@@ -30,13 +34,13 @@ export declare class PermissionsService {
      */
     checkPermission(userId: string, module: string, action: 'view' | 'edit' | 'fullAccess'): Promise<boolean>;
     /**
-     * Deactivate user permissions
+     * Deactivate user permissions (gracefully returns null if not found)
      */
-    deactivateUser(userId: string): Promise<IUserPermission>;
+    deactivateUser(userId: string): Promise<IUserPermission | null>;
     /**
-     * Activate user permissions
+     * Activate user permissions (gracefully returns null if not found)
      */
-    activateUser(userId: string): Promise<IUserPermission>;
+    activateUser(userId: string): Promise<IUserPermission | null>;
     /**
      * Get all active users with permissions
      */

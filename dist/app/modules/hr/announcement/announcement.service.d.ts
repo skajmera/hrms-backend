@@ -17,6 +17,7 @@ export declare class AnnouncementService {
     toggleLikeAnnouncement(id: string, userId: string): Promise<any>;
     toggleCommentLikeAnnouncement(id: string, commentId: string, userId: string): Promise<any>;
     addComment(id: string, userId: string, content: string): Promise<any>;
+    addReplyToComment(id: string, commentId: string, userId: string, content: string): Promise<any>;
     deleteComment(id: string, commentId: string, userId: string): Promise<any>;
     /**
      * Inject runtime 'liked' field for frontend consumption

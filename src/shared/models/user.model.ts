@@ -34,6 +34,7 @@ const ExperienceSchema = new Schema({
   startDate: { type: Date, required: false },
   endDate: { type: Date },
   isCurrent: { type: Boolean, default: false },
+  isRelevant: { type: Boolean, default: false }, // NEW
   responsibilities: { type: String },
   location: { type: String }
 }, { _id: false });
@@ -59,11 +60,11 @@ const SalaryDetailsSchema = new Schema({
 
 const ProfessionalDetailsSchema = new Schema({
   sourceOfHire: { type: String, required: false },
-  employeeId: { type: String, required: true, unique: true },
+  employeeId: { type: String, required: false, unique: true, sparse: true },
   biometricId: { type: String, unique: true, sparse: true }, // NEW - For biometric attendance integration
-  designation: { type: String, required: true },
-  department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
-  joiningDate: { type: Date, required: true },
+  designation: { type: String, required: false },
+  department: { type: Schema.Types.ObjectId, ref: 'Department', required: false },
+  joiningDate: { type: Date, required: false },
   employmentStatus: {
     type: String,
     enum: Object.values(EMPLOYMENT_STATUS),
@@ -85,7 +86,9 @@ const ProfessionalDetailsSchema = new Schema({
   shiftTime: ShiftTimeSchema, // Custom shift time
 
   workLocation: { type: String, required: false },
-  salaryDetails: SalaryDetailsSchema
+  salaryDetails: SalaryDetailsSchema,
+  totalExperience: { type: String }, // NEW
+  currentExperience: { type: String } // NEW
 }, { _id: false });
 
 const UserSchema = new Schema<IUser>({
@@ -99,8 +102,9 @@ const UserSchema = new Schema<IUser>({
   lastName: { type: String, required: true, trim: true },
   email: {
     type: String,
-    required: true,
+    required: false, // Changed for Drafts
     unique: true,
+    sparse: true, // Allow multiple nulls/undefined for Drafts
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
@@ -113,7 +117,7 @@ const UserSchema = new Schema<IUser>({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
   },
-  password: { type: String, required: true, minlength: 6, select: false },
+  password: { type: String, required: false, minlength: 6, select: false },
   phone: { type: String, required: false },
   alternatePhone: { type: String },
   dateOfBirth: { type: Date, required: false },
@@ -128,6 +132,10 @@ const UserSchema = new Schema<IUser>({
   // Address
   currentAddress: { type: AddressSchema, required: false },
   permanentAddress: AddressSchema,
+  separationInfo: {
+    dateOfExit: { type: Date },
+    previousCompany: { type: String }
+  },
 
   // Professional Details
   professionalDetails: { type: ProfessionalDetailsSchema, required: false },
@@ -177,6 +185,13 @@ UserSchema.index({ role: 1 });
 // Virtual for full name
 UserSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
+});
+
+// Virtual for profileImage (alias for profilePicture)
+UserSchema.virtual('profileImage').get(function () {
+  return this.profilePicture;
+}).set(function (val: string) {
+  this.profilePicture = val;
 });
 
 // Pre-save middleware to hash password
@@ -253,7 +268,7 @@ UserSchema.post('findOneAndUpdate', async function (doc) {
 
 // Pre-save middleware to set default shift time if not provided
 UserSchema.pre('save', function (next) {
-  if (this.professionalDetails.shift && !this.professionalDetails.shiftTime) {
+  if (this.professionalDetails?.shift && !this.professionalDetails?.shiftTime) {
     const shiftType = this.professionalDetails.shift as keyof typeof SHIFT_TIMINGS;
     const defaultTiming = SHIFT_TIMINGS[shiftType]
 

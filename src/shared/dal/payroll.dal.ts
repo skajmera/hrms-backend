@@ -15,7 +15,7 @@ export class PayrollDAL {
    */
   async findById(id: string): Promise<IPayroll | null> {
     return await PayrollModel.findById(id)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
       .populate('generatedBy', 'firstName lastName')
       .populate('approvedBy', 'firstName lastName');
   }
@@ -31,7 +31,7 @@ export class PayrollDAL {
     const skip = (page - 1) * limit;
 
     const records = await PayrollModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
       .populate('generatedBy', 'firstName lastName')
       .populate('approvedBy', 'firstName lastName')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
@@ -52,22 +52,22 @@ export class PayrollDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
   async updateById(id: string, updateData: Partial<IPayroll>): Promise<IPayroll> {
     const updatedPayroll = await PayrollModel.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: true }
-    ).populate('userId', 'firstName lastName email');
-  
+    ).populate('userId', 'firstName lastName email profilePicture');
+
     if (!updatedPayroll) {
       throw new Error('Payroll not found');
     }
-  
+
     return updatedPayroll;
   }
-  
+
   /**
    * Delete payroll
    */
@@ -80,18 +80,18 @@ export class PayrollDAL {
    */
   async findByUserMonthYear(userId: string, month: number, year: number): Promise<IPayroll | null> {
     return await PayrollModel.findOne({ userId, month, year })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
   }
 
-   async findByUserAndPeriod(
-    userId: string, 
-    month: number, 
+  async findByUserAndPeriod(
+    userId: string,
+    month: number,
     year: number
   ): Promise<IPayroll | null> {
-    return await PayrollModel.findOne({ 
-      userId, 
-      month, 
-      year 
+    return await PayrollModel.findOne({
+      userId,
+      month,
+      year
     })
       .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
       .populate('generatedBy', 'firstName lastName')
@@ -102,7 +102,7 @@ export class PayrollDAL {
    */
   async findByMonthYear(month: number, year: number): Promise<IPayroll[]> {
     return await PayrollModel.find({ month, year })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
@@ -134,63 +134,63 @@ export class PayrollDAL {
       }
     ]);
   }
-/**
-   * Get payroll statistics for dashboard
-   */
- async getPayrollStatsDashboard(month: number, year: number): Promise<any> {
-  const stats = await PayrollModel.aggregate([
-    {
-      $match: { month, year }
-    },
-    {
-      $group: {
-        _id: null,
-        totalPayroll: { $sum: '$netSalary' },
-        paidEmployees: {
-          $sum: { $cond: [{ $eq: ['$paymentStatus', 'PAID'] }, 1, 0] }
-        },
-        pendingPayments: {
-          $sum: { $cond: [{ $eq: ['$paymentStatus', 'PENDING'] }, 1, 0] }
-        },
-        averageSalary: { $avg: '$netSalary' },
-        totalEmployees: { $sum: 1 }
+  /**
+     * Get payroll statistics for dashboard
+     */
+  async getPayrollStatsDashboard(month: number, year: number): Promise<any> {
+    const stats = await PayrollModel.aggregate([
+      {
+        $match: { month, year }
+      },
+      {
+        $group: {
+          _id: null,
+          totalPayroll: { $sum: '$netSalary' },
+          paidEmployees: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'PAID'] }, 1, 0] }
+          },
+          pendingPayments: {
+            $sum: { $cond: [{ $eq: ['$paymentStatus', 'PENDING'] }, 1, 0] }
+          },
+          averageSalary: { $avg: '$netSalary' },
+          totalEmployees: { $sum: 1 }
+        }
       }
-    }
-  ]);
+    ]);
 
-  return stats[0] || {
-    totalPayroll: 0,
-    paidEmployees: 0,
-    pendingPayments: 0,
-    averageSalary: 0,
-    totalEmployees: 0
-  };
-}
+    return stats[0] || {
+      totalPayroll: 0,
+      paidEmployees: 0,
+      pendingPayments: 0,
+      averageSalary: 0,
+      totalEmployees: 0
+    };
+  }
 
 
- /**
-   * Get draft payrolls
-   */
+  /**
+    * Get draft payrolls
+    */
   async getDrafts(month?: number, year?: number): Promise<IPayroll[]> {
-  const filter: any = { isDraft: true };
-  if (month) filter.month = month;
-  if (year) filter.year = year;
+    const filter: any = { isDraft: true };
+    if (month) filter.month = month;
+    if (year) filter.year = year;
 
-  return await PayrollModel.find(filter)
-    .populate('userId', 'firstName lastName email professionalDetails.employeeId')
-    .sort({ createdAt: -1 });
-}
+    return await PayrollModel.find(filter)
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+      .sort({ createdAt: -1 });
+  }
 
   /**
    * Get pending payrolls
    */
-   async getPending(month?: number, year?: number): Promise<IPayroll[]> {
+  async getPending(month?: number, year?: number): Promise<IPayroll[]> {
     const filter: any = { paymentStatus: 'PENDING', isGenerated: true };
     if (month) filter.month = month;
     if (year) filter.year = year;
 
     return await PayrollModel.find(filter)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
       .sort({ createdAt: -1 });
   }
   /**

@@ -21,9 +21,9 @@ export class PermissionsController {
 
       const permission = await permissionsService.inviteUser(inviteData, invitedBy);
 
-      sendSuccessResponse(res, 
-       'User invited successfully with permissions',
-       permission)
+      sendSuccessResponse(res,
+        'User invited successfully with permissions',
+        permission)
     } catch (error) {
       next(error);
     }
@@ -40,6 +40,7 @@ export class PermissionsController {
       const filters: any = {};
       if (role) filters.role = role;
       if (status) filters.status = status;
+      if (search) filters.search = search;
 
       const options = {
         page: parseInt(page as string) || 1,
@@ -50,7 +51,26 @@ export class PermissionsController {
 
       const result = await permissionsService.getAllPermissions(filters, options);
       sendSuccessResponse(res, 'User permissions retrieved successfully', result);
-     
+
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get permissions for the currently logged-in user
+   * GET /api/v1/hr/permissions/my
+   */
+  static async getMyPermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?._id?.toString();
+      if (!userId) {
+        res.status(401).json({ status: 'error', message: 'Unauthorized' });
+        return;
+      }
+
+      const permission = await permissionsService.getPermissionByUserId(userId);
+      sendSuccessResponse(res, 'Your permissions retrieved successfully', permission);
     } catch (error) {
       next(error);
     }
@@ -65,9 +85,33 @@ export class PermissionsController {
       const { userId } = req.params;
       const permission = await permissionsService.getPermissionByUserId(userId);
 
-      sendSuccessResponse(res, 
+      sendSuccessResponse(res,
         'User permissions retrieved successfully',
-         permission
+        permission
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get exact assigned permission for the currently logged-in user (Returns object, empty if not found)
+   * GET /api/v1/hr/permissions/my-assigned
+   */
+  static async getMyAssignedPermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      console.log("req.user", req.user)
+      const userId = req.user?._id?.toString();
+      if (!userId) {
+        res.status(401).json({ status: 'error', message: 'Unauthorized' });
+        return;
+      }
+
+      const permissions = await permissionsService.getAssignedPermissionByUserId(userId);
+
+      sendSuccessResponse(res,
+        'Your assigned permissions retrieved successfully',
+        permissions
       );
     } catch (error) {
       next(error);
@@ -78,16 +122,19 @@ export class PermissionsController {
    * Update user permissions
    * PUT /api/v1/hr/permissions/:userId
    */
-  static async updatePermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async updatePermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
-      const updateData = req.body;
+      const updateData = {
+        ...req.body,
+        invitedBy: req.user?._id
+      };
 
       const permission = await permissionsService.updatePermissions(userId, updateData);
 
       sendSuccessResponse(res,
         'User permissions updated successfully',
-         permission
+        permission
       );
     } catch (error) {
       next(error);
@@ -119,8 +166,8 @@ export class PermissionsController {
       const { userId, module, action } = req.body;
       const hasPermission = await permissionsService.checkPermission(userId, module, action);
 
-      sendSuccessResponse(res,'Permission check completed',
-         { hasPermission }
+      sendSuccessResponse(res, 'Permission check completed',
+        { hasPermission }
       );
     } catch (error) {
       next(error);
@@ -136,8 +183,8 @@ export class PermissionsController {
       const { userId } = req.params;
       const permission = await permissionsService.deactivateUser(userId);
 
-      sendSuccessResponse(res,  'User deactivated successfully',
-   permission
+      sendSuccessResponse(res, 'User deactivated successfully',
+        permission
       );
     } catch (error) {
       next(error);
@@ -154,7 +201,7 @@ export class PermissionsController {
       const permission = await permissionsService.activateUser(userId);
 
       sendSuccessResponse(res, 'User activated successfully',
-       permission
+        permission
       );
     } catch (error) {
       next(error);
@@ -169,8 +216,8 @@ export class PermissionsController {
     try {
       const users = await permissionsService.getActiveUsers();
 
-      sendSuccessResponse(res,'Active users retrieved successfully',
-      users
+      sendSuccessResponse(res, 'Active users retrieved successfully',
+        users
       );
     } catch (error) {
       next(error);

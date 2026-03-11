@@ -1,6 +1,7 @@
 import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { announcementDAL } from '../../../../shared/dal/announcement.dal';
+import { userDAL } from '../../../../shared/dal/user.dal';
 
 export class EmployeeDashboardService {
   async getMyDashboard(userId: string, userRole: string, userDepartment: string) {
@@ -10,6 +11,9 @@ export class EmployeeDashboardService {
 
     // Get attendance summary
     const attendanceStats = await attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear);
+
+    // Get check-in summary (total, late, on-time)
+    const checkInSummary = await attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear);
 
     // Get leave balance
     const leaveBalance = await leaveDAL.getLeaveBalance(userId, currentYear);
@@ -22,10 +26,23 @@ export class EmployeeDashboardService {
 
     return {
       attendance: attendanceStats,
+      checkInSummary,
       leaveBalance,
       pendingLeaves: myLeaves.total,
       announcements: announcements.slice(0, 5)
     };
+  }
+
+  async getBirthdays() {
+    return await userDAL.getBirthdaysToday();
+  }
+
+  async getAnniversary() {
+    return await userDAL.getAnniversaryToday();
+  }
+
+  async getNewHires(days: number = 30, date?: string) {
+    return await userDAL.getNewHires(days, date);
   }
 }
 

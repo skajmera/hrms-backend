@@ -16,6 +16,34 @@ export class EmployeeDashboardController {
       sendErrorResponse(res, error.message);
     }
   }
+
+  async getBirthdays(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const birthdays = await employeeDashboardService.getBirthdays();
+      sendSuccessResponse(res, 'Birthdays retrieved successfully', birthdays);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async getAnniversary(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const anniversaries = await employeeDashboardService.getAnniversary();
+      sendSuccessResponse(res, 'Anniversaries retrieved successfully', anniversaries);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async getNewHires(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { days = 30, date } = req.query;
+      const newHires = await employeeDashboardService.getNewHires(Number(days), date as string);
+      sendSuccessResponse(res, 'New hires retrieved successfully', newHires);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
 }
 
 export const employeeDashboardController = new EmployeeDashboardController();

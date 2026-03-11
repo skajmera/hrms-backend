@@ -17,10 +17,16 @@ const swagger_1 = require("./config/swagger");
 const app = (0, express_1.default)();
 app.set('trust proxy', 1);
 // Security Middleware
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 // CORS Configuration
 app.use((0, cors_1.default)({
-    origin: '*', //config.cors.origin,
+    origin: (origin, callback) => {
+        // Allow all origins for the demo - this is needed because credentials: true 
+        // doesn't work with origin: '*'
+        callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -39,6 +45,8 @@ app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 // Compression Middleware
 app.use((0, compression_1.default)());
+// Serve static files
+app.use('/uploads', express_1.default.static('uploads'));
 // Swagger Documentation
 app.use('/api/v1/docs', (req, res, next) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');

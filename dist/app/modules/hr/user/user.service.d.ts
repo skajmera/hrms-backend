@@ -1,10 +1,21 @@
-import { IUserCreateInput, IUserUpdateInput } from '../../../../shared/interfaces/user.interface';
+import { IUserUpdateInput } from '../../../../shared/interfaces/user.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 export declare class UserService {
     /**
      * Create new user
      */
-    createUser(userData: IUserCreateInput): Promise<import("../../../../shared/interfaces/user.interface").IUser>;
+    createUser(userData: any): Promise<import("../../../../shared/interfaces/user.interface").IUser>;
+    /**
+     * Create draft user
+     */
+    createDraftEmployee(userData: any): Promise<import("../../../../shared/interfaces/user.interface").IUser | null>;
+    /**
+     * Get all draft employees
+     */
+    getDraftEmployees(options: IPaginationOptions): Promise<{
+        users: import("../../../../shared/interfaces/user.interface").IUser[];
+        total: number;
+    }>;
     /**
      * Get user by ID
      */
@@ -25,6 +36,10 @@ export declare class UserService {
      */
     deleteUser(id: string): Promise<import("../../../../shared/interfaces/user.interface").IUser>;
     /**
+     * Delete draft employee
+     */
+    deleteDraftEmployee(id: string): Promise<import("../../../../shared/interfaces/user.interface").IUser | null>;
+    /**
      * Get users by department
      */
     getUsersByDepartment(departmentId: string): Promise<import("../../../../shared/interfaces/user.interface").IUser[]>;
@@ -40,6 +55,14 @@ export declare class UserService {
      * Get user statistics
      */
     getUserStats(): Promise<any>;
+    /**
+     * Get user by employee ID
+     */
+    getUserByEmployeeId(employeeId: string): Promise<import("../../../../shared/interfaces/user.interface").IUser>;
+    /**
+     * Clear registered device ID for a user
+     */
+    clearUserDevice(id: string): Promise<import("../../../../shared/interfaces/user.interface").IUser | null>;
 }
 export declare const userService: UserService;
 //# sourceMappingURL=user.service.d.ts.map

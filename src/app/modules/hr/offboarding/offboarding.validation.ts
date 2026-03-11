@@ -54,4 +54,13 @@ export class OffboardingValidation {
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 })
   ];
+
+  /**
+   * Validation for scheduling exit interview
+   */
+  static scheduleExitInterview = [
+    param('id').isMongoId().withMessage('Invalid offboarding ID'),
+    body('exitInterviewDate').notEmpty().withMessage('Exit interview date is required').isISO8601().withMessage('Invalid date format'),
+    body('exitInterviewNotes').optional().isString().withMessage('Notes must be a string')
+  ];
 }

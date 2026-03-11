@@ -39,6 +39,36 @@ router.get('/', async (req, res) => {
 });
 /**
  * @swagger
+ * /hr/holidays/{id}:
+ *   delete:
+ *     summary: Delete a holiday
+ *     tags: [Holidays]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Holiday deleted successfully
+ */
+router.delete('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), async (req, res) => {
+    try {
+        const holiday = await holiday_dal_1.holidayDAL.delete(req.params.id);
+        if (!holiday) {
+            return (0, response_1.sendErrorResponse)(res, 'Holiday not found', constants_2.HTTP_STATUS.NOT_FOUND);
+        }
+        (0, response_1.sendSuccessResponse)(res, 'Holiday deleted successfully');
+    }
+    catch (error) {
+        (0, response_1.sendErrorResponse)(res, error.message, constants_2.HTTP_STATUS.BAD_REQUEST);
+    }
+});
+/**
+ * @swagger
  * /hr/holidays:
  *   post:
  *     summary: Create holiday

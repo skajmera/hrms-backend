@@ -23,6 +23,18 @@ const auth_middleware_1 = require("../../../../shared/middlewares/auth.middlewar
 const validation_1 = require("../../../../shared/middlewares/validation");
 const constants_1 = require("../../../../config/constants");
 const announcement_validation_1 = require("./announcement.validation");
+const upload_middleware_1 = require("../../../../shared/middlewares/upload.middleware");
+const parseAnnouncementBody = (req, res, next) => {
+    if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
+        try {
+            req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        }
+        catch (e) {
+            // let validation handle the error
+        }
+    }
+    next();
+};
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate);
 /**
@@ -261,7 +273,7 @@ router.get('/:id', announcement_controller_1.announcementController.getAnnouncem
  *       400:
  *         description: Validation error
  */
-router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(announcement_validation_1.createAnnouncementValidation), announcement_controller_1.announcementController.createAnnouncement.bind(announcement_controller_1.announcementController));
+router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.announcementUpload.array('attachments', 5), parseAnnouncementBody, (0, validation_1.validate)(announcement_validation_1.createAnnouncementValidation), announcement_controller_1.announcementController.createAnnouncement.bind(announcement_controller_1.announcementController));
 /**
  * @swagger
  * /hr/announcements/{id}:
@@ -302,7 +314,7 @@ router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_A
  *       404:
  *         description: Announcement not found
  */
-router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), announcement_controller_1.announcementController.updateAnnouncement.bind(announcement_controller_1.announcementController));
+router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.announcementUpload.array('attachments', 5), parseAnnouncementBody, announcement_controller_1.announcementController.updateAnnouncement.bind(announcement_controller_1.announcementController));
 /**
  * @swagger
  * /hr/announcements/{id}:
@@ -478,5 +490,42 @@ router.post('/:id/comments/:commentId/like', announcement_controller_1.announcem
  *         description: Comment deleted
  */
 router.delete('/:id/comments/:commentId', announcement_controller_1.announcementController.deleteComment.bind(announcement_controller_1.announcementController));
+/**
+ * @swagger
+ * /hr/announcements/{id}/comments/{commentId}/replies:
+ *   post:
+ *     summary: Add a threaded reply to a comment
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reply added successfully
+ */
+router.post('/:id/comments/:commentId/replies', announcement_controller_1.announcementController.replyToComment.bind(announcement_controller_1.announcementController));
 exports.default = router;
 //# sourceMappingURL=announcement.route.js.map

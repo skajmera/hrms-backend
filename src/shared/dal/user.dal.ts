@@ -8,6 +8,10 @@ export class UserDAL {
    */
   async create(userData: IUserCreateInput): Promise<IUser> {
     const user = await UserModel.create(userData);
+    await user.populate([
+      { path: 'createdBy', select: 'firstName lastName email profilePicture' },
+      { path: 'updatedBy', select: 'firstName lastName email profilePicture' }
+    ]);
     return user;
   }
 
@@ -18,7 +22,9 @@ export class UserDAL {
     const query = UserModel.findById(id)
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.designation', 'name code level')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email');
+      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
 
     if (selectPassword) {
       query.select('+password');
@@ -47,7 +53,9 @@ export class UserDAL {
     return await UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.designation', 'name code level')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email');
+      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -66,6 +74,8 @@ export class UserDAL {
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -75,30 +85,36 @@ export class UserDAL {
     return { users, total };
   }
 
-  /**
-   * Update user by ID
-   */
   async update(id: string, updateData: any): Promise<IUser | null> {
-    // Sanitize empty strings for ObjectId and other fields
-    if (updateData.professionalDetails) {
-      const pd = updateData.professionalDetails;
+    // Check if updateData already contains MongoDB operators (e.g., $unset)
+    const hasOperators = Object.keys(updateData).some(key => key.startsWith('$'));
 
-      // Fields that should be null if empty
-      if (pd.reportingManager === '') pd.reportingManager = null;
-      if (pd.department === '') pd.department = null;
-      if (pd.designation === '') pd.designation = null;
+    if (!hasOperators) {
+      // Sanitize empty strings for ObjectId and other fields
+      if (updateData.professionalDetails) {
+        const pd = updateData.professionalDetails;
 
-      // Clean up other potential empty strings that might cause issues
-      if (updateData.adhaarNumber === '') updateData.adhaarNumber = undefined;
-      if (updateData.panNumber === '') updateData.panNumber = undefined;
-      if (updateData.profilePicture === '') updateData.profilePicture = undefined;
+        // Fields that should be null if empty or literal "null"
+        if (['', 'null', 'undefined'].includes(pd.reportingManager)) pd.reportingManager = null;
+        if (['', 'null', 'undefined'].includes(pd.department)) pd.department = null;
+        if (['', 'null', 'undefined'].includes(pd.designation)) pd.designation = null;
+
+        // Clean up other potential empty strings that might cause issues
+        if (updateData.adhaarNumber === '') updateData.adhaarNumber = undefined;
+        if (updateData.panNumber === '') updateData.panNumber = undefined;
+        if (updateData.profilePicture === '') updateData.profilePicture = undefined;
+      }
+
+      updateData = { $set: updateData };
     }
 
     return await UserModel.findByIdAndUpdate(
       id,
-      { $set: updateData },
+      updateData,
       { new: true, runValidators: false }
-    );
+    )
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -124,7 +140,9 @@ export class UserDAL {
    */
   async findByDepartment(departmentId: string): Promise<IUser[]> {
     return await UserModel.find({ 'professionalDetails.department': departmentId, isActive: true })
-      .populate('professionalDetails.reportingManager', 'firstName lastName email');
+      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -133,7 +151,9 @@ export class UserDAL {
   async findByRole(role: string): Promise<IUser[]> {
     return await UserModel.find({ role, isActive: true })
       .populate('professionalDetails.department', 'name code')
-      .populate('professionalDetails.designation', 'name code level');
+      .populate('professionalDetails.designation', 'name code level')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -213,10 +233,10 @@ export class UserDAL {
   /**
    * Get recently joined users
    */
-  async getNewHires(days: number = 30): Promise<any[]> {
-    const today = new Date();
+  async getNewHires(days: number = 30, date?: string): Promise<any[]> {
+    const today = date ? new Date(date) : new Date();
 
-    const dateThreshold = new Date();
+    const dateThreshold = new Date(today);
     dateThreshold.setDate(dateThreshold.getDate() - days);
 
     return await UserModel.aggregate([
@@ -334,21 +354,67 @@ export class UserDAL {
   }
 
   /**
-   * Search users
+   * Search users by name, email, or employee ID
    */
   async search(searchTerm: string): Promise<IUser[]> {
+    const searchRegex = { $regex: searchTerm, $options: 'i' };
+    const parts = searchTerm.trim().split(/\s+/);
+
+    const orQuery: any[] = [
+      { firstName: searchRegex },
+      { lastName: searchRegex },
+      { email: searchRegex },
+      { 'professionalDetails.employeeId': searchRegex }
+    ];
+
+    // If search term has multiple words, try matching first and last name combinations
+    if (parts.length >= 2) {
+      orQuery.push({
+        $and: [
+          { firstName: { $regex: parts[0], $options: 'i' } },
+          { lastName: { $regex: parts[parts.length - 1], $options: 'i' } }
+        ]
+      });
+    }
+
     return await UserModel.find({
-      $or: [
-        { firstName: { $regex: searchTerm, $options: 'i' } },
-        { lastName: { $regex: searchTerm, $options: 'i' } },
-        { email: { $regex: searchTerm, $options: 'i' } },
-        { 'professionalDetails.employeeId': { $regex: searchTerm, $options: 'i' } }
-      ],
+      $or: orQuery,
       isActive: true
     })
       .populate('professionalDetails.department', 'name code')
       .populate('professionalDetails.designation', 'name code level')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture')
       .limit(20);
+  }
+
+  /**
+   * Find user by full name
+   */
+  async findByName(name: string): Promise<IUser | null> {
+    const parts = name.trim().split(/\s+/);
+    let query: any = {};
+
+    if (parts.length === 1) {
+      query = {
+        $or: [
+          { firstName: { $regex: `^${parts[0]}$`, $options: 'i' } },
+          { lastName: { $regex: `^${parts[0]}$`, $options: 'i' } }
+        ]
+      };
+    } else {
+      // Try exact match on first and last name
+      query = {
+        firstName: { $regex: `^${parts[0]}$`, $options: 'i' },
+        lastName: { $regex: `^${parts[parts.length - 1]}$`, $options: 'i' }
+      };
+    }
+
+    return await UserModel.findOne({ ...query, isActive: true })
+      .populate('professionalDetails.department', 'name code')
+      .populate('professionalDetails.designation', 'name code level')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture');
   }
 
   /**

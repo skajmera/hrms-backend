@@ -42,6 +42,7 @@ export declare const EMPLOYMENT_STATUS: {
     readonly RESIGNED: "RESIGNED";
     readonly TERMINATED: "TERMINATED";
     readonly RETIRED: "RETIRED";
+    readonly DRAFT: "DRAFT";
 };
 export declare const PAYMENT_STATUS: {
     readonly PENDING: "PENDING";

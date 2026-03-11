@@ -35,6 +35,8 @@ class PermissionsController {
                 filters.role = role;
             if (status)
                 filters.status = status;
+            if (search)
+                filters.search = search;
             const options = {
                 page: parseInt(page) || 1,
                 limit: parseInt(limit) || 10,
@@ -43,6 +45,24 @@ class PermissionsController {
             };
             const result = await permissions_service_1.permissionsService.getAllPermissions(filters, options);
             (0, response_1.sendSuccessResponse)(res, 'User permissions retrieved successfully', result);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    /**
+     * Get permissions for the currently logged-in user
+     * GET /api/v1/hr/permissions/my
+     */
+    static async getMyPermissions(req, res, next) {
+        try {
+            const userId = req.user?._id?.toString();
+            if (!userId) {
+                res.status(401).json({ status: 'error', message: 'Unauthorized' });
+                return;
+            }
+            const permission = await permissions_service_1.permissionsService.getPermissionByUserId(userId);
+            (0, response_1.sendSuccessResponse)(res, 'Your permissions retrieved successfully', permission);
         }
         catch (error) {
             next(error);
@@ -63,13 +83,35 @@ class PermissionsController {
         }
     }
     /**
+     * Get exact assigned permission for the currently logged-in user (Returns object, empty if not found)
+     * GET /api/v1/hr/permissions/my-assigned
+     */
+    static async getMyAssignedPermissions(req, res, next) {
+        try {
+            console.log("req.user", req.user);
+            const userId = req.user?._id?.toString();
+            if (!userId) {
+                res.status(401).json({ status: 'error', message: 'Unauthorized' });
+                return;
+            }
+            const permissions = await permissions_service_1.permissionsService.getAssignedPermissionByUserId(userId);
+            (0, response_1.sendSuccessResponse)(res, 'Your assigned permissions retrieved successfully', permissions);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    /**
      * Update user permissions
      * PUT /api/v1/hr/permissions/:userId
      */
     static async updatePermissions(req, res, next) {
         try {
             const { userId } = req.params;
-            const updateData = req.body;
+            const updateData = {
+                ...req.body,
+                invitedBy: req.user?._id
+            };
             const permission = await permissions_service_1.permissionsService.updatePermissions(userId, updateData);
             (0, response_1.sendSuccessResponse)(res, 'User permissions updated successfully', permission);
         }

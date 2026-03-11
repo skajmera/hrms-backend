@@ -13,6 +13,34 @@ class EmployeeDashboardController {
             (0, response_1.sendErrorResponse)(res, error.message);
         }
     }
+    async getBirthdays(req, res, next) {
+        try {
+            const birthdays = await dashboard_service_1.employeeDashboardService.getBirthdays();
+            (0, response_1.sendSuccessResponse)(res, 'Birthdays retrieved successfully', birthdays);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getAnniversary(req, res, next) {
+        try {
+            const anniversaries = await dashboard_service_1.employeeDashboardService.getAnniversary();
+            (0, response_1.sendSuccessResponse)(res, 'Anniversaries retrieved successfully', anniversaries);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getNewHires(req, res, next) {
+        try {
+            const { days = 30, date } = req.query;
+            const newHires = await dashboard_service_1.employeeDashboardService.getNewHires(Number(days), date);
+            (0, response_1.sendSuccessResponse)(res, 'New hires retrieved successfully', newHires);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
 }
 exports.EmployeeDashboardController = EmployeeDashboardController;
 exports.employeeDashboardController = new EmployeeDashboardController();

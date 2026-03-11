@@ -9,7 +9,7 @@ export class AuthService {
    * Register new user
    */
   async register(userData: IUserCreateInput): Promise<IAuthResponse> {
-    const existingUser = await userDAL.findByEmail(userData.email);
+    const existingUser = await userDAL.findByEmail(userData.email!);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }

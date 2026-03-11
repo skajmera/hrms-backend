@@ -58,6 +58,10 @@ export declare class AnnouncementDAL {
      * Delete comment from announcement
      */
     deleteComment(id: string, commentId: string, userId: string): Promise<IAnnouncement | null>;
+    /**
+     * Add a reply to a comment
+     */
+    addReply(id: string, commentId: string, userId: string, content: string): Promise<IAnnouncement | null>;
 }
 export declare const announcementDAL: AnnouncementDAL;
 //# sourceMappingURL=announcement.dal.d.ts.map

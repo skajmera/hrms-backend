@@ -34,6 +34,7 @@ export class OffboardingService {
     const offboardingData: Partial<IOffboarding> = {
       userId: user._id,
       employeeId: user.professionalDetails.employeeId,
+      biometricId: user.professionalDetails.biometricId,
       employeeName: `${user.firstName} ${user.lastName}`,
       designation: user.professionalDetails.designation,
       department: user.professionalDetails.department,
@@ -109,10 +110,7 @@ export class OffboardingService {
 
     // Update user status to resigned
     await userDAL.update(offboarding.userId?._id.toString(), {
-    //   'professionalDetails.employmentStatus': 'RESIGNED'
-    professionalDetails: {
-        employmentStatus: 'RESIGNED'
-      }
+      'professionalDetails.employmentStatus': 'RESIGNED'
     });
 
     return await OffboardingDAL.updateById(offboardingId, updateData);
@@ -154,10 +152,7 @@ export class OffboardingService {
 
     // Revert user status back to active
     await userDAL.update(offboarding.userId.toString(), {
-    //   'professionalDetails.employmentStatus': 'ACTIVE'
-      professionalDetails: {
-        employmentStatus: 'ACTIVE'
-      }
+      'professionalDetails.employmentStatus': 'ACTIVE'
     });
 
     return await OffboardingDAL.updateById(offboardingId, updateData);
@@ -175,7 +170,7 @@ export class OffboardingService {
 
     // Check if all clearances are completed
     const clearance = offboarding.clearance;
-    const allClearancesCompleted = 
+    const allClearancesCompleted =
       clearance.assetReturn.status === 'COMPLETED' &&
       clearance.itClearance.status === 'COMPLETED' &&
       clearance.financeClearance.status === 'COMPLETED' &&
@@ -192,10 +187,7 @@ export class OffboardingService {
     // Update user status
     await userDAL.update(offboarding.userId.toString(), {
       isActive: false,
-    //   'professionalDetails.employmentStatus': 'RESIGNED'
-    professionalDetails: {
-        employmentStatus: 'RESIGNED'
-      }
+      'professionalDetails.employmentStatus': 'RESIGNED'
     });
 
     return await OffboardingDAL.updateById(offboardingId, updateData);
@@ -205,7 +197,7 @@ export class OffboardingService {
    * Update clearance status
    */
   static async updateClearance(
-    offboardingId: string, 
+    offboardingId: string,
     clearanceType: 'assetReturn' | 'itClearance' | 'financeClearance' | 'hrClearance',
     status: 'PENDING' | 'COMPLETED',
     notes?: string
@@ -245,7 +237,7 @@ export class OffboardingService {
     const stats = await OffboardingDAL.getStats(month, year);
     const pending = await OffboardingDAL.countByStatus('PENDING');
     const noticePeriod = await OffboardingDAL.countByStatus('NOTICE_PERIOD');
-    
+
     return {
       stats,
       pending,

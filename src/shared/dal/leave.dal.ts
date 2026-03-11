@@ -170,7 +170,16 @@ export class LeaveDAL {
    */
   async updateLeaveBalanceAfterApproval(leave: ILeave): Promise<void> {
     const year = leave.startDate.getFullYear();
-    const balance = await this.getLeaveBalance(leave.userId._id.toString(), year);
+
+    // Safely get userId string
+    const userId = leave.userId?._id ? leave.userId._id.toString() : leave.userId?.toString();
+
+    if (!userId) {
+      console.error(`Cannot update leave balance: userId is missing for leave ${leave._id}`);
+      return;
+    }
+
+    const balance = await this.getLeaveBalance(userId, year);
 
     if (balance) {
       const leaveType = leave.leaveType.toLowerCase() + 'Leave';
@@ -181,31 +190,33 @@ export class LeaveDAL {
         currentBalance.remaining = currentBalance.total - currentBalance.used;
         await balance.save();
       }
+    } else {
+      console.warn(`No leave balance found for user ${userId} in year ${year}`);
     }
   }
   /**
  * Get leaves by date range
  * Returns all leaves that overlap with the given date range
  */
- async findByDateRange(startDate: Date, endDate: Date): Promise<ILeave[]> {
-  return await LeaveModel.find({
-    $or: [
-      // Leave starts within the range
-      { startDate: { $gte: startDate, $lte: endDate } },
-      // Leave ends within the range
-      { endDate: { $gte: startDate, $lte: endDate } },
-      // Leave spans the entire range
-      { 
-        startDate: { $lte: startDate }, 
-        endDate: { $gte: endDate } 
-      }
-    ],
-    status: LEAVE_STATUS.APPROVED // Only count approved leaves
-  })
-    .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-    .populate('approvedBy', 'firstName lastName')
-    .sort({ startDate: 1 });
-}
+  async findByDateRange(startDate: Date, endDate: Date): Promise<ILeave[]> {
+    return await LeaveModel.find({
+      $or: [
+        // Leave starts within the range
+        { startDate: { $gte: startDate, $lte: endDate } },
+        // Leave ends within the range
+        { endDate: { $gte: startDate, $lte: endDate } },
+        // Leave spans the entire range
+        {
+          startDate: { $lte: startDate },
+          endDate: { $gte: endDate }
+        }
+      ],
+      status: LEAVE_STATUS.APPROVED // Only count approved leaves
+    })
+      .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+      .populate('approvedBy', 'firstName lastName')
+      .sort({ startDate: 1 });
+  }
 }
 
 export const leaveDAL = new LeaveDAL();

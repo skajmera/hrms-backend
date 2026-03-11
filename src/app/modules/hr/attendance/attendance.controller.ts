@@ -18,16 +18,16 @@ export class AttendanceController {
         attendanceData.selfie = req.file.path;
       }
 
-      // Ensure userId is from token
-      const userId = req.user?.id;
+      // Use userId from body if provided (HR marking for others), otherwise use token ID
+      const userId = req.body.userId || req.user?._id?.toString() || req.user?.id;
       if (!userId) {
-        throw new Error('Unauthorized');
+        throw new Error('User ID is required');
       }
 
       const result = await attendanceService.markAttendance({
         ...attendanceData,
         userId,
-        date: new Date()
+        date: attendanceData.date || new Date()
       });
 
       sendSuccessResponse(
@@ -75,7 +75,7 @@ export class AttendanceController {
     }
   }
 
-  async getAttendanceById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getAttendanceById(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const attendance = await attendanceService.getAttendanceById(req.params.id);
       sendSuccessResponse(res, 'Attendance retrieved successfully', attendance);
@@ -84,7 +84,7 @@ export class AttendanceController {
     }
   }
 
-  async getAllAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getAllAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc', ...filters } = req.query;
       const { userId, startDate, endDate, status }: any = req.query
@@ -123,7 +123,7 @@ export class AttendanceController {
     }
   }
 
-  async updateAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async updateAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const attendance = await attendanceService.updateAttendance(req.params.id, req.body);
       sendSuccessResponse(res, 'Attendance updated successfully', attendance);
@@ -132,7 +132,7 @@ export class AttendanceController {
     }
   }
 
-  async deleteAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async deleteAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       await attendanceService.deleteAttendance(req.params.id);
       sendSuccessResponse(res, 'Attendance deleted successfully');
@@ -141,7 +141,7 @@ export class AttendanceController {
     }
   }
 
-  async getTodayAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getTodayAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const attendance = await attendanceService.getTodayAttendance();
       sendSuccessResponse(res, "Today's attendance retrieved successfully", attendance);
@@ -150,7 +150,7 @@ export class AttendanceController {
     }
   }
 
-  async getUserAttendanceReport(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getUserAttendanceReport(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId, month, year } = req.params;
       const report = await attendanceService.getUserAttendanceReport(userId, Number(month), Number(year));
@@ -160,7 +160,7 @@ export class AttendanceController {
     }
   }
 
-  async getEmployeeTodayAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getEmployeeTodayAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
       const attendance = await attendanceService.getEmployeeTodayAttendance(userId);

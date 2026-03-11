@@ -30,6 +30,7 @@ class OffboardingService {
         const offboardingData = {
             userId: user._id,
             employeeId: user.professionalDetails.employeeId,
+            biometricId: user.professionalDetails.biometricId,
             employeeName: `${user.firstName} ${user.lastName}`,
             designation: user.professionalDetails.designation,
             department: user.professionalDetails.department,
@@ -96,10 +97,7 @@ class OffboardingService {
         };
         // Update user status to resigned
         await user_dal_1.userDAL.update(offboarding.userId?._id.toString(), {
-            //   'professionalDetails.employmentStatus': 'RESIGNED'
-            professionalDetails: {
-                employmentStatus: 'RESIGNED'
-            }
+            'professionalDetails.employmentStatus': 'RESIGNED'
         });
         return await offboarding_dal_1.OffboardingDAL.updateById(offboardingId, updateData);
     }
@@ -132,10 +130,7 @@ class OffboardingService {
         };
         // Revert user status back to active
         await user_dal_1.userDAL.update(offboarding.userId.toString(), {
-            //   'professionalDetails.employmentStatus': 'ACTIVE'
-            professionalDetails: {
-                employmentStatus: 'ACTIVE'
-            }
+            'professionalDetails.employmentStatus': 'ACTIVE'
         });
         return await offboarding_dal_1.OffboardingDAL.updateById(offboardingId, updateData);
     }
@@ -162,10 +157,7 @@ class OffboardingService {
         // Update user status
         await user_dal_1.userDAL.update(offboarding.userId.toString(), {
             isActive: false,
-            //   'professionalDetails.employmentStatus': 'RESIGNED'
-            professionalDetails: {
-                employmentStatus: 'RESIGNED'
-            }
+            'professionalDetails.employmentStatus': 'RESIGNED'
         });
         return await offboarding_dal_1.OffboardingDAL.updateById(offboardingId, updateData);
     }

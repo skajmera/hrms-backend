@@ -7,6 +7,13 @@ export class AnnouncementDAL {
    * Create announcement
    */
   async create(announcementData: IAnnouncementCreateInput & { createdBy: string }): Promise<IAnnouncement> {
+    // Sanitize junk frontend data if announcement is global to prevent CastErrors
+    if (announcementData.targetAudience?.isGlobal) {
+      announcementData.targetAudience.departments = [];
+      announcementData.targetAudience.roles = [];
+      announcementData.targetAudience.specificUsers = [];
+    }
+
     return await AnnouncementModel.create(announcementData);
   }
 
@@ -227,6 +234,31 @@ export class AnnouncementDAL {
       .populate('likes', 'firstName lastName profilePicture')
       .populate('comments.userId', 'firstName lastName profilePicture')
       .populate('comments.likes', 'firstName lastName profilePicture');
+  }
+
+  /**
+   * Add a reply to a comment
+   */
+  async addReply(id: string, commentId: string, userId: string, content: string): Promise<IAnnouncement | null> {
+    return await AnnouncementModel.findOneAndUpdate(
+      { _id: id, "comments._id": commentId },
+      {
+        $push: {
+          "comments.$.replies": {
+            userId,
+            content,
+            likes: [],
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    )
+      .populate('likes', 'firstName lastName profilePicture')
+      .populate('comments.userId', 'firstName lastName profilePicture')
+      .populate('comments.likes', 'firstName lastName profilePicture')
+      .populate('comments.replies.userId', 'firstName lastName profilePicture')
+      .populate('comments.replies.likes', 'firstName lastName profilePicture');
   }
 }
 

@@ -8,6 +8,10 @@ class UserDAL {
      */
     async create(userData) {
         const user = await user_model_1.UserModel.create(userData);
+        await user.populate([
+            { path: 'createdBy', select: 'firstName lastName email profilePicture' },
+            { path: 'updatedBy', select: 'firstName lastName email profilePicture' }
+        ]);
         return user;
     }
     /**
@@ -17,7 +21,9 @@ class UserDAL {
         const query = user_model_1.UserModel.findById(id)
             .populate('professionalDetails.department', 'name code')
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
         if (selectPassword) {
             query.select('+password');
         }
@@ -40,7 +46,9 @@ class UserDAL {
         return await user_model_1.UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
             .populate('professionalDetails.department', 'name code')
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Find all users with filters and pagination
@@ -53,35 +61,41 @@ class UserDAL {
             .populate('professionalDetails.department', 'name code')
             .populate('professionalDetails.designation', 'name code level')
             .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
         const total = await user_model_1.UserModel.countDocuments(query);
         return { users, total };
     }
-    /**
-     * Update user by ID
-     */
     async update(id, updateData) {
-        // Sanitize empty strings for ObjectId and other fields
-        if (updateData.professionalDetails) {
-            const pd = updateData.professionalDetails;
-            // Fields that should be null if empty
-            if (pd.reportingManager === '')
-                pd.reportingManager = null;
-            if (pd.department === '')
-                pd.department = null;
-            if (pd.designation === '')
-                pd.designation = null;
-            // Clean up other potential empty strings that might cause issues
-            if (updateData.adhaarNumber === '')
-                updateData.adhaarNumber = undefined;
-            if (updateData.panNumber === '')
-                updateData.panNumber = undefined;
-            if (updateData.profilePicture === '')
-                updateData.profilePicture = undefined;
+        // Check if updateData already contains MongoDB operators (e.g., $unset)
+        const hasOperators = Object.keys(updateData).some(key => key.startsWith('$'));
+        if (!hasOperators) {
+            // Sanitize empty strings for ObjectId and other fields
+            if (updateData.professionalDetails) {
+                const pd = updateData.professionalDetails;
+                // Fields that should be null if empty or literal "null"
+                if (['', 'null', 'undefined'].includes(pd.reportingManager))
+                    pd.reportingManager = null;
+                if (['', 'null', 'undefined'].includes(pd.department))
+                    pd.department = null;
+                if (['', 'null', 'undefined'].includes(pd.designation))
+                    pd.designation = null;
+                // Clean up other potential empty strings that might cause issues
+                if (updateData.adhaarNumber === '')
+                    updateData.adhaarNumber = undefined;
+                if (updateData.panNumber === '')
+                    updateData.panNumber = undefined;
+                if (updateData.profilePicture === '')
+                    updateData.profilePicture = undefined;
+            }
+            updateData = { $set: updateData };
         }
-        return await user_model_1.UserModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: false });
+        return await user_model_1.UserModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: false })
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Delete user by ID (soft delete)
@@ -100,7 +114,9 @@ class UserDAL {
      */
     async findByDepartment(departmentId) {
         return await user_model_1.UserModel.find({ 'professionalDetails.department': departmentId, isActive: true })
-            .populate('professionalDetails.reportingManager', 'firstName lastName email');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Find users by role
@@ -108,7 +124,9 @@ class UserDAL {
     async findByRole(role) {
         return await user_model_1.UserModel.find({ role, isActive: true })
             .populate('professionalDetails.department', 'name code')
-            .populate('professionalDetails.designation', 'name code level');
+            .populate('professionalDetails.designation', 'name code level')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Get users with birthdays today
@@ -184,9 +202,9 @@ class UserDAL {
     /**
      * Get recently joined users
      */
-    async getNewHires(days = 30) {
-        const today = new Date();
-        const dateThreshold = new Date();
+    async getNewHires(days = 30, date) {
+        const today = date ? new Date(date) : new Date();
+        const dateThreshold = new Date(today);
         dateThreshold.setDate(dateThreshold.getDate() - days);
         return await user_model_1.UserModel.aggregate([
             // 1️⃣ Only active users
@@ -295,21 +313,62 @@ class UserDAL {
         await user_model_1.UserModel.findByIdAndUpdate(id, { lastLogin: new Date() });
     }
     /**
-     * Search users
+     * Search users by name, email, or employee ID
      */
     async search(searchTerm) {
+        const searchRegex = { $regex: searchTerm, $options: 'i' };
+        const parts = searchTerm.trim().split(/\s+/);
+        const orQuery = [
+            { firstName: searchRegex },
+            { lastName: searchRegex },
+            { email: searchRegex },
+            { 'professionalDetails.employeeId': searchRegex }
+        ];
+        // If search term has multiple words, try matching first and last name combinations
+        if (parts.length >= 2) {
+            orQuery.push({
+                $and: [
+                    { firstName: { $regex: parts[0], $options: 'i' } },
+                    { lastName: { $regex: parts[parts.length - 1], $options: 'i' } }
+                ]
+            });
+        }
         return await user_model_1.UserModel.find({
-            $or: [
-                { firstName: { $regex: searchTerm, $options: 'i' } },
-                { lastName: { $regex: searchTerm, $options: 'i' } },
-                { email: { $regex: searchTerm, $options: 'i' } },
-                { 'professionalDetails.employeeId': { $regex: searchTerm, $options: 'i' } }
-            ],
+            $or: orQuery,
             isActive: true
         })
             .populate('professionalDetails.department', 'name code')
             .populate('professionalDetails.designation', 'name code level')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture')
             .limit(20);
+    }
+    /**
+     * Find user by full name
+     */
+    async findByName(name) {
+        const parts = name.trim().split(/\s+/);
+        let query = {};
+        if (parts.length === 1) {
+            query = {
+                $or: [
+                    { firstName: { $regex: `^${parts[0]}$`, $options: 'i' } },
+                    { lastName: { $regex: `^${parts[0]}$`, $options: 'i' } }
+                ]
+            };
+        }
+        else {
+            // Try exact match on first and last name
+            query = {
+                firstName: { $regex: `^${parts[0]}$`, $options: 'i' },
+                lastName: { $regex: `^${parts[parts.length - 1]}$`, $options: 'i' }
+            };
+        }
+        return await user_model_1.UserModel.findOne({ ...query, isActive: true })
+            .populate('professionalDetails.department', 'name code')
+            .populate('professionalDetails.designation', 'name code level')
+            .populate('createdBy', 'firstName lastName email profilePicture')
+            .populate('updatedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Get user count by status

@@ -7,8 +7,9 @@ export declare class DashboardService {
             late: number;
             wfh: number;
             onLeave: number;
-            getYetToCheckInCount: number;
+            yetToCheckIn: number;
         };
+        checkInSummary: any;
         leaves: {
             pending: number;
             onLeaveToday: number;
@@ -16,7 +17,7 @@ export declare class DashboardService {
         newHires: number;
     }>;
     getBirthdays(): Promise<import("../../../../shared/interfaces/user.interface").IUser[]>;
-    getNewHires(days?: number): Promise<any[]>;
+    getNewHires(days?: number, date?: string): Promise<any[]>;
     getRecentAnnouncements(userId: string, userRole: string, userDepartment: string): Promise<import("../../../../shared/interfaces/announcement.interface").IAnnouncement[]>;
     getAnniversary(): Promise<import("../../../../shared/interfaces/user.interface").IUser[]>;
     /**

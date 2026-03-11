@@ -16,15 +16,15 @@ class AttendanceController {
             if (req.file) {
                 attendanceData.selfie = req.file.path;
             }
-            // Ensure userId is from token
-            const userId = req.user?.id;
+            // Use userId from body if provided (HR marking for others), otherwise use token ID
+            const userId = req.body.userId || req.user?._id?.toString() || req.user?.id;
             if (!userId) {
-                throw new Error('Unauthorized');
+                throw new Error('User ID is required');
             }
             const result = await attendance_service_1.attendanceService.markAttendance({
                 ...attendanceData,
                 userId,
-                date: new Date()
+                date: attendanceData.date || new Date()
             });
             (0, response_1.sendSuccessResponse)(res, `${result.type} successful`, result.attendance, constants_1.HTTP_STATUS.CREATED);
         }

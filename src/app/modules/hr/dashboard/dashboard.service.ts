@@ -6,11 +6,18 @@ import { LeaveModel, LeaveBalanceModel } from '../../../../shared/models/leave.m
 
 export class DashboardService {
   async getDashboardStats() {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+
     const totalUsers = await userDAL.findAll({ isActive: true });
     const todayAttendance = await attendanceDAL.getTodayAttendance();
     const pendingLeaves = await leaveDAL.getPendingLeaves();
     const employeesOnLeave = await leaveDAL.getEmployeesOnLeaveToday();
     const getYetToCheckInCount = await userDAL.getYetToCheckInCount();
+
+    // Get aggregate monthly check-in summary
+    const checkInSummary = await attendanceDAL.getMonthlyCheckInSummary(currentMonth, currentYear);
 
     const presentCount = todayAttendance.filter(a => a.status === 'PRESENT').length;
     const absentCount = todayAttendance.filter(a => a.status === 'ABSENT').length;
@@ -18,6 +25,7 @@ export class DashboardService {
     const wfhCount = todayAttendance.filter(a => a.status === 'WFH').length;
 
     const newHires = await userDAL.getNewHires(30);
+
     return {
       totalEmployees: totalUsers.total,
       attendance: {
@@ -26,8 +34,9 @@ export class DashboardService {
         late: lateCount,
         wfh: wfhCount,
         onLeave: employeesOnLeave.length,
-        getYetToCheckInCount: getYetToCheckInCount
+        yetToCheckIn: getYetToCheckInCount
       },
+      checkInSummary,
       leaves: {
         pending: pendingLeaves.length,
         onLeaveToday: employeesOnLeave.length
@@ -40,8 +49,8 @@ export class DashboardService {
     return await userDAL.getBirthdaysToday();
   }
 
-  async getNewHires(days: number = 30) {
-    return await userDAL.getNewHires(days);
+  async getNewHires(days: number = 30, date?: string) {
+    return await userDAL.getNewHires(days, date);
   }
 
   async getRecentAnnouncements(userId: string, userRole: string, userDepartment: string) {
@@ -96,7 +105,7 @@ export class DashboardService {
     });
 
     // Calculate percentage change
-    const percentageChange : any = lastMonthRequests > 0
+    const percentageChange: any = lastMonthRequests > 0
       ? (((currentMonthRequests - lastMonthRequests) / lastMonthRequests) * 100).toFixed(1)
       : '+0';
 
@@ -132,9 +141,9 @@ export class DashboardService {
       totalEarnedUsed: 0
     };
 
-    const totalLeaveRemaining = 
-      balanceData.totalCasualRemaining + 
-      balanceData.totalSickRemaining + 
+    const totalLeaveRemaining =
+      balanceData.totalCasualRemaining +
+      balanceData.totalSickRemaining +
       balanceData.totalEarnedRemaining;
 
     // Leave type breakdown

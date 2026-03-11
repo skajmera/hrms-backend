@@ -7,6 +7,12 @@ class AnnouncementDAL {
      * Create announcement
      */
     async create(announcementData) {
+        // Sanitize junk frontend data if announcement is global to prevent CastErrors
+        if (announcementData.targetAudience?.isGlobal) {
+            announcementData.targetAudience.departments = [];
+            announcementData.targetAudience.roles = [];
+            announcementData.targetAudience.specificUsers = [];
+        }
         return await announcement_model_1.AnnouncementModel.create(announcementData);
     }
     /**
@@ -182,6 +188,26 @@ class AnnouncementDAL {
             .populate('likes', 'firstName lastName profilePicture')
             .populate('comments.userId', 'firstName lastName profilePicture')
             .populate('comments.likes', 'firstName lastName profilePicture');
+    }
+    /**
+     * Add a reply to a comment
+     */
+    async addReply(id, commentId, userId, content) {
+        return await announcement_model_1.AnnouncementModel.findOneAndUpdate({ _id: id, "comments._id": commentId }, {
+            $push: {
+                "comments.$.replies": {
+                    userId,
+                    content,
+                    likes: [],
+                    createdAt: new Date()
+                }
+            }
+        }, { new: true })
+            .populate('likes', 'firstName lastName profilePicture')
+            .populate('comments.userId', 'firstName lastName profilePicture')
+            .populate('comments.likes', 'firstName lastName profilePicture')
+            .populate('comments.replies.userId', 'firstName lastName profilePicture')
+            .populate('comments.replies.likes', 'firstName lastName profilePicture');
     }
 }
 exports.AnnouncementDAL = AnnouncementDAL;

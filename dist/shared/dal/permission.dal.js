@@ -53,10 +53,14 @@ class PermissionDAL {
         };
     }
     /**
-     * Update user permission
+     * Upsert user permission (creates if not exists, updates if exists)
      */
-    async updateByUserId(userId, updateData) {
-        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, updateData, { new: true }).populate('userId', 'firstName lastName email');
+    async updateByUserId(userId, updateData, upsertData) {
+        // Merge upsertData (base fields) with updateData (incoming changes) for a reliable upsert.
+        // Using $set for all fields ensures required fields (userId, email, invitedBy) are always
+        // present regardless of whether the document is being created or updated.
+        const mergedData = { ...(upsertData || {}), ...updateData };
+        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, { $set: mergedData }, { new: true, upsert: true, runValidators: false }).populate('userId', 'firstName lastName email');
     }
     /**
      * Delete user permission

@@ -14,12 +14,18 @@ const app: Application = express();
 
 app.set('trust proxy', 1);
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 // CORS Configuration
 app.use(cors({
-  origin: '*',//config.cors.origin,
+  origin: (origin, callback) => {
+    // Allow all origins for the demo - this is needed because credentials: true 
+    // doesn't work with origin: '*'
+    callback(null, true);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH','OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -41,11 +47,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Compression Middleware
 app.use(compression());
 
+// Serve static files
+app.use('/uploads', express.static('uploads'));
+
 // Swagger Documentation
 
 app.use(
   '/api/v1/docs',
-  (req:Request, res:Response, next:NextFunction) => {
+  (req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
     res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
     res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;");

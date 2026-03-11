@@ -7,7 +7,18 @@ import { HTTP_STATUS } from '../../../../config/constants';
 export class AnnouncementController {
   async createAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.createAnnouncement({ ...req.body, createdBy: req.user._id });
+      const payload = { ...req.body, createdBy: req.user._id };
+
+      if (req.files && Array.isArray(req.files)) {
+        payload.attachments = req.files.map((file: Express.Multer.File) => ({
+          name: file.originalname,
+          url: `/uploads/announcements/${file.filename}`,
+          type: file.mimetype,
+          size: file.size
+        }));
+      }
+
+      const announcement = await announcementService.createAnnouncement(payload);
       sendSuccessResponse(res, 'Announcement created successfully', announcement, HTTP_STATUS.CREATED);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
@@ -42,7 +53,18 @@ export class AnnouncementController {
 
   async updateAnnouncement(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.updateAnnouncement(req.params.id, req.body, req.user._id.toString());
+      const payload = { ...req.body };
+
+      if (req.files && Array.isArray(req.files)) {
+        payload.attachments = req.files.map((file: Express.Multer.File) => ({
+          name: file.originalname,
+          url: `/uploads/announcements/${file.filename}`,
+          type: file.mimetype,
+          size: file.size
+        }));
+      }
+
+      const announcement = await announcementService.updateAnnouncement(req.params.id, payload, req.user._id.toString());
       sendSuccessResponse(res, 'Announcement updated successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
@@ -116,6 +138,17 @@ export class AnnouncementController {
       const { content } = req.body;
       const announcement = await announcementService.addComment(req.params.id, req.user._id.toString(), content);
       sendSuccessResponse(res, 'Comment added successfully', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async replyToComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id, commentId } = req.params;
+      const { content } = req.body;
+      const announcement = await announcementService.addReplyToComment(id, commentId, req.user._id.toString(), content);
+      sendSuccessResponse(res, 'Reply added successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

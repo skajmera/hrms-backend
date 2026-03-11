@@ -20,7 +20,7 @@ exports.queryAnnouncementsValidation = [
     (0, express_validator_1.query)('expiryDate').optional().isISO8601().withMessage('expiryDate must be a valid date'),
     (0, express_validator_1.query)('announcementType')
         .optional()
-        .isIn(['GENERAL', 'BIRTHDAY', 'ANNIVERSARY'])
+        .isIn(['GENERAL', 'BIRTHDAY', 'ANNIVERSARY', 'EVENT', 'EMERGENCY', 'OTHER', 'NEWHIRE'])
         .withMessage('Invalid announcementType')
 ];
 //# sourceMappingURL=announcement.validation.js.map

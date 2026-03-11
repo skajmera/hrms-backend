@@ -8,11 +8,16 @@ const announcement_dal_1 = require("../../../../shared/dal/announcement.dal");
 const leave_model_1 = require("../../../../shared/models/leave.model");
 class DashboardService {
     async getDashboardStats() {
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
         const totalUsers = await user_dal_1.userDAL.findAll({ isActive: true });
         const todayAttendance = await attendance_dal_1.attendanceDAL.getTodayAttendance();
         const pendingLeaves = await leave_dal_1.leaveDAL.getPendingLeaves();
         const employeesOnLeave = await leave_dal_1.leaveDAL.getEmployeesOnLeaveToday();
         const getYetToCheckInCount = await user_dal_1.userDAL.getYetToCheckInCount();
+        // Get aggregate monthly check-in summary
+        const checkInSummary = await attendance_dal_1.attendanceDAL.getMonthlyCheckInSummary(currentMonth, currentYear);
         const presentCount = todayAttendance.filter(a => a.status === 'PRESENT').length;
         const absentCount = todayAttendance.filter(a => a.status === 'ABSENT').length;
         const lateCount = todayAttendance.filter(a => a.isLate).length;
@@ -26,8 +31,9 @@ class DashboardService {
                 late: lateCount,
                 wfh: wfhCount,
                 onLeave: employeesOnLeave.length,
-                getYetToCheckInCount: getYetToCheckInCount
+                yetToCheckIn: getYetToCheckInCount
             },
+            checkInSummary,
             leaves: {
                 pending: pendingLeaves.length,
                 onLeaveToday: employeesOnLeave.length
@@ -38,8 +44,8 @@ class DashboardService {
     async getBirthdays() {
         return await user_dal_1.userDAL.getBirthdaysToday();
     }
-    async getNewHires(days = 30) {
-        return await user_dal_1.userDAL.getNewHires(days);
+    async getNewHires(days = 30, date) {
+        return await user_dal_1.userDAL.getNewHires(days, date);
     }
     async getRecentAnnouncements(userId, userRole, userDepartment) {
         return await announcement_dal_1.announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);

@@ -85,11 +85,17 @@ class SettingsService {
      * Update work schedule
      */
     static async updateWorkSchedule(scheduleId, updateData) {
-        const schedule = await work_schedule_model_1.WorkScheduleModel.findByIdAndUpdate(scheduleId, updateData, { new: true });
-        if (!schedule) {
-            throw new Error('Work schedule not found');
+        // If setting as default, unset other defaults in the same org
+        if (updateData.isDefault === true) {
+            const schedule = await work_schedule_model_1.WorkScheduleModel.findById(scheduleId).select('organizationId');
+            if (schedule) {
+                await work_schedule_model_1.WorkScheduleModel.updateMany({ organizationId: schedule.organizationId, _id: { $ne: scheduleId }, isDefault: true }, { isDefault: false });
+            }
         }
-        return schedule;
+        const updated = await work_schedule_model_1.WorkScheduleModel.findByIdAndUpdate(scheduleId, updateData, { new: true });
+        if (!updated)
+            throw new Error('Work schedule not found');
+        return updated;
     }
     /**
      * Delete work schedule

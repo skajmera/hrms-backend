@@ -14,7 +14,7 @@ class PayrollDAL {
      */
     async findById(id) {
         return await payroll_model_1.PayrollModel.findById(id)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
             .populate('generatedBy', 'firstName lastName')
             .populate('approvedBy', 'firstName lastName');
     }
@@ -25,7 +25,7 @@ class PayrollDAL {
         const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = options;
         const skip = (page - 1) * limit;
         const records = await payroll_model_1.PayrollModel.find(filters)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
             .populate('generatedBy', 'firstName lastName')
             .populate('approvedBy', 'firstName lastName')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
@@ -39,10 +39,10 @@ class PayrollDAL {
      */
     async update(id, updateData) {
         return await payroll_model_1.PayrollModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email');
+            .populate('userId', 'firstName lastName email profilePicture');
     }
     async updateById(id, updateData) {
-        const updatedPayroll = await payroll_model_1.PayrollModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true }).populate('userId', 'firstName lastName email');
+        const updatedPayroll = await payroll_model_1.PayrollModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true }).populate('userId', 'firstName lastName email profilePicture');
         if (!updatedPayroll) {
             throw new Error('Payroll not found');
         }
@@ -59,7 +59,7 @@ class PayrollDAL {
      */
     async findByUserMonthYear(userId, month, year) {
         return await payroll_model_1.PayrollModel.findOne({ userId, month, year })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId');
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
     }
     async findByUserAndPeriod(userId, month, year) {
         return await payroll_model_1.PayrollModel.findOne({
@@ -76,7 +76,7 @@ class PayrollDAL {
      */
     async findByMonthYear(month, year) {
         return await payroll_model_1.PayrollModel.find({ month, year })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department');
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
     }
     /**
      * Get user payroll history
@@ -147,7 +147,7 @@ class PayrollDAL {
         if (year)
             filter.year = year;
         return await payroll_model_1.PayrollModel.find(filter)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
             .sort({ createdAt: -1 });
     }
     /**
@@ -160,7 +160,7 @@ class PayrollDAL {
         if (year)
             filter.year = year;
         return await payroll_model_1.PayrollModel.find(filter)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
             .sort({ createdAt: -1 });
     }
     /**

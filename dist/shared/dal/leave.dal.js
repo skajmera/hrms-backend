@@ -131,7 +131,13 @@ class LeaveDAL {
      */
     async updateLeaveBalanceAfterApproval(leave) {
         const year = leave.startDate.getFullYear();
-        const balance = await this.getLeaveBalance(leave.userId._id.toString(), year);
+        // Safely get userId string
+        const userId = leave.userId?._id ? leave.userId._id.toString() : leave.userId?.toString();
+        if (!userId) {
+            console.error(`Cannot update leave balance: userId is missing for leave ${leave._id}`);
+            return;
+        }
+        const balance = await this.getLeaveBalance(userId, year);
         if (balance) {
             const leaveType = leave.leaveType.toLowerCase() + 'Leave';
             const currentBalance = balance[leaveType];
@@ -140,6 +146,9 @@ class LeaveDAL {
                 currentBalance.remaining = currentBalance.total - currentBalance.used;
                 await balance.save();
             }
+        }
+        else {
+            console.warn(`No leave balance found for user ${userId} in year ${year}`);
         }
     }
     /**

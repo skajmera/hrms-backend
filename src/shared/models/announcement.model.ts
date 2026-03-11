@@ -58,6 +58,12 @@ const AnnouncementSchema = new Schema<IAnnouncement>({
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
     content: { type: String, required: true },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    replies: [{
+      userId: { type: Schema.Types.ObjectId, ref: 'User' },
+      content: { type: String, required: true },
+      likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+      createdAt: { type: Date, default: Date.now }
+    }],
     createdAt: { type: Date, default: Date.now }
   }]
 }, {

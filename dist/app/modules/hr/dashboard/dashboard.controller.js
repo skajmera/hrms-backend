@@ -24,8 +24,8 @@ class DashboardController {
     }
     async getNewHires(req, res, next) {
         try {
-            const { days = 30 } = req.query;
-            const newHires = await dashboard_service_1.dashboardService.getNewHires(Number(days));
+            const { days = 30, date } = req.query;
+            const newHires = await dashboard_service_1.dashboardService.getNewHires(Number(days), date);
             (0, response_1.sendSuccessResponse)(res, 'New hires retrieved successfully', newHires);
         }
         catch (error) {

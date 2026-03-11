@@ -7,7 +7,16 @@ const constants_1 = require("../../../../config/constants");
 class AnnouncementController {
     async createAnnouncement(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.createAnnouncement({ ...req.body, createdBy: req.user._id });
+            const payload = { ...req.body, createdBy: req.user._id };
+            if (req.files && Array.isArray(req.files)) {
+                payload.attachments = req.files.map((file) => ({
+                    name: file.originalname,
+                    url: `/uploads/announcements/${file.filename}`,
+                    type: file.mimetype,
+                    size: file.size
+                }));
+            }
+            const announcement = await announcement_service_1.announcementService.createAnnouncement(payload);
             (0, response_1.sendSuccessResponse)(res, 'Announcement created successfully', announcement, constants_1.HTTP_STATUS.CREATED);
         }
         catch (error) {
@@ -41,7 +50,16 @@ class AnnouncementController {
     }
     async updateAnnouncement(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, req.body, req.user._id.toString());
+            const payload = { ...req.body };
+            if (req.files && Array.isArray(req.files)) {
+                payload.attachments = req.files.map((file) => ({
+                    name: file.originalname,
+                    url: `/uploads/announcements/${file.filename}`,
+                    type: file.mimetype,
+                    size: file.size
+                }));
+            }
+            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, payload, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcement updated successfully', announcement);
         }
         catch (error) {
@@ -110,6 +128,17 @@ class AnnouncementController {
             const { content } = req.body;
             const announcement = await announcement_service_1.announcementService.addComment(req.params.id, req.user._id.toString(), content);
             (0, response_1.sendSuccessResponse)(res, 'Comment added successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async replyToComment(req, res, next) {
+        try {
+            const { id, commentId } = req.params;
+            const { content } = req.body;
+            const announcement = await announcement_service_1.announcementService.addReplyToComment(id, commentId, req.user._id.toString(), content);
+            (0, response_1.sendSuccessResponse)(res, 'Reply added successfully', announcement);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

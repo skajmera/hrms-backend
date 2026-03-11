@@ -83,6 +83,13 @@ class AnnouncementService {
         }
         return this.injectLikedField(announcement, userId);
     }
+    async addReplyToComment(id, commentId, userId, content) {
+        const announcement = await announcement_dal_1.announcementDAL.addReply(id, commentId, userId, content);
+        if (!announcement) {
+            throw new Error('Announcement or comment not found');
+        }
+        return this.injectLikedField(announcement, userId);
+    }
     async deleteComment(id, commentId, userId) {
         const announcement = await announcement_dal_1.announcementDAL.deleteComment(id, commentId, userId);
         if (!announcement) {
@@ -101,7 +108,11 @@ class AnnouncementService {
         if (a.comments) {
             a.comments = a.comments.map((c) => ({
                 ...c,
-                liked: c.likes?.some((id) => (id._id || id).toString() === userId.toString()) || false
+                liked: c.likes?.some((id) => (id._id || id).toString() === userId.toString()) || false,
+                replies: c.replies ? c.replies.map((r) => ({
+                    ...r,
+                    liked: r.likes?.some((id) => (id._id || id).toString() === userId.toString()) || false
+                })) : []
             }));
         }
         return a;

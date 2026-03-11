@@ -35,6 +35,7 @@ export interface IExperience {
   startDate: Date;
   endDate?: Date;
   isCurrent: boolean;
+  isRelevant?: boolean; // NEW
   responsibilities?: string;
   location?: string;
 }
@@ -73,6 +74,8 @@ export interface IProfessionalDetails {
   shiftTime?: IShiftTime; // NEW - Custom shift timing
   workLocation: string;
   salaryDetails?: ISalaryDetails;
+  totalExperience?: string; // NEW
+  currentExperience?: string; // NEW
 }
 
 export interface IUser extends Document {
@@ -91,6 +94,13 @@ export interface IUser extends Document {
   bloodGroup?: string;
   maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
   profilePicture?: string;
+  profileImage?: string; // Alias for profilePicture
+
+  // Separation Details
+  separationInfo?: {
+    dateOfExit: Date;
+    previousCompany: string;
+  };
 
   // Address
   currentAddress?: IAddress;
@@ -140,7 +150,7 @@ export interface IUserCreateInput {
   createdBy?: Types.ObjectId | string;
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   password?: string;
   personalEmail?: string;
   phone?: string;
@@ -174,6 +184,7 @@ export interface IUserUpdateInput {
   };
   isActive?: boolean;
   professionalDetails?: IProfessionalDetails | any;
+  registeredDeviceId?: string | null;
 }
 
 export interface ILoginInput {

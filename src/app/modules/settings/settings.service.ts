@@ -92,11 +92,20 @@ export class SettingsService {
    * Update work schedule
    */
   static async updateWorkSchedule(scheduleId: string, updateData: Partial<IWorkSchedule>): Promise<IWorkSchedule> {
-    const schedule = await WorkScheduleModel.findByIdAndUpdate(scheduleId, updateData, { new: true });
-    if (!schedule) {
-      throw new Error('Work schedule not found');
+    // If setting as default, unset other defaults in the same org
+    if (updateData.isDefault === true) {
+      const schedule = await WorkScheduleModel.findById(scheduleId).select('organizationId');
+      if (schedule) {
+        await WorkScheduleModel.updateMany(
+          { organizationId: schedule.organizationId, _id: { $ne: scheduleId }, isDefault: true },
+          { isDefault: false }
+        );
+      }
     }
-    return schedule;
+
+    const updated = await WorkScheduleModel.findByIdAndUpdate(scheduleId, updateData, { new: true });
+    if (!updated) throw new Error('Work schedule not found');
+    return updated;
   }
 
   /**

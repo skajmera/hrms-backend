@@ -15,6 +15,7 @@ export interface ParsedPayrollData {
     arrearAmount?: number;
     specialPay?: number;
     miscellaneousPay?: number;
+    nonWorkingDayCompensation?: number;
     providentFund?: number;
     esic?: number;
     professionalTax?: number;

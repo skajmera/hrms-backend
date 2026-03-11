@@ -24,8 +24,8 @@ export class DashboardController {
 
   async getNewHires(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { days = 30 } = req.query;
-      const newHires = await dashboardService.getNewHires(Number(days));
+      const { days = 30, date } = req.query;
+      const newHires = await dashboardService.getNewHires(Number(days), date as string);
       sendSuccessResponse(res, 'New hires retrieved successfully', newHires);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -37,7 +37,7 @@ export class DashboardController {
       const announcements = await dashboardService.getRecentAnnouncements(
         req.user._id.toString(),
         req.user.role,
-        req.user.professionalDetails?.department?._id.toString() 
+        req.user.professionalDetails?.department?._id.toString()
       );
       sendSuccessResponse(res, 'Announcements retrieved successfully', announcements);
     } catch (error: any) {

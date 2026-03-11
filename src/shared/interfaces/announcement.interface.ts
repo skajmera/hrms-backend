@@ -50,6 +50,13 @@ export interface IAnnouncement extends Document {
     userId: Types.ObjectId | string;
     content: string;
     likes: (Types.ObjectId | string)[];
+    replies?: {
+      _id: Types.ObjectId | string;
+      userId: Types.ObjectId | string;
+      content: string;
+      likes: (Types.ObjectId | string)[];
+      createdAt: Date;
+    }[];
     createdAt: Date;
   }[];
 

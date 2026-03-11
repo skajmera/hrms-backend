@@ -99,6 +99,14 @@ export class AnnouncementService {
     return this.injectLikedField(announcement, userId);
   }
 
+  async addReplyToComment(id: string, commentId: string, userId: string, content: string) {
+    const announcement = await announcementDAL.addReply(id, commentId, userId, content);
+    if (!announcement) {
+      throw new Error('Announcement or comment not found');
+    }
+    return this.injectLikedField(announcement, userId);
+  }
+
   async deleteComment(id: string, commentId: string, userId: string) {
     const announcement = await announcementDAL.deleteComment(id, commentId, userId);
     if (!announcement) {
@@ -124,7 +132,13 @@ export class AnnouncementService {
         ...c,
         liked: c.likes?.some((id: any) =>
           (id._id || id).toString() === userId.toString()
-        ) || false
+        ) || false,
+        replies: c.replies ? c.replies.map((r: any) => ({
+          ...r,
+          liked: r.likes?.some((id: any) =>
+            (id._id || id).toString() === userId.toString()
+          ) || false
+        })) : []
       }));
     }
 

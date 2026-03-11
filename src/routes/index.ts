@@ -14,6 +14,7 @@ import employeeDashboardRoutes from '../app/modules/employee/dashboard/dashboard
 // Manager
 import managerTeamRoutes from '../app/modules/manager/team/team.route';
 import managerLeaveRoutes from '../app/modules/manager/leave/leave.route';
+import managerReportsRoutes from '../app/modules/manager/reports/reports.route';
 
 // HR
 import userRoutes from '../app/modules/hr/user/user.route';
@@ -46,6 +47,7 @@ router.use('/employee/dashboard', employeeDashboardRoutes);
 // Manager routes (Team management)
 router.use('/manager/team', managerTeamRoutes);
 router.use('/manager/leave', managerLeaveRoutes);
+router.use('/manager/reports', managerReportsRoutes);
 
 // HR routes (Admin operations)
 router.use('/hr/users', userRoutes);
