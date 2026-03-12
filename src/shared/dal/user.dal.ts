@@ -22,7 +22,7 @@ export class UserDAL {
     const query = UserModel.findById(id)
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
 
@@ -53,7 +53,7 @@ export class UserDAL {
     return await UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
   }
@@ -73,7 +73,7 @@ export class UserDAL {
     const users = await UserModel.find(query)
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
-      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
@@ -140,7 +140,7 @@ export class UserDAL {
    */
   async findByDepartment(departmentId: string): Promise<IUser[]> {
     return await UserModel.find({ 'professionalDetails.department': departmentId, isActive: true })
-      .populate('professionalDetails.reportingManager', 'firstName lastName email')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
   }
@@ -223,6 +223,11 @@ export class UserDAL {
       // 4️⃣ Clean response
       {
         $project: {
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          profilePicture: 1,
+          profileImage: "$profilePicture",
           birthMonth: 0,
           birthDay: 0
         }
@@ -401,6 +406,7 @@ export class UserDAL {
     })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture')
       .limit(20);
@@ -431,6 +437,7 @@ export class UserDAL {
     return await UserModel.findOne({ ...query, isActive: true })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
   }
@@ -512,6 +519,11 @@ export class UserDAL {
 
       {
         $project: {
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          profilePicture: 1,
+          profileImage: "$profilePicture",
           anniversaryMonth: 0,
           anniversary: 0
         }
@@ -684,6 +696,8 @@ export class UserDAL {
           firstName: 1,
           lastName: 1,
           email: 1,
+          profilePicture: 1,
+          profileImage: "$profilePicture",
           "professionalDetails.employeeId": 1,
           "professionalDetails.department": 1,
           attendanceStatus: 1,

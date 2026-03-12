@@ -284,7 +284,7 @@ router.get('/department/:departmentId', (0, auth_middleware_1.authorize)(constan
  *     security:
  *       - bearerAuth: []
  */
-router.post('/draft', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.createDraftValidation), user_controller_1.userController.createDraftEmployee.bind(user_controller_1.userController));
+router.post('/draft', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.createDraftValidation), user_controller_1.userController.createDraftEmployee.bind(user_controller_1.userController));
 /**
  * @swagger
  * /hr/users/drafts:
@@ -452,7 +452,7 @@ router.get('/:id', (0, validation_1.validate)(user_validation_1.getUserValidatio
  *       409:
  *         description: Email or Employee ID already exists
  */
-router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.createUserValidation), user_controller_1.userController.createUser.bind(user_controller_1.userController));
+router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.createUserValidation), user_controller_1.userController.createUser.bind(user_controller_1.userController));
 // NOTE: /draft and /drafts routes moved above /:id to prevent route hijacking
 /**
  * @swagger
@@ -505,7 +505,7 @@ router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_A
  *       404:
  *         description: User not found
  */
-router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.updateUserValidation), user_controller_1.userController.updateUser.bind(user_controller_1.userController));
+router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.updateUserValidation), user_controller_1.userController.updateUser.bind(user_controller_1.userController));
 /**
  * @swagger
  * /hr/users/employee/{employeeId}:
@@ -552,6 +552,33 @@ router.get('/employee/:employeeId', (0, auth_middleware_1.authorize)(constants_1
  *         description: User not found
  */
 router.post('/:id/clear-device', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.getUserValidation), user_controller_1.userController.clearUserDevice.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/device-token:
+ *   post:
+ *     summary: Register Firebase Cloud Messaging (FCM) device token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm_token_xyz..."
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ *       400:
+ *         description: Validation error
+ */
+router.post('/device-token', user_controller_1.userController.addDeviceToken.bind(user_controller_1.userController));
 // NOTE: /upload-avatar route moved above /:id to prevent route hijacking
 // NOTE: /draft/:id route moved above /:id to prevent route hijacking
 /**

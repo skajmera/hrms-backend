@@ -225,6 +225,22 @@ class UserService {
         }
         return await user_dal_1.userDAL.update(id, { $unset: { registeredDeviceId: "" } });
     }
+    /**
+     * Upload user avatar using base64 or file path
+     */
+    async uploadAvatar(userId, imageUrl) {
+        return await user_dal_1.userDAL.update(userId, { profilePicture: imageUrl });
+    }
+    /**
+     * Add FCM Device Token for Push Notifications
+     */
+    async addFcmToken(userId, token) {
+        const user = await user_dal_1.userDAL.update(userId, { $addToSet: { fcmTokens: token } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user;
+    }
 }
 exports.UserService = UserService;
 exports.userService = new UserService();

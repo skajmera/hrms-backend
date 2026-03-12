@@ -19,9 +19,9 @@ class UserDAL {
      */
     async findById(id, selectPassword = false) {
         const query = user_model_1.UserModel.findById(id)
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture');
         if (selectPassword) {
@@ -44,9 +44,9 @@ class UserDAL {
      */
     async findByEmployeeId(employeeId) {
         return await user_model_1.UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture');
     }
@@ -58,9 +58,9 @@ class UserDAL {
         const skip = (page - 1) * limit;
         const query = { ...filters };
         const users = await user_model_1.UserModel.find(query)
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
@@ -114,7 +114,7 @@ class UserDAL {
      */
     async findByDepartment(departmentId) {
         return await user_model_1.UserModel.find({ 'professionalDetails.department': departmentId, isActive: true })
-            .populate('professionalDetails.reportingManager', 'firstName lastName email')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture');
     }
@@ -123,7 +123,7 @@ class UserDAL {
      */
     async findByRole(role) {
         return await user_model_1.UserModel.find({ role, isActive: true })
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture');
@@ -193,6 +193,11 @@ class UserDAL {
             // 4️⃣ Clean response
             {
                 $project: {
+                    firstName: 1,
+                    lastName: 1,
+                    email: 1,
+                    profilePicture: 1,
+                    profileImage: "$profilePicture",
                     birthMonth: 0,
                     birthDay: 0
                 }
@@ -243,7 +248,7 @@ class UserDAL {
                     preserveNullAndEmptyArrays: true
                 }
             },
-            // 4️⃣ Lookup New Hire Announcements
+            // 4️⃣ Lookup New Hire Announcements (Including Drafts & Scheduled)
             {
                 $lookup: {
                     from: "announcements",
@@ -253,15 +258,7 @@ class UserDAL {
                             $match: {
                                 $expr: {
                                     $and: [
-                                        { $eq: ["$isActive", true] },
                                         { $eq: ["$announcementType", "NEWHIRES"] },
-                                        { $lte: ["$startDate", today] },
-                                        {
-                                            $or: [
-                                                { $eq: ["$expiryDate", null] },
-                                                { $gte: ["$expiryDate", today] }
-                                            ]
-                                        },
                                         {
                                             $or: [
                                                 { $eq: ["$targetAudience.isGlobal", true] },
@@ -272,12 +269,12 @@ class UserDAL {
                                 }
                             }
                         },
+                        { $sort: { createdAt: -1 } },
+                        { $limit: 1 },
                         {
                             $project: {
                                 title: 1,
                                 content: 1,
-                                priority: 1,
-                                isPinned: 1,
                                 attachments: 1
                             }
                         }
@@ -285,13 +282,38 @@ class UserDAL {
                     as: "newHireAnnouncements"
                 }
             },
-            // 5️⃣ Final response shape
+            // 5️⃣ Final Optimized Response Shape
             {
                 $project: {
-                    password: 0,
-                    emailVerificationToken: 0,
-                    passwordResetToken: 0,
-                    passwordResetExpires: 0
+                    _id: 1,
+                    fullName: { $concat: [{ $ifNull: ["$firstName", ""] }, " ", { $ifNull: ["$lastName", ""] }] },
+                    profileImage: { $ifNull: ["$profilePicture", ""] },
+                    designation: "$designation.name",
+                    department: "$department.name",
+                    joiningDate: "$professionalDetails.joiningDate",
+                    announcement: {
+                        $let: {
+                            vars: {
+                                firstAnn: { $arrayElemAt: ["$newHireAnnouncements", 0] }
+                            },
+                            in: {
+                                $cond: {
+                                    if: { $ne: ["$$firstAnn", null] },
+                                    then: {
+                                        _id: "$$firstAnn._id",
+                                        title: { $ifNull: ["$$firstAnn.title", ""] },
+                                        description: { $ifNull: ["$$firstAnn.content", ""] },
+                                        attachments: { $cond: { if: { $isArray: "$$firstAnn.attachments" }, then: "$$firstAnn.attachments", else: [] } }
+                                    },
+                                    else: {
+                                        title: "",
+                                        description: "",
+                                        attachments: []
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         ]);
@@ -337,8 +359,9 @@ class UserDAL {
             $or: orQuery,
             isActive: true
         })
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture')
             .limit(20);
@@ -365,8 +388,9 @@ class UserDAL {
             };
         }
         return await user_model_1.UserModel.findOne({ ...query, isActive: true })
-            .populate('professionalDetails.department', 'name code')
+            .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('updatedBy', 'firstName lastName email profilePicture');
     }
@@ -444,6 +468,11 @@ class UserDAL {
             },
             {
                 $project: {
+                    firstName: 1,
+                    lastName: 1,
+                    email: 1,
+                    profilePicture: 1,
+                    profileImage: "$profilePicture",
                     anniversaryMonth: 0,
                     anniversary: 0
                 }
@@ -603,6 +632,8 @@ class UserDAL {
                     firstName: 1,
                     lastName: 1,
                     email: 1,
+                    profilePicture: 1,
+                    profileImage: "$profilePicture",
                     "professionalDetails.employeeId": 1,
                     "professionalDetails.department": 1,
                     attendanceStatus: 1,

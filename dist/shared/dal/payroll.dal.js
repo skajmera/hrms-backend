@@ -15,8 +15,8 @@ class PayrollDAL {
     async findById(id) {
         return await payroll_model_1.PayrollModel.findById(id)
             .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-            .populate('generatedBy', 'firstName lastName')
-            .populate('approvedBy', 'firstName lastName');
+            .populate('generatedBy', 'firstName lastName profilePicture')
+            .populate('approvedBy', 'firstName lastName profilePicture');
     }
     /**
      * Find all payroll records
@@ -26,8 +26,8 @@ class PayrollDAL {
         const skip = (page - 1) * limit;
         const records = await payroll_model_1.PayrollModel.find(filters)
             .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-            .populate('generatedBy', 'firstName lastName')
-            .populate('approvedBy', 'firstName lastName')
+            .populate('generatedBy', 'firstName lastName profilePicture')
+            .populate('approvedBy', 'firstName lastName profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -68,8 +68,8 @@ class PayrollDAL {
             year
         })
             .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-            .populate('generatedBy', 'firstName lastName')
-            .populate('approvedBy', 'firstName lastName');
+            .populate('generatedBy', 'firstName lastName profilePicture')
+            .populate('approvedBy', 'firstName lastName profilePicture');
     }
     /**
      * Get payroll by month and year

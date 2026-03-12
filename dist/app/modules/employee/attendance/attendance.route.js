@@ -90,5 +90,6 @@ router.get('/', attendance_controller_1.employeeAttendanceController.getMyAttend
  *         description: Summary retrieved successfully
  */
 router.get('/summary/:month/:year', attendance_controller_1.employeeAttendanceController.getMyAttendanceSummary.bind(attendance_controller_1.employeeAttendanceController));
+router.get('/today', attendance_controller_1.employeeAttendanceController.getMyTodayAttendance.bind(attendance_controller_1.employeeAttendanceController));
 exports.default = router;
 //# sourceMappingURL=attendance.route.js.map

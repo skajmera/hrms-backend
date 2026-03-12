@@ -266,5 +266,11 @@ router.post('/refresh', auth_controller_1.authController.refreshToken.bind(auth_
  *         description: Unauthorized
  */
 router.get('/profile', auth_middleware_1.authenticate, auth_controller_1.authController.getProfile.bind(auth_controller_1.authController));
+/**
+ * @route   POST /api/v1/auth/fcm-token
+ * @desc    Update FCM Token
+ * @access  Private
+ */
+router.post('/fcm-token', auth_middleware_1.authenticate, auth_controller_1.authController.updateFcmToken.bind(auth_controller_1.authController));
 exports.default = router;
 //# sourceMappingURL=auth.route.js.map

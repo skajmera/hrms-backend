@@ -34,14 +34,13 @@ class AnnouncementController {
     }
     async getAllAnnouncements(req, res, next) {
         try {
-            // Keep controller minimal: extract paging/sort and forward remaining query params
             const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
             const result = await announcement_service_1.announcementService.getAllAnnouncements(filters, {
                 page: Number(page),
                 limit: Number(limit),
                 sortBy: sortBy,
                 sortOrder: sortOrder
-            }, req.user._id.toString());
+            }, req.user._id.toString(), req.user.role);
             (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
         }
         catch (error) {
@@ -149,6 +148,17 @@ class AnnouncementController {
             const { id, commentId } = req.params;
             const announcement = await announcement_service_1.announcementService.deleteComment(id, commentId, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Comment deleted successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getTypedAnnouncements(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+            const { announcementType } = req.params;
+            const result = await announcement_service_1.announcementService.getTypedAnnouncements(announcementType, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder }, req.user._id.toString(), req.user.role);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), `${announcementType} announcements retrieved successfully`);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

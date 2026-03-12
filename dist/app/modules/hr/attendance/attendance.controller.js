@@ -14,7 +14,7 @@ class AttendanceController {
             let attendanceData = req.body;
             // If multipart (from multer), the file might be in req.file
             if (req.file) {
-                attendanceData.selfie = req.file.path;
+                attendanceData.selfie = `/${req.file.path.replace(/\\/g, '/')}`;
             }
             // Use userId from body if provided (HR marking for others), otherwise use token ID
             const userId = req.body.userId || req.user?._id?.toString() || req.user?.id;
@@ -46,7 +46,7 @@ class AttendanceController {
         try {
             const userId = req.user?.id;
             const { deviceId, wifiBSSID, gpsLatitude, gpsLongitude } = req.body;
-            const selfie = req.file?.path;
+            const selfie = req.file?.path ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
             if (!selfie) {
                 throw new Error('Selfie is required for registration');
             }
@@ -76,19 +76,66 @@ class AttendanceController {
     async getAllAttendance(req, res, next) {
         try {
             const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc', ...filters } = req.query;
-            const { userId, startDate, endDate, status } = req.query;
+            const { userId, startDate, endDate, status, checkIn, checkOut, workHours } = req.query;
             const filterData = {};
-            if (userId) {
+            if (userId)
                 filterData.userId = userId;
-            }
-            if (status) {
+            if (status)
                 filterData.status = status;
+            // Date constraints (set hours to hit the boundaries of the day gracefully)
+            if (startDate || endDate) {
+                filterData.date = {};
+                if (startDate) {
+                    filterData.date.$gte = new Date(startDate);
+                }
+                if (endDate) {
+                    const endDay = new Date(endDate);
+                    endDay.setHours(23, 59, 59, 999);
+                    filterData.date.$lte = endDay;
+                }
             }
-            if (startDate && endDate) {
-                filterData.date = {
-                    $gte: new Date(startDate),
-                    $lte: new Date(endDate)
-                };
+            // Advanced Arrays Filtering 
+            const buildOrQuery = (param, handlers) => {
+                if (!param)
+                    return null;
+                const values = Array.isArray(param) ? param : [param];
+                const orConditions = [];
+                values.forEach((val) => {
+                    if (handlers[val]) {
+                        orConditions.push(handlers[val]);
+                    }
+                });
+                return orConditions.length > 0 ? { $or: orConditions } : null;
+            };
+            const checkInHandlers = {
+                'before-checkin': { isLate: false, checkInTime: { $exists: true, $ne: null } },
+                'after-checkin': { isLate: true },
+                '0-5-mins': { isLate: true, lateByMinutes: { $gt: 0, $lte: 5 } },
+                '6-10-mins': { isLate: true, lateByMinutes: { $gt: 5, $lte: 10 } },
+                '11-15-mins': { isLate: true, lateByMinutes: { $gt: 10, $lte: 15 } },
+                'more-than-15': { isLate: true, lateByMinutes: { $gt: 15 } },
+            };
+            const checkOutHandlers = {
+                'before-checkout': { earlyExit: true },
+                'after-checkout': { earlyExit: false, checkOutTime: { $exists: true, $ne: null } },
+            };
+            const workHoursHandlers = {
+                'less-than-8': { workingHours: { $lt: 8 }, checkOutTime: { $exists: true, $ne: null } },
+                'more-than-8': { workingHours: { $gte: 8 }, checkOutTime: { $exists: true, $ne: null } },
+            };
+            const andConditions = [];
+            const checkInQuery = buildOrQuery(checkIn, checkInHandlers);
+            if (checkInQuery)
+                andConditions.push(checkInQuery);
+            const checkOutQuery = buildOrQuery(checkOut, checkOutHandlers);
+            if (checkOutQuery)
+                andConditions.push(checkOutQuery);
+            const workHoursQuery = buildOrQuery(workHours, workHoursHandlers);
+            if (workHoursQuery)
+                andConditions.push(workHoursQuery);
+            // Merge native $and
+            if (andConditions.length > 0) {
+                filterData.$and = andConditions;
             }
             const result = await attendance_service_1.attendanceService.getAllAttendance(filterData, {
                 page: Number(page),

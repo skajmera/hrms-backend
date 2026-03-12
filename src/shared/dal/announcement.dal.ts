@@ -24,7 +24,7 @@ export class AnnouncementDAL {
     return await AnnouncementModel.findById(id)
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('targetAudience.departments', 'name code')
-      .populate('targetAudience.specificUsers', 'firstName lastName email')
+      .populate('targetAudience.specificUsers', 'firstName lastName email profilePicture')
       .populate('likes', 'firstName lastName profilePicture')
       .populate('comments.userId', 'firstName lastName profilePicture')
       .populate('comments.likes', 'firstName lastName profilePicture');

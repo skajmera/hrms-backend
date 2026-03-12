@@ -5,6 +5,8 @@ const leave_dal_1 = require("../../../../shared/dal/leave.dal");
 const user_dal_1 = require("../../../../shared/dal/user.dal");
 const email_1 = require("../../../../shared/utils/email");
 const constants_1 = require("../../../../config/constants");
+const notifications_service_1 = require("../../notifications/notifications.service");
+const notification_interface_1 = require("../../../../shared/interfaces/notification.interface");
 class ManagerLeaveService {
     /**
      * Approve team member leave
@@ -38,6 +40,20 @@ class ManagerLeaveService {
         // Update leave balance
         if (approvedLeave) {
             await leave_dal_1.leaveDAL.updateLeaveBalanceAfterApproval(approvedLeave);
+            // --- TRIGGER NOTIFICATION ---
+            try {
+                await notifications_service_1.notificationsService.sendNotification({
+                    userId: user._id.toString(),
+                    type: notification_interface_1.NotificationType.LEAVE_APPROVED,
+                    title: 'Leave Approved',
+                    message: `Your leave request for ${leave.leaveType} from ${leave.startDate.toDateString()} to ${leave.endDate.toDateString()} has been approved.`,
+                    targetApp: 'EMPLOYEE',
+                    data: { leaveId: approvedLeave._id }
+                });
+            }
+            catch (error) {
+                console.error('[ManagerLeaveService] Failed to send approval notification:', error);
+            }
             // Send email notification
             try {
                 await (0, email_1.sendLeaveApprovalEmail)(user.email, user.getFullName(), leave.leaveType, leave.startDate.toDateString(), leave.endDate.toDateString());
@@ -60,7 +76,6 @@ class ManagerLeaveService {
             throw new Error('Leave not found');
         }
         // userId may be populated (object) or plain ID — safely extract string
-        console.log("leave : ", leave);
         const userId = leave.userId?._id?.toString() ?? leave.userId?.toString();
         console.log(`[ManagerLeaveService] Leave found. userId: ${userId}, status: ${leave.status}`);
         const user = await user_dal_1.userDAL.findById(userId);
@@ -78,8 +93,25 @@ class ManagerLeaveService {
                 throw new Error('Unauthorized to reject this leave');
             }
         }
+        const rejectedLeave = await leave_dal_1.leaveDAL.reject(leaveId, managerId, rejectionReason);
+        // --- TRIGGER NOTIFICATION ---
+        if (rejectedLeave) {
+            try {
+                await notifications_service_1.notificationsService.sendNotification({
+                    userId: user._id.toString(),
+                    type: notification_interface_1.NotificationType.LEAVE_REJECTED,
+                    title: 'Leave Rejected',
+                    message: `Your leave request for ${leave.leaveType} has been rejected. Reason: ${rejectionReason}`,
+                    targetApp: 'EMPLOYEE',
+                    data: { leaveId: rejectedLeave._id }
+                });
+            }
+            catch (error) {
+                console.error('[ManagerLeaveService] Failed to send rejection notification:', error);
+            }
+        }
         console.log(`[ManagerLeaveService] Leave rejected successfully: ${leaveId}`);
-        return await leave_dal_1.leaveDAL.reject(leaveId, managerId, rejectionReason);
+        return rejectedLeave;
     }
 }
 exports.ManagerLeaveService = ManagerLeaveService;

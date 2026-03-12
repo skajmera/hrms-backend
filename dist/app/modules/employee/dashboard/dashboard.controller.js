@@ -15,8 +15,12 @@ class EmployeeDashboardController {
     }
     async getBirthdays(req, res, next) {
         try {
-            const birthdays = await dashboard_service_1.employeeDashboardService.getBirthdays();
-            (0, response_1.sendSuccessResponse)(res, 'Birthdays retrieved successfully', birthdays);
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getBirthdays(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'Birthdays retrieved successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);
@@ -24,8 +28,12 @@ class EmployeeDashboardController {
     }
     async getAnniversary(req, res, next) {
         try {
-            const anniversaries = await dashboard_service_1.employeeDashboardService.getAnniversary();
-            (0, response_1.sendSuccessResponse)(res, 'Anniversaries retrieved successfully', anniversaries);
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getAnniversary(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'Anniversaries retrieved successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);
@@ -33,9 +41,26 @@ class EmployeeDashboardController {
     }
     async getNewHires(req, res, next) {
         try {
-            const { days = 30, date } = req.query;
-            const newHires = await dashboard_service_1.employeeDashboardService.getNewHires(Number(days), date);
-            (0, response_1.sendSuccessResponse)(res, 'New hires retrieved successfully', newHires);
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getNewHires(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'New hires retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getAllAnnouncements(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getAllAnnouncements(userId, userRole, deptId, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder });
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

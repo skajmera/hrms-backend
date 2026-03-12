@@ -16,7 +16,7 @@ export class AttendanceDAL {
    */
   async findById(id: string): Promise<IAttendance | null> {
     return await AttendanceModel.findById(id)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
   }
 
   /**
@@ -45,8 +45,8 @@ export class AttendanceDAL {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
     const records = await AttendanceModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
-      .populate('approvedBy', 'firstName lastName')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
+      .populate('approvedBy', 'firstName lastName profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -65,7 +65,7 @@ export class AttendanceDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -104,7 +104,7 @@ export class AttendanceDAL {
     return await AttendanceModel.find({
       date: { $gte: today, $lt: tomorrow }
     })
-      .populate('userId', 'firstName lastName shiftTime email professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName shiftTime email profilePicture professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
@@ -207,7 +207,7 @@ export class AttendanceDAL {
       date: { $gte: startDate, $lte: endDate },
       isLate: true
     })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
       .sort({ date: -1 });
   }
 

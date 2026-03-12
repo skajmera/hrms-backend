@@ -70,5 +70,6 @@ router.get('/anniversary', dashboard_controller_1.employeeDashboardController.ge
  *         description: New hires retrieved successfully
  */
 router.get('/new-hires', dashboard_controller_1.employeeDashboardController.getNewHires.bind(dashboard_controller_1.employeeDashboardController));
+router.get('/announcements', dashboard_controller_1.employeeDashboardController.getAllAnnouncements.bind(dashboard_controller_1.employeeDashboardController));
 exports.default = router;
 //# sourceMappingURL=dashboard.route.js.map

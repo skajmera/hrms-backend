@@ -130,6 +130,8 @@ const payroll_dal_1 = require("../../../../shared/dal/payroll.dal");
 const user_dal_1 = require("../../../../shared/dal/user.dal");
 const attendance_dal_1 = require("../../../../shared/dal/attendance.dal");
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
+const notifications_service_1 = require("../../notifications/notifications.service");
+const notification_interface_1 = require("../../../../shared/interfaces/notification.interface");
 const constants_1 = require("../../../../config/constants");
 const pdfGenerator_1 = require("../../../../shared/utils/pdfGenerator");
 /**
@@ -237,11 +239,26 @@ class PayrollService {
         const updateData = {
             isDraft: false,
             isGenerated: true,
-            isPending: true,
+            isPending: false, // Mutual exclusivity with generated
             approvedBy,
             approvedAt: new Date()
         };
-        return await payroll_dal_1.payrollDAL.updateById(payrollId, updateData);
+        const updatedPayroll = await payroll_dal_1.payrollDAL.updateById(payrollId, updateData);
+        // --- TRIGGER NOTIFICATION ---
+        try {
+            await notifications_service_1.notificationsService.sendNotification({
+                userId: payroll.userId.toString(),
+                type: notification_interface_1.NotificationType.PAYROLL_GENERATED,
+                title: 'Payslip Generated',
+                message: `Your payslip for ${payroll.month}/${payroll.year} has been generated. You can now view and download it.`,
+                targetApp: 'EMPLOYEE',
+                data: { payrollId: updatedPayroll._id }
+            });
+        }
+        catch (error) {
+            console.error('[PayrollService] Failed to send payroll notification:', error);
+        }
+        return updatedPayroll;
     }
     /**
      * Mark payroll as paid
@@ -263,7 +280,7 @@ class PayrollService {
      * Get payroll statistics for dashboard
      */
     static async getPayrollStats(month, year) {
-        const stats = await payroll_dal_1.payrollDAL.getPayrollStats(month, year);
+        const stats = await payroll_dal_1.payrollDAL.getPayrollStatsDashboard(month, year);
         // Calculate percentage changes (mock for now - you can implement actual comparison)
         const percentageChange = stats.totalEmployees > 0 ? 3 : 0;
         return {
@@ -337,7 +354,8 @@ class PayrollService {
             revisionDate: new Date(),
             revisionReason,
             isDraft: true,
-            isGenerated: false
+            isGenerated: false,
+            isPending: false
         };
         const payroll = await payroll_dal_1.payrollDAL.update(payrollId, updateData);
         if (!payroll) {

@@ -73,7 +73,7 @@ export class SettingsService {
    */
   static async getWorkSchedules(organizationId: string): Promise<IWorkSchedule[]> {
     return await WorkScheduleModel.find({ organizationId })
-      .populate('createdBy', 'firstName lastName')
+      .populate('createdBy', 'firstName lastName email profilePicture')
       .sort({ isDefault: -1, createdAt: -1 });
   }
 
@@ -189,7 +189,7 @@ export class SettingsService {
    */
   static async getDesignationById(designationId: string): Promise<IDesignation> {
     const designation = await DesignationModel.findById(designationId)
-      .populate('associatedUsers', 'firstName lastName email');
+      .populate('associatedUsers', 'firstName lastName email profilePicture');
     if (!designation) {
       throw new Error('Designation not found');
     }

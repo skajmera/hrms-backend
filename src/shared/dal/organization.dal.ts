@@ -22,8 +22,8 @@ export class OrganizationDAL {
    */
   static async findById(organizationId: string): Promise<IOrganization | null> {
     return await OrganizationModel.findById(organizationId)
-      .populate('owner', 'firstName lastName email')
-      .populate('admins', 'firstName lastName email');
+      .populate('owner', 'firstName lastName email profilePicture')
+      .populate('admins', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -31,7 +31,7 @@ export class OrganizationDAL {
    */
   static async findByOwner(ownerId: string): Promise<IOrganization | null> {
     return await OrganizationModel.findOne({ owner: ownerId })
-      .populate('admins', 'firstName lastName email');
+      .populate('admins', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -60,7 +60,7 @@ export class OrganizationDAL {
 
     const [data, totalItems] = await Promise.all([
       OrganizationModel.find(filters)
-        .populate('owner', 'firstName lastName email')
+        .populate('owner', 'firstName lastName email profilePicture')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -91,7 +91,7 @@ export class OrganizationDAL {
       organizationId,
       { $set: updateData },
       { new: true }
-    ).populate('owner', 'firstName lastName email');
+    ).populate('owner', 'firstName lastName email profilePicture');
   }
 
   /**

@@ -52,6 +52,7 @@ const NotificationSettingsSchema = new mongoose_1.Schema({
         earlyExit: { type: Boolean, default: true }
     },
     leaves: {
+        application: { type: Boolean, default: true },
         newRequest: { type: Boolean, default: true },
         approval: { type: Boolean, default: true },
         rejection: { type: Boolean, default: true }

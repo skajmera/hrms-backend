@@ -63,6 +63,14 @@ export declare class UserService {
      * Clear registered device ID for a user
      */
     clearUserDevice(id: string): Promise<import("../../../../shared/interfaces/user.interface").IUser | null>;
+    /**
+     * Upload user avatar using base64 or file path
+     */
+    uploadAvatar(userId: string, imageUrl: string): Promise<import("../../../../shared/interfaces/user.interface").IUser | null>;
+    /**
+     * Add FCM Device Token for Push Notifications
+     */
+    addFcmToken(userId: string, token: string): Promise<import("../../../../shared/interfaces/user.interface").IUser>;
 }
 export declare const userService: UserService;
 //# sourceMappingURL=user.service.d.ts.map

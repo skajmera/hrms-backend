@@ -11,8 +11,9 @@ exports.createUserValidation = [
         .notEmpty().withMessage('Phone number is required')
         .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('alternatePhone')
-        .optional()
-        .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+        .optional({ checkFalsy: true })
+        .matches(/^\+?[0-9\s\-()]{7,15}$/)
+        .withMessage('Valid alternate phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth is required'),
     (0, express_validator_1.body)('gender').optional().isIn(['MALE', 'FEMALE', 'OTHER']).withMessage('Valid gender is required'),
     (0, express_validator_1.body)('profileImage').optional().isString().withMessage('Profile image must be a URL string'),
@@ -41,8 +42,9 @@ exports.updateUserValidation = [
         .notEmpty().withMessage('Phone cannot be empty')
         .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('alternatePhone')
-        .optional()
-        .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+        .optional({ checkFalsy: true })
+        .matches(/^\+?[0-9\s\-()]{7,15}$/)
+        .withMessage('Valid alternate phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('email').optional().isEmail().withMessage('Valid email is required'),
     (0, express_validator_1.body)('profileImage').optional().isString(),
     (0, express_validator_1.body)('professionalDetails.totalExperience').optional().isString(),
@@ -66,7 +68,8 @@ exports.createDraftValidation = [
         .optional()
         .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('alternatePhone')
-        .optional()
-        .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+        .optional({ checkFalsy: true })
+        .matches(/^\+?[0-9\s\-()]{7,15}$/)
+        .withMessage('Valid alternate phone number is required (7-15 digits)')
 ];
 //# sourceMappingURL=user.validation.js.map

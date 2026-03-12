@@ -68,7 +68,7 @@ class SettingsService {
      */
     static async getWorkSchedules(organizationId) {
         return await work_schedule_model_1.WorkScheduleModel.find({ organizationId })
-            .populate('createdBy', 'firstName lastName')
+            .populate('createdBy', 'firstName lastName email profilePicture')
             .sort({ isDefault: -1, createdAt: -1 });
     }
     /**
@@ -159,7 +159,7 @@ class SettingsService {
      */
     static async getDesignationById(designationId) {
         const designation = await designation_model_1.DesignationModel.findById(designationId)
-            .populate('associatedUsers', 'firstName lastName email');
+            .populate('associatedUsers', 'firstName lastName email profilePicture');
         if (!designation) {
             throw new Error('Designation not found');
         }
@@ -209,17 +209,35 @@ class SettingsService {
      */
     static async getSecuritySettings(organizationId, userId) {
         console.log('Fetching security settings for organizationId:', organizationId);
+        let orgId = organizationId;
+        // Fallback: If organizationId is missing, try to find the first organization (for dev/single-tenant)
+        if (!orgId) {
+            const allOrgs = await organization_dal_1.OrganizationDAL.findAll({}, { limit: 1, page: 1 });
+            if (allOrgs.data && allOrgs.data.length > 0) {
+                orgId = allOrgs.data[0]._id.toString();
+                console.log('Fallback: Using first organizationId:', orgId);
+            }
+        }
         const [organization, user] = await Promise.all([
-            organization_dal_1.OrganizationDAL.findById(organizationId),
+            orgId ? organization_dal_1.OrganizationDAL.findById(orgId) : Promise.resolve(null),
             user_dal_1.userDAL.findById(userId)
         ]);
+        // Default settings if organization is not found
         if (!organization) {
-            throw new Error('Organization not found');
+            console.warn(`Organization ${orgId} not found, returning default security settings.`);
+            return {
+                requireFaceCapture: false,
+                blockMockLocations: true,
+                isFaceRegistered: !!user?.azurePersonId,
+                officeLocations: [],
+                allowedWifiNetworks: [],
+                registeredDeviceId: user?.registeredDeviceId || null
+            };
         }
         const securitySettings = organization.settings?.securitySettings || {};
         return {
             requireFaceCapture: securitySettings.requireFaceCapture || false,
-            blockMockLocations: securitySettings.blockMockLocations || true,
+            blockMockLocations: securitySettings.blockMockLocations !== undefined ? securitySettings.blockMockLocations : true,
             isFaceRegistered: !!user?.azurePersonId,
             officeLocations: securitySettings.officeLocations || [],
             allowedWifiNetworks: securitySettings.allowedWifiNetworks || [],

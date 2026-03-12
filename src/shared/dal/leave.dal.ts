@@ -16,10 +16,10 @@ export class LeaveDAL {
    */
   async findById(id: string): Promise<ILeave | null> {
     return await LeaveModel.findById(id)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
-      .populate('approvedBy', 'firstName lastName')
-      .populate('rejectedBy', 'firstName lastName')
-      .populate('handoverTo', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
+      .populate('approvedBy', 'firstName lastName profilePicture')
+      .populate('rejectedBy', 'firstName lastName profilePicture')
+      .populate('handoverTo', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -33,8 +33,8 @@ export class LeaveDAL {
     const skip = (page - 1) * limit;
 
     const leaves = await LeaveModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
-      .populate('approvedBy', 'firstName lastName')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+      .populate('approvedBy', 'firstName lastName profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -53,7 +53,7 @@ export class LeaveDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -68,7 +68,7 @@ export class LeaveDAL {
    */
   async getPendingLeaves(): Promise<ILeave[]> {
     return await LeaveModel.find({ status: LEAVE_STATUS.PENDING })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
       .sort({ appliedDate: 1 });
   }
 
@@ -107,7 +107,7 @@ export class LeaveDAL {
       startDate: { $lte: today },
       endDate: { $gte: today }
     })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
@@ -125,7 +125,7 @@ export class LeaveDAL {
       },
       { new: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -144,7 +144,7 @@ export class LeaveDAL {
       },
       { new: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -214,7 +214,7 @@ export class LeaveDAL {
       status: LEAVE_STATUS.APPROVED // Only count approved leaves
     })
       .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-      .populate('approvedBy', 'firstName lastName')
+      .populate('approvedBy', 'firstName lastName profilePicture')
       .sort({ startDate: 1 });
   }
 }

@@ -29,6 +29,10 @@ export declare class AuthController {
      * Get current user profile
      */
     getProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    /**
+     * Update FCM Token
+     */
+    updateFcmToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const authController: AuthController;
 //# sourceMappingURL=auth.controller.d.ts.map

@@ -113,10 +113,12 @@ export interface IUser extends Document {
     lastLogin?: Date;
     registeredDeviceId?: string;
     azurePersonId?: string;
+    fcmTokens?: string[];
     createdAt: Date;
     updatedAt: Date;
     createdBy?: Types.ObjectId | string;
     updatedBy?: Types.ObjectId | string;
+    fullName?: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
     generateAuthToken(): string;
     getFullName(): string;
