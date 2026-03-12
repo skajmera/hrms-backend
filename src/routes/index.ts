@@ -58,7 +58,6 @@ router.use('/manager/reports', managerReportsRoutes);
 router.use('/hr/users', userRoutes);
 router.use('/hr/attendance', attendanceRoutes);
 router.use('/hr/leave', leaveRoutes);
-router.use('/leaves', leaveRoutes);
 router.use('/hr/payroll', payrollRoutes);
 router.use('/hr/announcements', announcementRoutes);
 router.use('/hr/departments', departmentRoutes);
