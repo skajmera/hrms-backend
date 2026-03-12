@@ -31,7 +31,7 @@ export declare class AttendanceDAL {
     /**
      * Get attendance by user and date range
      */
-    findByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<IAttendance[]>;
+    findByUserAndDateRange(userId: string, startDate: Date, endDate: Date, additionalFilters?: IQueryFilters): Promise<IAttendance[]>;
     /**
      * Get today's attendance
      */

@@ -182,6 +182,11 @@ PayrollSchema.pre('save', function (next) {
     this.totalDeductions = totalStandardDeductions + customDeductionsTotal;
     // Calculate net salary
     this.netSalary = this.grossSalary - this.totalDeductions;
+    // Status flag enforcement
+    if (this.isGenerated) {
+        this.isDraft = false;
+        this.isPending = false;
+    }
     next();
 });
 exports.PayrollModel = mongoose_1.default.model('Payroll', PayrollSchema);

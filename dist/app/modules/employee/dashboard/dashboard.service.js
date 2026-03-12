@@ -4,21 +4,15 @@ exports.employeeDashboardService = exports.EmployeeDashboardService = void 0;
 const attendance_dal_1 = require("../../../../shared/dal/attendance.dal");
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
 const announcement_dal_1 = require("../../../../shared/dal/announcement.dal");
-const user_dal_1 = require("../../../../shared/dal/user.dal");
 class EmployeeDashboardService {
     async getMyDashboard(userId, userRole, userDepartment) {
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
-        // Get attendance summary
         const attendanceStats = await attendance_dal_1.attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear);
-        // Get check-in summary (total, late, on-time)
         const checkInSummary = await attendance_dal_1.attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear);
-        // Get leave balance
         const leaveBalance = await leave_dal_1.leaveDAL.getLeaveBalance(userId, currentYear);
-        // Get pending leaves
         const myLeaves = await leave_dal_1.leaveDAL.findAll({ userId, status: 'PENDING' }, {});
-        // Get announcements
         const announcements = await announcement_dal_1.announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);
         return {
             attendance: attendanceStats,
@@ -28,14 +22,43 @@ class EmployeeDashboardService {
             announcements: announcements.slice(0, 5)
         };
     }
-    async getBirthdays() {
-        return await user_dal_1.userDAL.getBirthdaysToday();
+    async getBirthdays(userId, userRole, deptId) {
+        const options = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
+        return await this.getAllAnnouncementsByType('BIRTHDAY', userId, userRole, deptId, options);
     }
-    async getAnniversary() {
-        return await user_dal_1.userDAL.getAnniversaryToday();
+    async getAnniversary(userId, userRole, deptId) {
+        const options = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
+        return await this.getAllAnnouncementsByType('ANNIVERSARY', userId, userRole, deptId, options);
     }
-    async getNewHires(days = 30, date) {
-        return await user_dal_1.userDAL.getNewHires(days, date);
+    async getNewHires(userId, userRole, deptId) {
+        const options = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
+        return await this.getAllAnnouncementsByType('NEWHIRE', userId, userRole, deptId, options);
+    }
+    async getAllAnnouncementsByType(type, userId, userRole, deptId, options) {
+        const filters = {
+            ...announcement_dal_1.announcementDAL.getActiveFilter(),
+            announcementType: type,
+            $or: [
+                { 'targetAudience.isGlobal': true },
+                { 'targetAudience.roles': userRole },
+                { 'targetAudience.departments': deptId },
+                { 'targetAudience.specificUsers': userId }
+            ]
+        };
+        return await announcement_dal_1.announcementDAL.findAll(filters, options);
+    }
+    async getAllAnnouncements(userId, userRole, deptId, options) {
+        // Use active filter + audience targeting for employee-visible announcements
+        const filters = {
+            ...announcement_dal_1.announcementDAL.getActiveFilter(),
+            $or: [
+                { 'targetAudience.isGlobal': true },
+                { 'targetAudience.roles': userRole },
+                { 'targetAudience.departments': deptId },
+                { 'targetAudience.specificUsers': userId }
+            ]
+        };
+        return await announcement_dal_1.announcementDAL.findAll(filters, options);
     }
 }
 exports.EmployeeDashboardService = EmployeeDashboardService;

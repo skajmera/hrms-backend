@@ -36,7 +36,6 @@ export class AnnouncementController {
 
   async getAllAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Keep controller minimal: extract paging/sort and forward remaining query params
       const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
 
       const result = await announcementService.getAllAnnouncements(filters, {
@@ -44,7 +43,7 @@ export class AnnouncementController {
         limit: Number(limit),
         sortBy: sortBy as string,
         sortOrder: sortOrder as 'asc' | 'desc'
-      }, req.user._id.toString());
+      }, req.user._id.toString(), req.user.role);
       sendPaginatedResponse(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -159,6 +158,23 @@ export class AnnouncementController {
       const { id, commentId } = req.params;
       const announcement = await announcementService.deleteComment(id, commentId, req.user._id.toString());
       sendSuccessResponse(res, 'Comment deleted successfully', announcement);
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  async getTypedAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+      const { announcementType } = req.params;
+
+      const result = await announcementService.getTypedAnnouncements(
+        announcementType,
+        { page: Number(page), limit: Number(limit), sortBy: sortBy as string, sortOrder: sortOrder as 'asc' | 'desc' },
+        req.user._id.toString(),
+        req.user.role
+      );
+      sendPaginatedResponse(res, result.announcements, result.total, Number(page), Number(limit), `${announcementType} announcements retrieved successfully`);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

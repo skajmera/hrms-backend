@@ -5,7 +5,7 @@ export declare class AnnouncementService {
         createdBy: string;
     }): Promise<import("../../../../shared/interfaces/announcement.interface").IAnnouncement>;
     getAnnouncementById(id: string, userId?: string): Promise<any>;
-    getAllAnnouncements(filters: any, options: IPaginationOptions, userId?: string): Promise<{
+    getAllAnnouncements(filters: any, options: IPaginationOptions, userId?: string, role?: string): Promise<{
         announcements: import("../../../../shared/interfaces/announcement.interface").IAnnouncement[];
         total: number;
     }>;
@@ -14,6 +14,10 @@ export declare class AnnouncementService {
     markAsViewed(id: string, userId: string): Promise<void>;
     togglePin(id: string, userId: string): Promise<any>;
     getActiveAnnouncementsForUser(userId: string, userRole: string, userDepartment: string): Promise<any[]>;
+    getTypedAnnouncements(type: string, options: IPaginationOptions, userId: string, role: string): Promise<{
+        announcements: any[];
+        total: number;
+    }>;
     toggleLikeAnnouncement(id: string, userId: string): Promise<any>;
     toggleCommentLikeAnnouncement(id: string, commentId: string, userId: string): Promise<any>;
     addComment(id: string, userId: string, content: string): Promise<any>;

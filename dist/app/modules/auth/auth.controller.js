@@ -89,6 +89,22 @@ class AuthController {
             (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.NOT_FOUND);
         }
     }
+    /**
+     * Update FCM Token
+     */
+    async updateFcmToken(req, res, next) {
+        try {
+            const { fcmToken } = req.body;
+            if (!fcmToken) {
+                throw new Error('FCM Token is required');
+            }
+            await auth_service_1.authService.updateFcmToken(req.user._id.toString(), fcmToken);
+            (0, response_1.sendSuccessResponse)(res, 'FCM Token updated successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
 }
 exports.AuthController = AuthController;
 exports.authController = new AuthController();

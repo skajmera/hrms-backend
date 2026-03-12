@@ -16,8 +16,8 @@ class EmployeeAttendanceController {
     }
     async getMyAttendance(req, res, next) {
         try {
-            const { startDate, endDate } = req.query;
-            const attendance = await attendance_service_1.employeeAttendanceService.getMyAttendance(req.user._id.toString(), new Date(startDate), new Date(endDate));
+            const { startDate, endDate, status, checkIn, checkOut, workHours } = req.query;
+            const attendance = await attendance_service_1.employeeAttendanceService.getMyAttendance(req.user._id.toString(), new Date(startDate), new Date(endDate), { status, checkIn, checkOut, workHours });
             (0, response_1.sendSuccessResponse)(res, 'Attendance retrieved successfully', attendance);
         }
         catch (error) {
@@ -29,6 +29,15 @@ class EmployeeAttendanceController {
             const { month, year } = req.params;
             const summary = await attendance_service_1.employeeAttendanceService.getMyAttendanceSummary(req.user._id.toString(), Number(month), Number(year));
             (0, response_1.sendSuccessResponse)(res, 'Attendance summary retrieved successfully', summary);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getMyTodayAttendance(req, res, next) {
+        try {
+            const attendance = await attendance_service_1.employeeAttendanceService.getTodayAttendance(req.user._id.toString());
+            (0, response_1.sendSuccessResponse)(res, "Today's attendance retrieved successfully", attendance);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

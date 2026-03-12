@@ -248,6 +248,24 @@ export class UserService {
     if (!user) { throw new Error('User not found'); }
     return await userDAL.update(id, { $unset: { registeredDeviceId: "" } });
   }
+
+  /**
+   * Upload user avatar using base64 or file path
+   */
+  async uploadAvatar(userId: string, imageUrl: string) {
+    return await userDAL.update(userId, { profilePicture: imageUrl });
+  }
+
+  /**
+   * Add FCM Device Token for Push Notifications
+   */
+  async addFcmToken(userId: string, token: string) {
+    const user = await userDAL.update(userId, { $addToSet: { fcmTokens: token } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
 }
 
 export const userService = new UserService();

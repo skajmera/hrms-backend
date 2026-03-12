@@ -14,11 +14,14 @@ class DepartmentDAL {
      * Find department by ID
      */
     async findById(id) {
-        return await department_model_1.DepartmentModel.findById(id)
+        return await department_model_1.DepartmentModel.findOne({ _id: id, isActive: true })
             .populate('parentDepartment', 'name code')
-            .populate('headOfDepartment', 'firstName lastName email')
-            .populate('employees', 'firstName lastName email professionalDetails.employeeId')
-            .populate('createdBy', 'firstName lastName');
+            .populate('headOfDepartment', 'firstName lastName email profilePicture')
+            .populate({
+            path: 'employees',
+            select: 'firstName lastName email profilePicture professionalDetails.employeeId'
+        })
+            .populate('createdBy', 'firstName lastName email profilePicture');
     }
     /**
      * Find all departments
@@ -26,14 +29,15 @@ class DepartmentDAL {
     async findAll(filters = {}, options = {}) {
         const { page = 1, limit = 10, sortBy = 'name', sortOrder = 'asc' } = options;
         const skip = (page - 1) * limit;
-        const departments = await department_model_1.DepartmentModel.find(filters)
+        const activeFilters = { ...filters, isActive: true };
+        const departments = await department_model_1.DepartmentModel.find(activeFilters)
             .populate('parentDepartment', 'name code')
-            .populate('headOfDepartment', 'firstName lastName email')
-            .populate('employees', 'firstName lastName email')
+            .populate('headOfDepartment', 'firstName lastName email profilePicture')
+            .populate('employees', 'firstName lastName email profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
-        const total = await department_model_1.DepartmentModel.countDocuments(filters);
+        const total = await department_model_1.DepartmentModel.countDocuments(activeFilters);
         return { departments, total };
     }
     /**
@@ -42,7 +46,7 @@ class DepartmentDAL {
     async update(id, updateData) {
         return await department_model_1.DepartmentModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
             .populate('parentDepartment', 'name code')
-            .populate('headOfDepartment', 'firstName lastName email');
+            .populate('headOfDepartment', 'firstName lastName email profilePicture');
     }
     /**
      * Delete department
@@ -56,11 +60,11 @@ class DepartmentDAL {
     async hardDelete(id) {
         return await department_model_1.DepartmentModel.findByIdAndDelete(id);
     } /**
-    
-    Find department by code
-    */
+      
+      Find department by code
+      */
     async findByCode(code) {
-        return await department_model_1.DepartmentModel.findOne({ code });
+        return await department_model_1.DepartmentModel.findOne({ code, isActive: true });
     }
     /**
     
@@ -68,8 +72,8 @@ class DepartmentDAL {
     */
     async getDepartmentTree() {
         const departments = await department_model_1.DepartmentModel.find({ isActive: true })
-            .populate('headOfDepartment', 'firstName lastName email')
-            .populate('employees', 'firstName lastName email')
+            .populate('headOfDepartment', 'firstName lastName email profilePicture')
+            .populate('employees', 'firstName lastName email profilePicture')
             .sort({ level: 1, name: 1 });
         const buildTree = (parentId = null) => {
             return departments
@@ -124,6 +128,8 @@ class DepartmentDAL {
                     head: {
                         _id: '$head._id',
                         fullName: { $concat: ['$head.firstName', ' ', '$head.lastName'] },
+                        profilePicture: '$head.profilePicture',
+                        profileImage: '$head.profilePicture',
                         designation: '$head.professionalDetails.designation'
                     },
                     employees: {
@@ -133,6 +139,8 @@ class DepartmentDAL {
                             in: {
                                 _id: '$$e._id',
                                 fullName: { $concat: ['$$e.firstName', ' ', '$$e.lastName'] },
+                                profilePicture: '$$e.profilePicture',
+                                profileImage: '$$e.profilePicture',
                                 designation: '$$e.professionalDetails.designation',
                                 reportingManager: '$$e.professionalDetails.reportingManager'
                             }
@@ -149,7 +157,7 @@ class DepartmentDAL {
     */
     async getSubDepartments(parentId) {
         return await department_model_1.DepartmentModel.find({ parentDepartment: parentId, isActive: true })
-            .populate('headOfDepartment', 'firstName lastName email');
+            .populate('headOfDepartment', 'firstName lastName email profilePicture');
     }
     /**
     
@@ -185,9 +193,9 @@ class DepartmentDAL {
         ]);
     }
     /**
-* Sync employees in department
-* Called when user department changes
-*/
+  * Sync employees in department
+  * Called when user department changes
+  */
     async syncEmployees(departmentId) {
         const employees = await user_model_1.UserModel.find({
             'professionalDetails.department': departmentId,
@@ -205,7 +213,7 @@ class DepartmentDAL {
      * Get all employees in department and sub-departments
      */
     async getAllEmployeesRecursive(departmentId) {
-        const department = await department_model_1.DepartmentModel.findById(departmentId);
+        const department = await this.findById(departmentId);
         if (!department)
             return [];
         let allEmployees = [...department.employees.map(e => e.toString())];

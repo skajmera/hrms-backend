@@ -4,16 +4,31 @@ exports.userController = exports.UserController = void 0;
 const user_service_1 = require("./user.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
+// When form is sent as multipart/form-data, nested JSON fields arrive as strings — parse them back.
+const JSON_FIELDS = ['education', 'experience', 'currentAddress', 'permanentAddress', 'professionalDetails', 'separationInfo', 'bankDetails', 'emergencyContact', 'documents'];
+const parseJsonFields = (body) => {
+    for (const field of JSON_FIELDS) {
+        if (typeof body[field] === 'string') {
+            try {
+                body[field] = JSON.parse(body[field]);
+            }
+            catch { /* leave as-is if not valid JSON */ }
+        }
+    }
+    return body;
+};
 class UserController {
     /**
      * Create new user
      */
     async createUser(req, res, next) {
         try {
-            const createData = req.body;
+            const createData = parseJsonFields(req.body);
             console.log("req.body : ", req.body);
-            const userId = req.user._id.toString();
-            createData.createdBy = userId;
+            createData.createdBy = req.user._id.toString();
+            if (req.file) {
+                createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
+            }
             const user = await user_service_1.userService.createUser(createData);
             (0, response_1.sendSuccessResponse)(res, 'User created successfully', user, constants_1.HTTP_STATUS.CREATED);
         }
@@ -26,9 +41,11 @@ class UserController {
      */
     async createDraftEmployee(req, res, next) {
         try {
-            const createData = req.body;
-            const userId = req.user._id.toString();
-            createData.createdBy = userId;
+            const createData = parseJsonFields(req.body);
+            createData.createdBy = req.user._id.toString();
+            if (req.file) {
+                createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
+            }
             const user = await user_service_1.userService.createDraftEmployee(createData);
             (0, response_1.sendSuccessResponse)(res, 'Draft user created successfully', user, constants_1.HTTP_STATUS.CREATED);
         }
@@ -95,9 +112,11 @@ class UserController {
      */
     async updateUser(req, res, next) {
         try {
-            const updateData = req.body;
-            const userId = req.user._id.toString();
-            updateData.updatedBy = userId;
+            const updateData = parseJsonFields(req.body);
+            updateData.updatedBy = req.user._id.toString();
+            if (req.file) {
+                updateData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
+            }
             const user = await user_service_1.userService.updateUser(req.params.id, updateData);
             (0, response_1.sendSuccessResponse)(res, 'User updated successfully', user);
         }
@@ -198,11 +217,28 @@ class UserController {
             if (!req.file) {
                 throw new Error('No file uploaded');
             }
-            const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
+            const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
             (0, response_1.sendSuccessResponse)(res, 'Avatar uploaded successfully', {
                 imageUrl,
                 path: req.file.path.replace(/\\/g, '/')
             });
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
+        }
+    }
+    /**
+     * Register Firebase Cloud Messaging Notification Device Token
+     */
+    async addDeviceToken(req, res, next) {
+        try {
+            const { token } = req.body;
+            if (!token) {
+                throw new Error('FCM push token is required');
+            }
+            const userId = req.user._id.toString();
+            await user_service_1.userService.addFcmToken(userId, token);
+            (0, response_1.sendSuccessResponse)(res, 'Device push notification token registered successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);

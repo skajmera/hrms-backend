@@ -3,7 +3,7 @@ import { IPaginationOptions } from '../../../../shared/interfaces/common.interfa
 export declare class LeaveService {
     applyLeave(leaveData: ILeaveCreateInput): Promise<import("../../../../shared/interfaces/leave.interface").ILeave>;
     getLeaveById(id: string): Promise<import("../../../../shared/interfaces/leave.interface").ILeave>;
-    getAllLeaves(filters: any, options: IPaginationOptions): Promise<{
+    getAllLeaves(query: any, options: IPaginationOptions): Promise<{
         leaves: import("../../../../shared/interfaces/leave.interface").ILeave[];
         total: number;
     }>;

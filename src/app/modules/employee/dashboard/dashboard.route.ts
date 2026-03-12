@@ -75,4 +75,6 @@ router.get('/anniversary', employeeDashboardController.getAnniversary.bind(emplo
  */
 router.get('/new-hires', employeeDashboardController.getNewHires.bind(employeeDashboardController));
 
+router.get('/announcements', employeeDashboardController.getAllAnnouncements.bind(employeeDashboardController));
+
 export default router;

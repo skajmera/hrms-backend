@@ -93,5 +93,6 @@ router.get('/', employeeAttendanceController.getMyAttendance.bind(employeeAttend
  *         description: Summary retrieved successfully
  */
 router.get('/summary/:month/:year', employeeAttendanceController.getMyAttendanceSummary.bind(employeeAttendanceController));
+router.get('/today', employeeAttendanceController.getMyTodayAttendance.bind(employeeAttendanceController));
 
 export default router;

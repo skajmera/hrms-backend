@@ -9,8 +9,10 @@ export const createUserValidation = [
     .notEmpty().withMessage('Phone number is required')
     .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
   body('alternatePhone')
-    .optional()
-    .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+    .optional({ checkFalsy: true })
+    .matches(/^\+?[0-9\s\-()]{7,15}$/)
+    .withMessage('Valid alternate phone number is required (7-15 digits)'),
+
   body('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth is required'),
   body('gender').optional().isIn(['MALE', 'FEMALE', 'OTHER']).withMessage('Valid gender is required'),
   body('profileImage').optional().isString().withMessage('Profile image must be a URL string'),
@@ -43,8 +45,10 @@ export const updateUserValidation = [
     .notEmpty().withMessage('Phone cannot be empty')
     .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
   body('alternatePhone')
-    .optional()
-    .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+    .optional({ checkFalsy: true })
+    .matches(/^\+?[0-9\s\-()]{7,15}$/)
+    .withMessage('Valid alternate phone number is required (7-15 digits)'),
+
   body('email').optional().isEmail().withMessage('Valid email is required'),
   body('profileImage').optional().isString(),
   body('professionalDetails.totalExperience').optional().isString(),
@@ -71,6 +75,8 @@ export const createDraftValidation = [
     .optional()
     .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid phone number is required (7-15 digits)'),
   body('alternatePhone')
-    .optional()
-    .matches(/^\+?[0-9\s\-()]{7,15}$/).withMessage('Valid alternate phone number is required (7-15 digits)'),
+    .optional({ checkFalsy: true })
+    .matches(/^\+?[0-9\s\-()]{7,15}$/)
+    .withMessage('Valid alternate phone number is required (7-15 digits)')
+
 ];

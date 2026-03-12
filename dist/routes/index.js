@@ -14,6 +14,7 @@ const attendance_route_1 = __importDefault(require("../app/modules/employee/atte
 const leave_route_1 = __importDefault(require("../app/modules/employee/leave/leave.route"));
 const payroll_route_1 = __importDefault(require("../app/modules/employee/payroll/payroll.route"));
 const dashboard_route_1 = __importDefault(require("../app/modules/employee/dashboard/dashboard.route"));
+const notifications_route_1 = __importDefault(require("../app/modules/employee/notifications/notifications.route"));
 // Manager
 const team_route_1 = __importDefault(require("../app/modules/manager/team/team.route"));
 const leave_route_2 = __importDefault(require("../app/modules/manager/leave/leave.route"));
@@ -30,6 +31,7 @@ const reports_route_2 = __importDefault(require("../app/modules/hr/reports/repor
 const holidays_route_1 = __importDefault(require("../app/modules/hr/holidays/holidays.route"));
 const analytics_route_1 = __importDefault(require("../app/modules/hr/analytics/analytics.route"));
 const shifts_route_1 = __importDefault(require("../app/modules/hr/shifts/shifts.route"));
+const notifications_route_2 = __importDefault(require("../app/modules/hr/notifications/notifications.route"));
 const permissions_route_1 = __importDefault(require("../app/modules/hr/permissions/permissions.route")); // NEW
 const offboarding_route_1 = __importDefault(require("../app/modules/hr/offboarding/offboarding.route")); // NEW
 const router = (0, express_1.Router)();
@@ -43,6 +45,7 @@ router.use('/employee/attendance', attendance_route_1.default);
 router.use('/employee/leave', leave_route_1.default);
 router.use('/employee/payroll', payroll_route_1.default);
 router.use('/employee/dashboard', dashboard_route_1.default);
+router.use('/employee/notifications', notifications_route_1.default);
 // Manager routes (Team management)
 router.use('/manager/team', team_route_1.default);
 router.use('/manager/leave', leave_route_2.default);
@@ -56,6 +59,7 @@ router.use('/hr/payroll', payroll_route_2.default);
 router.use('/hr/announcements', announcement_route_1.default);
 router.use('/hr/departments', department_route_1.default);
 router.use('/hr/dashboard', dashboard_route_2.default);
+router.use('/hr/notifications', notifications_route_2.default);
 router.use('/hr/reports', reports_route_2.default);
 router.use('/hr/holidays', holidays_route_1.default);
 router.use('/hr/analytics', analytics_route_1.default);

@@ -57,6 +57,10 @@ export declare class UserController {
      * Upload user profile picture
      */
     uploadAvatar(req: any, res: Response, next: NextFunction): Promise<void>;
+    /**
+     * Register Firebase Cloud Messaging Notification Device Token
+     */
+    addDeviceToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const userController: UserController;
 //# sourceMappingURL=user.controller.d.ts.map

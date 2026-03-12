@@ -192,6 +192,7 @@ const UserSchema = new mongoose_1.Schema({
     lastLogin: { type: Date },
     registeredDeviceId: { type: String, unique: true, sparse: true },
     azurePersonId: { type: String, unique: true, sparse: true },
+    fcmTokens: [{ type: String }], // Array of Firebase Cloud Messaging device tokens
     // Metadata
     createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
     updatedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }

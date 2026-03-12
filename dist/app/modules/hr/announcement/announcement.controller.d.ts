@@ -14,6 +14,7 @@ export declare class AnnouncementController {
     addComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     replyToComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     deleteComment(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    getTypedAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const announcementController: AnnouncementController;
 //# sourceMappingURL=announcement.controller.d.ts.map

@@ -25,9 +25,9 @@ export class LeaveController {
 
   async getAllLeaves(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...filters } = req.query;
+      const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...query } = req.query as any;
 
-      const result = await leaveService.getAllLeaves(filters, {
+      const result = await leaveService.getAllLeaves(query, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,

@@ -9,7 +9,7 @@ export interface IWorkSchedule extends Document {
   scheduleType: 'DURATION_BASED' | 'CLOCK_BASED';
   effectiveFrom: Date;
   standardWorkingHoursPerDay: number; // in hours (e.g., 8)
-  
+
   workingDays: {
     monday: {
       isWorking: boolean;
@@ -54,11 +54,11 @@ export interface IWorkSchedule extends Document {
       duration?: number;
     };
   };
-  
+
   totalWeeklyHours: number;
   isActive: boolean;
   isDefault: boolean;
-  
+
   createdBy: Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;
@@ -70,37 +70,38 @@ export interface IWorkSchedule extends Document {
 export interface INotificationSettings extends Document {
   organizationId: Types.ObjectId | string;
   userId: Types.ObjectId | string;
-  
+
   attendance: {
     checkInCheckOut: boolean;
     lateArrival: boolean;
     earlyExit: boolean;
   };
-  
+
   leaves: {
+    application: boolean;
     newRequest: boolean;
     approval: boolean;
     rejection: boolean;
   };
-  
+
   announcements: {
     newAnnouncement: boolean;
     mentions: boolean;
     likes: boolean;
     comments: boolean;
   };
-  
+
   reminders: {
     birthdays: boolean;
     anniversaries: boolean;
     newHiring: boolean;
   };
-  
+
   payroll: {
     payslipGenerated: boolean;
     paymentProcessed: boolean;
   };
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,7 +118,7 @@ export interface IDesignation extends Document {
   parentDesignation?: Types.ObjectId | string;
   associatedUsers: Types.ObjectId[] | string[];
   isActive: boolean;
-  
+
   createdBy: Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;

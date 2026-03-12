@@ -2,9 +2,55 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.announcementService = exports.AnnouncementService = void 0;
 const announcement_dal_1 = require("../../../../shared/dal/announcement.dal");
+const user_dal_1 = require("../../../../shared/dal/user.dal");
+const notifications_service_1 = require("../../notifications/notifications.service");
+const notification_interface_1 = require("../../../../shared/interfaces/notification.interface");
 class AnnouncementService {
     async createAnnouncement(announcementData) {
-        return await announcement_dal_1.announcementDAL.create(announcementData);
+        const announcement = await announcement_dal_1.announcementDAL.create(announcementData);
+        // --- TRIGGER NOTIFICATIONS FOR TARGET AUDIENCE ---
+        try {
+            if (announcement.isActive) {
+                let targetUserIds = [];
+                if (announcement.targetAudience.isGlobal) {
+                    // Notify everyone (active users)
+                    const allUsers = await user_dal_1.userDAL.findAll({ isActive: true }, { limit: 2000, page: 1 });
+                    targetUserIds = allUsers.users.map(u => u._id.toString());
+                }
+                else {
+                    // Notify specific audience
+                    const filters = { isActive: true, $or: [] };
+                    if (announcement.targetAudience.roles?.length) {
+                        filters.$or.push({ role: { $in: announcement.targetAudience.roles } });
+                    }
+                    if (announcement.targetAudience.departments?.length) {
+                        filters.$or.push({ 'professionalDetails.department': { $in: announcement.targetAudience.departments } });
+                    }
+                    if (announcement.targetAudience.specificUsers?.length) {
+                        filters.$or.push({ _id: { $in: announcement.targetAudience.specificUsers } });
+                    }
+                    if (filters.$or.length > 0) {
+                        const users = await user_dal_1.userDAL.findAll(filters, { limit: 1000, page: 1 });
+                        targetUserIds = users.users.map(u => u._id.toString());
+                    }
+                }
+                if (targetUserIds.length > 0) {
+                    const notificationPayloads = targetUserIds.map(userId => ({
+                        userId,
+                        type: notification_interface_1.NotificationType.ANNOUNCEMENT,
+                        title: 'New Announcement',
+                        message: announcement.title,
+                        targetApp: 'EMPLOYEE',
+                        data: { announcementId: announcement._id }
+                    }));
+                    await notifications_service_1.notificationsService.sendBulkNotifications(notificationPayloads);
+                }
+            }
+        }
+        catch (error) {
+            console.error('[AnnouncementService] Failed to send announcement notifications:', error);
+        }
+        return announcement;
     }
     async getAnnouncementById(id, userId) {
         const announcement = await announcement_dal_1.announcementDAL.findById(id);
@@ -13,21 +59,19 @@ class AnnouncementService {
         }
         return userId ? this.injectLikedField(announcement, userId) : announcement;
     }
-    async getAllAnnouncements(filters, options, userId) {
-        // Normalize and parse query filters here so controller stays thin and consistent
+    async getAllAnnouncements(filters, options, userId, role) {
         const { startDate, expiryDate, announcementType, ...rest } = filters || {};
         const queryFilters = { ...rest };
-        if (startDate) {
-            // fetch announcements starting on/after provided date
+        if (startDate)
             queryFilters.startDate = { $gte: new Date(startDate) };
-        }
-        if (expiryDate) {
-            // fetch announcements expiring on/before provided date
+        if (expiryDate)
             queryFilters.expiryDate = { $lte: new Date(expiryDate) };
-        }
-        if (announcementType) {
+        if (announcementType)
             queryFilters.announcementType = announcementType;
-        }
+        // Employees/Managers only see active, valid-date announcements
+        const isEmployee = role && !['SUPER_ADMIN', 'HR_ADMIN'].includes(role);
+        if (isEmployee)
+            Object.assign(queryFilters, announcement_dal_1.announcementDAL.getActiveFilter());
         const result = await announcement_dal_1.announcementDAL.findAll(queryFilters, options);
         if (userId) {
             result.announcements = result.announcements.map(a => this.injectLikedField(a, userId));
@@ -61,6 +105,14 @@ class AnnouncementService {
     async getActiveAnnouncementsForUser(userId, userRole, userDepartment) {
         const announcements = await announcement_dal_1.announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);
         return announcements.map(a => this.injectLikedField(a, userId));
+    }
+    async getTypedAnnouncements(type, options, userId, role) {
+        const isEmployee = !['SUPER_ADMIN', 'HR_ADMIN'].includes(role);
+        const result = await announcement_dal_1.announcementDAL.findTypedWithUsers(type, options, isEmployee);
+        if (userId) {
+            result.announcements = result.announcements.map(a => this.injectLikedField(a, userId));
+        }
+        return result;
     }
     async toggleLikeAnnouncement(id, userId) {
         const announcement = await announcement_dal_1.announcementDAL.toggleLike(id, userId);

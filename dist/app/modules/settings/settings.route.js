@@ -179,6 +179,9 @@ router.use(auth_middleware_1.authenticate);
  *         leaves:
  *           type: object
  *           properties:
+ *             application:
+ *               type: boolean
+ *               example: true
  *             newRequest:
  *               type: boolean
  *               example: true
@@ -678,6 +681,7 @@ router.get('/notifications', settings_controller_1.SettingsController.getNotific
  *               lateArrival: true
  *               earlyExit: false
  *             leaves:
+ *               application: true
  *               newRequest: true
  *               approval: true
  *               rejection: true
