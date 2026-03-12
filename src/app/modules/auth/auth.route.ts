@@ -286,4 +286,11 @@ router.post('/refresh', authController.refreshToken.bind(authController));
  */
 router.get('/profile', authenticate, authController.getProfile.bind(authController));
 
+/**
+ * @route   POST /api/v1/auth/fcm-token
+ * @desc    Update FCM Token
+ * @access  Private
+ */
+router.post('/fcm-token', authenticate, authController.updateFcmToken.bind(authController));
+
 export default router;

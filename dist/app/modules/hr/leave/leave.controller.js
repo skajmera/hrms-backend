@@ -25,8 +25,8 @@ class LeaveController {
     }
     async getAllLeaves(req, res, next) {
         try {
-            const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...filters } = req.query;
-            const result = await leave_service_1.leaveService.getAllLeaves(filters, {
+            const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc', ...query } = req.query;
+            const result = await leave_service_1.leaveService.getAllLeaves(query, {
                 page: Number(page),
                 limit: Number(limit),
                 sortBy: sortBy,
@@ -40,10 +40,17 @@ class LeaveController {
     }
     async approveLeave(req, res, next) {
         try {
+            console.log('--- Approve Leave Request ---');
+            console.log('User from request:', JSON.stringify(req.user, null, 2));
+            console.log('Leave ID from params:', req.params.id);
+            if (!req.user || !req.user._id) {
+                throw new Error('Authentication failed: User information missing from request');
+            }
             const leave = await leave_service_1.leaveService.approveLeave(req.params.id, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Leave approved successfully', leave);
         }
         catch (error) {
+            console.error('Error in approveLeave:', error.message);
             (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
         }
     }

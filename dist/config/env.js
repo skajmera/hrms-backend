@@ -31,7 +31,7 @@ exports.config = {
     },
     rateLimit: {
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes 900000
-        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '1000')
+        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '10000')
     },
     cors: {
         origin: process.env.CORS_ORIGIN || 'http://localhost:5173' || 'https://hrms-backend-khq1.onrender.com/'

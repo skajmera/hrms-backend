@@ -19,15 +19,15 @@ class OrganizationDAL {
      */
     static async findById(organizationId) {
         return await organization_model_1.OrganizationModel.findById(organizationId)
-            .populate('owner', 'firstName lastName email')
-            .populate('admins', 'firstName lastName email');
+            .populate('owner', 'firstName lastName email profilePicture')
+            .populate('admins', 'firstName lastName email profilePicture');
     }
     /**
      * Find organization by owner
      */
     static async findByOwner(ownerId) {
         return await organization_model_1.OrganizationModel.findOne({ owner: ownerId })
-            .populate('admins', 'firstName lastName email');
+            .populate('admins', 'firstName lastName email profilePicture');
     }
     /**
      * Find organization by email
@@ -44,7 +44,7 @@ class OrganizationDAL {
         const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
         const [data, totalItems] = await Promise.all([
             organization_model_1.OrganizationModel.find(filters)
-                .populate('owner', 'firstName lastName email')
+                .populate('owner', 'firstName lastName email profilePicture')
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
@@ -68,7 +68,7 @@ class OrganizationDAL {
      * Update organization
      */
     static async updateById(organizationId, updateData) {
-        return await organization_model_1.OrganizationModel.findByIdAndUpdate(organizationId, { $set: updateData }, { new: true }).populate('owner', 'firstName lastName email');
+        return await organization_model_1.OrganizationModel.findByIdAndUpdate(organizationId, { $set: updateData }, { new: true }).populate('owner', 'firstName lastName email profilePicture');
     }
     /**
      * Delete organization

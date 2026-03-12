@@ -31,6 +31,10 @@ export declare class AuthService {
      * Get current user profile
      */
     getProfile(userId: string): Promise<any>;
+    /**
+     * Update FCM Token for push notifications
+     */
+    updateFcmToken(userId: string, fcmToken: string): Promise<void>;
 }
 export declare const authService: AuthService;
 //# sourceMappingURL=auth.service.d.ts.map

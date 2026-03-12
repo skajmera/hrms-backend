@@ -43,6 +43,12 @@ class PermissionsService {
         if (filters.status) {
             queryFilters.isActive = filters.status === 'active';
         }
+        if (filters.search) {
+            queryFilters.$or = [
+                { email: { $regex: filters.search, $options: 'i' } },
+                { role: { $regex: filters.search, $options: 'i' } }
+            ];
+        }
         return await permission_dal_1.permissionDAL.findAll(queryFilters, options);
     }
     /**
@@ -67,23 +73,40 @@ class PermissionsService {
         return permission;
     }
     /**
-     * Update user permissions
+     * Get exact assigned permission by user ID (Returns object, empty object if not found)
+     */
+    async getAssignedPermissionByUserId(userId) {
+        return await permission_dal_1.permissionDAL.findByUserId(userId) || {};
+    }
+    /**
+     * Update or create user permissions (Atomic Upsert)
      */
     async updatePermissions(userId, updateData) {
-        const permission = await permission_dal_1.permissionDAL.updateByUserId(userId, updateData);
-        if (!permission) {
-            throw new Error('User permissions not found');
-        }
+        const user = await user_dal_1.userDAL.findById(userId);
+        if (!user)
+            throw new Error('User not found');
+        const { invitedBy, ...dataToUpdate } = updateData;
+        const upsertData = {
+            userId: user._id,
+            email: user.email,
+            role: dataToUpdate.role || user.role,
+            modules: dataToUpdate.modules || this.getDefaultPermissionsByRole(user.role),
+            invitedBy: invitedBy,
+            isActive: true,
+            invitedAt: new Date()
+        };
+        const permission = await permission_dal_1.permissionDAL.updateByUserId(userId, dataToUpdate, upsertData);
+        if (!permission)
+            throw new Error('Failed to update or create user permissions');
         return permission;
     }
     /**
-     * Delete user permissions
+     * Delete user permissions (Gracefully handles non-existent permissions)
      */
     async deletePermissions(userId) {
-        const permission = await permission_dal_1.permissionDAL.deleteByUserId(userId);
-        if (!permission) {
-            throw new Error('User permissions not found');
-        }
+        await permission_dal_1.permissionDAL.deleteByUserId(userId);
+        // Removed the "throw new Error('User permissions not found')" check
+        // If the permission doesn't exist, we consider the deletion successful anyway.
     }
     /**
      * Check if user has specific permission
@@ -92,24 +115,16 @@ class PermissionsService {
         return await permission_dal_1.permissionDAL.hasPermission(userId, module, action);
     }
     /**
-     * Deactivate user permissions
+     * Deactivate user permissions (gracefully returns null if not found)
      */
     async deactivateUser(userId) {
-        const permission = await permission_dal_1.permissionDAL.deactivate(userId);
-        if (!permission) {
-            throw new Error('User permissions not found');
-        }
-        return permission;
+        return await permission_dal_1.permissionDAL.deactivate(userId);
     }
     /**
-     * Activate user permissions
+     * Activate user permissions (gracefully returns null if not found)
      */
     async activateUser(userId) {
-        const permission = await permission_dal_1.permissionDAL.activate(userId);
-        if (!permission) {
-            throw new Error('User permissions not found');
-        }
-        return permission;
+        return await permission_dal_1.permissionDAL.activate(userId);
     }
     /**
      * Get all active users with permissions

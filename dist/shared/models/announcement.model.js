@@ -86,6 +86,12 @@ const AnnouncementSchema = new mongoose_1.Schema({
             userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
             content: { type: String, required: true },
             likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+            replies: [{
+                    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
+                    content: { type: String, required: true },
+                    likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }],
+                    createdAt: { type: Date, default: Date.now }
+                }],
             createdAt: { type: Date, default: Date.now }
         }]
 }, {

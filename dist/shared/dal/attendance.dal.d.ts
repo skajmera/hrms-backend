@@ -31,7 +31,7 @@ export declare class AttendanceDAL {
     /**
      * Get attendance by user and date range
      */
-    findByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<IAttendance[]>;
+    findByUserAndDateRange(userId: string, startDate: Date, endDate: Date, additionalFilters?: IQueryFilters): Promise<IAttendance[]>;
     /**
      * Get today's attendance
      */
@@ -40,6 +40,14 @@ export declare class AttendanceDAL {
      * Get attendance statistics for a user
      */
     getUserAttendanceStats(userId: string, month: number, year: number): Promise<any>;
+    /**
+     * Get monthly check-in summary (total, late, on-time)
+     */
+    getUserMonthlyCheckInSummary(userId: string, month: number, year: number): Promise<any>;
+    /**
+     * Get monthly check-in summary for all users (total, late, on-time)
+     */
+    getMonthlyCheckInSummary(month: number, year: number): Promise<any>;
     /**
      * Get late arrivals
      */

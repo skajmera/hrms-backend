@@ -15,10 +15,10 @@ class LeaveDAL {
      */
     async findById(id) {
         return await leave_model_1.LeaveModel.findById(id)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
-            .populate('approvedBy', 'firstName lastName')
-            .populate('rejectedBy', 'firstName lastName')
-            .populate('handoverTo', 'firstName lastName email');
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
+            .populate('approvedBy', 'firstName lastName profilePicture')
+            .populate('rejectedBy', 'firstName lastName profilePicture')
+            .populate('handoverTo', 'firstName lastName email profilePicture');
     }
     /**
      * Find all leaves
@@ -27,8 +27,8 @@ class LeaveDAL {
         const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc' } = options;
         const skip = (page - 1) * limit;
         const leaves = await leave_model_1.LeaveModel.find(filters)
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId')
-            .populate('approvedBy', 'firstName lastName')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+            .populate('approvedBy', 'firstName lastName profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -40,7 +40,7 @@ class LeaveDAL {
      */
     async update(id, updateData) {
         return await leave_model_1.LeaveModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email');
+            .populate('userId', 'firstName lastName email profilePicture');
     }
     /**
      * Delete leave
@@ -53,7 +53,7 @@ class LeaveDAL {
      */
     async getPendingLeaves() {
         return await leave_model_1.LeaveModel.find({ status: constants_1.LEAVE_STATUS.PENDING })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department')
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
             .sort({ appliedDate: 1 });
     }
     /**
@@ -85,7 +85,7 @@ class LeaveDAL {
             startDate: { $lte: today },
             endDate: { $gte: today }
         })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department');
+            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
     }
     /**
      * Approve leave
@@ -98,7 +98,7 @@ class LeaveDAL {
                 approvedDate: new Date()
             }
         }, { new: true })
-            .populate('userId', 'firstName lastName email');
+            .populate('userId', 'firstName lastName email profilePicture');
     }
     /**
      * Reject leave
@@ -112,7 +112,7 @@ class LeaveDAL {
                 rejectionReason
             }
         }, { new: true })
-            .populate('userId', 'firstName lastName email');
+            .populate('userId', 'firstName lastName email profilePicture');
     }
     /**
      * Get leave balance
@@ -131,7 +131,13 @@ class LeaveDAL {
      */
     async updateLeaveBalanceAfterApproval(leave) {
         const year = leave.startDate.getFullYear();
-        const balance = await this.getLeaveBalance(leave.userId._id.toString(), year);
+        // Safely get userId string
+        const userId = leave.userId?._id ? leave.userId._id.toString() : leave.userId?.toString();
+        if (!userId) {
+            console.error(`Cannot update leave balance: userId is missing for leave ${leave._id}`);
+            return;
+        }
+        const balance = await this.getLeaveBalance(userId, year);
         if (balance) {
             const leaveType = leave.leaveType.toLowerCase() + 'Leave';
             const currentBalance = balance[leaveType];
@@ -140,6 +146,9 @@ class LeaveDAL {
                 currentBalance.remaining = currentBalance.total - currentBalance.used;
                 await balance.save();
             }
+        }
+        else {
+            console.warn(`No leave balance found for user ${userId} in year ${year}`);
         }
     }
     /**
@@ -162,7 +171,7 @@ class LeaveDAL {
             status: constants_1.LEAVE_STATUS.APPROVED // Only count approved leaves
         })
             .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-            .populate('approvedBy', 'firstName lastName')
+            .populate('approvedBy', 'firstName lastName profilePicture')
             .sort({ startDate: 1 });
     }
 }

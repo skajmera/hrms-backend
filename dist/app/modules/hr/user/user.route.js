@@ -105,6 +105,7 @@ const auth_middleware_1 = require("../../../../shared/middlewares/auth.middlewar
 const validation_1 = require("../../../../shared/middlewares/validation");
 const constants_1 = require("../../../../config/constants");
 const user_validation_1 = require("./user.validation");
+const upload_middleware_1 = require("../../../../shared/middlewares/upload.middleware");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate);
 /**
@@ -174,7 +175,7 @@ router.use(auth_middleware_1.authenticate);
  *       403:
  *         description: Forbidden - Insufficient permissions
  */
-router.get('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER), (0, validation_1.validate)(user_validation_1.queryUsersValidation), user_controller_1.userController.getAllUsers.bind(user_controller_1.userController));
+router.get('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER, constants_1.USER_ROLES.EMPLOYEE), (0, validation_1.validate)(user_validation_1.queryUsersValidation), user_controller_1.userController.getAllUsers.bind(user_controller_1.userController));
 /**
  * @swagger
  * /hr/users/search:
@@ -209,7 +210,7 @@ router.get('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_AD
  *                   items:
  *                     $ref: '#/components/schemas/User'
  */
-router.get('/search', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER), user_controller_1.userController.searchUsers.bind(user_controller_1.userController));
+router.get('/search', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER, constants_1.USER_ROLES.EMPLOYEE), user_controller_1.userController.searchUsers.bind(user_controller_1.userController));
 /**
  * @swagger
  * /hr/users/stats:
@@ -273,7 +274,43 @@ router.get('/stats', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUP
  *                   items:
  *                     $ref: '#/components/schemas/User'
  */
-router.get('/department/:departmentId', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER), user_controller_1.userController.getUsersByDepartment.bind(user_controller_1.userController));
+router.get('/department/:departmentId', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER, constants_1.USER_ROLES.EMPLOYEE), user_controller_1.userController.getUsersByDepartment.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/draft:
+ *   post:
+ *     summary: Create draft user (partial data)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/draft', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.createDraftValidation), user_controller_1.userController.createDraftEmployee.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/drafts:
+ *   get:
+ *     summary: Get all draft employees
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/drafts', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.queryUsersValidation), user_controller_1.userController.getDraftEmployees.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/upload-avatar:
+ *   post:
+ *     summary: Upload user profile picture
+ *     tags: [Users]
+ */
+router.post('/upload-avatar', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), user_controller_1.userController.uploadAvatar.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/draft/{id}:
+ *   delete:
+ *     summary: Delete draft employee
+ *     tags: [Users]
+ */
+router.delete('/draft/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.getUserValidation), user_controller_1.userController.deleteDraftEmployee.bind(user_controller_1.userController));
 /**
  * @swagger
  * /hr/users/{id}:
@@ -282,29 +319,6 @@ router.get('/department/:departmentId', (0, auth_middleware_1.authorize)(constan
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found
  */
 router.get('/:id', (0, validation_1.validate)(user_validation_1.getUserValidation), user_controller_1.userController.getUserById.bind(user_controller_1.userController));
 /**
@@ -438,7 +452,8 @@ router.get('/:id', (0, validation_1.validate)(user_validation_1.getUserValidatio
  *       409:
  *         description: Email or Employee ID already exists
  */
-router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.createUserValidation), user_controller_1.userController.createUser.bind(user_controller_1.userController));
+router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.createUserValidation), user_controller_1.userController.createUser.bind(user_controller_1.userController));
+// NOTE: /draft and /drafts routes moved above /:id to prevent route hijacking
 /**
  * @swagger
  * /hr/users/{id}:
@@ -490,7 +505,82 @@ router.post('/', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_A
  *       404:
  *         description: User not found
  */
-router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.updateUserValidation), user_controller_1.userController.updateUser.bind(user_controller_1.userController));
+router.put('/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), upload_middleware_1.avatarUpload.single('profilePicture'), (0, validation_1.validate)(user_validation_1.updateUserValidation), user_controller_1.userController.updateUser.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/employee/{employeeId}:
+ *   get:
+ *     summary: Get user by employee ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Employee ID (e.g., EMP001)
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get('/employee/:employeeId', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN, constants_1.USER_ROLES.MANAGER), user_controller_1.userController.getUserByEmployeeId.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/{id}/clear-device:
+ *   post:
+ *     summary: Clear user registered device
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Device cleared successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ */
+router.post('/:id/clear-device', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(user_validation_1.getUserValidation), user_controller_1.userController.clearUserDevice.bind(user_controller_1.userController));
+/**
+ * @swagger
+ * /hr/users/device-token:
+ *   post:
+ *     summary: Register Firebase Cloud Messaging (FCM) device token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm_token_xyz..."
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ *       400:
+ *         description: Validation error
+ */
+router.post('/device-token', user_controller_1.userController.addDeviceToken.bind(user_controller_1.userController));
+// NOTE: /upload-avatar route moved above /:id to prevent route hijacking
+// NOTE: /draft/:id route moved above /:id to prevent route hijacking
 /**
  * @swagger
  * /hr/users/{id}:

@@ -20,7 +20,7 @@ class PermissionDAL {
     async findByUserId(userId) {
         return await permission_model_1.UserPermissionModel.findOne({ userId })
             .populate('userId', 'firstName lastName email profilePicture')
-            .populate('invitedBy', 'firstName lastName email');
+            .populate('invitedBy', 'firstName lastName email profilePicture');
     }
     /**
      * Get all user permissions with pagination
@@ -32,7 +32,7 @@ class PermissionDAL {
         const [data, totalItems] = await Promise.all([
             permission_model_1.UserPermissionModel.find(filters)
                 .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-                .populate('invitedBy', 'firstName lastName')
+                .populate('invitedBy', 'firstName lastName profilePicture')
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
@@ -53,10 +53,14 @@ class PermissionDAL {
         };
     }
     /**
-     * Update user permission
+     * Upsert user permission (creates if not exists, updates if exists)
      */
-    async updateByUserId(userId, updateData) {
-        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, updateData, { new: true }).populate('userId', 'firstName lastName email');
+    async updateByUserId(userId, updateData, upsertData) {
+        // Merge upsertData (base fields) with updateData (incoming changes) for a reliable upsert.
+        // Using $set for all fields ensures required fields (userId, email, invitedBy) are always
+        // present regardless of whether the document is being created or updated.
+        const mergedData = { ...(upsertData || {}), ...updateData };
+        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, { $set: mergedData }, { new: true, upsert: true, runValidators: false }).populate('userId', 'firstName lastName email profilePicture');
     }
     /**
      * Delete user permission

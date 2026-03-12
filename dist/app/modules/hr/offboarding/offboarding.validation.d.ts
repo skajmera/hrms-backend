@@ -23,5 +23,9 @@ export declare class OffboardingValidation {
      * Validation for query params
      */
     static getResignations: import("express-validator").ValidationChain[];
+    /**
+     * Validation for scheduling exit interview
+     */
+    static scheduleExitInterview: import("express-validator").ValidationChain[];
 }
 //# sourceMappingURL=offboarding.validation.d.ts.map

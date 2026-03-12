@@ -24,9 +24,6 @@ export declare class UserDAL {
         users: IUser[];
         total: number;
     }>;
-    /**
-     * Update user by ID
-     */
     update(id: string, updateData: any): Promise<IUser | null>;
     /**
      * Delete user by ID (soft delete)
@@ -51,15 +48,19 @@ export declare class UserDAL {
     /**
      * Get recently joined users
      */
-    getNewHires(days?: number): Promise<any[]>;
+    getNewHires(days?: number, date?: string): Promise<any[]>;
     /**
      * Update last login
      */
     updateLastLogin(id: string): Promise<void>;
     /**
-     * Search users
+     * Search users by name, email, or employee ID
      */
     search(searchTerm: string): Promise<IUser[]>;
+    /**
+     * Find user by full name
+     */
+    findByName(name: string): Promise<IUser | null>;
     /**
      * Get user count by status
      */

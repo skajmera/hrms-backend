@@ -86,7 +86,12 @@ class FileParser {
      * Map parsed data to payroll structure
      */
     static mapDataToPayroll(data) {
-        return data.map((row) => {
+        return data
+            .filter((row) => {
+            // Skip rows that are completely empty
+            return Object.values(row).some(val => val !== null && val !== undefined && val !== '');
+        })
+            .map((row) => {
             // Normalize keys (remove spaces, convert to camelCase)
             const normalizedRow = {};
             Object.keys(row).forEach(key => {
@@ -104,22 +109,23 @@ class FileParser {
                 conveyance: this.parseNumber(normalizedRow.conveyance || normalizedRow.transport),
                 specialAllowance: this.parseNumber(normalizedRow.specialAllowance),
                 statutoryBonus: this.parseNumber(normalizedRow.statutoryBonus),
-                otherAllowances: this.parseNumber(normalizedRow.otherAllowances),
+                otherAllowances: this.parseNumber(normalizedRow.otherAllowances || normalizedRow.otherAllowance),
                 byodPayment: this.parseNumber(normalizedRow.byodPayment),
                 taskBasedIncentive: this.parseNumber(normalizedRow.taskBasedIncentive),
                 arrearMonth: normalizedRow.arrearMonth || null,
-                arrearAmount: this.parseNumber(normalizedRow.arrearAmount),
-                specialPay: this.parseNumber(normalizedRow.specialPay),
+                arrearAmount: this.parseNumber(normalizedRow.arrearAmount || normalizedRow.arrear),
+                specialPay: this.parseNumber(normalizedRow.specialPay || normalizedRow.specialPayAdjustable),
                 miscellaneousPay: this.parseNumber(normalizedRow.miscellaneousPay || normalizedRow.miscellaneous),
+                nonWorkingDayCompensation: this.parseNumber(normalizedRow.nonWorkingDayCompensation),
                 // Deductions
                 providentFund: this.parseNumber(normalizedRow.providentFund || normalizedRow.pf),
                 esic: this.parseNumber(normalizedRow.esic || normalizedRow.esi),
                 professionalTax: this.parseNumber(normalizedRow.professionalTax || normalizedRow.pt),
                 leaveWithoutPay: this.parseNumber(normalizedRow.leaveWithoutPay || normalizedRow.lwp),
                 lateWithoutPay: this.parseNumber(normalizedRow.lateWithoutPay),
-                lateArrivalDeductions: this.parseNumber(normalizedRow.lateArrivalDeductions),
+                lateArrivalDeductions: this.parseNumber(normalizedRow.lateArrivalDeductions || normalizedRow.lateArrivalDeduction),
                 tds: this.parseNumber(normalizedRow.tds || normalizedRow.incomeTax),
-                loanRepayment: this.parseNumber(normalizedRow.loanRepayment),
+                loanRepayment: this.parseNumber(normalizedRow.loanRepayment || normalizedRow.loadRepayment),
                 // Attendance
                 workingDays: this.parseNumber(normalizedRow.workingDays),
                 presentDays: this.parseNumber(normalizedRow.presentDays || normalizedRow.paidDays),
@@ -133,7 +139,8 @@ class FileParser {
     static normalizeKey(key) {
         return key
             .trim()
-            .replace(/\s+/g, ' ')
+            .replace(/[^a-zA-Z0-9\s]/g, ' ') // Replace non-alphanumeric (except spaces) with space
+            .replace(/\s+/g, ' ') // Collapse multiple spaces
             .split(' ')
             .map((word, index) => {
             if (index === 0) {
@@ -200,25 +207,25 @@ class FileParser {
                 'Month': 1,
                 'Year': 2026,
                 'Basic Salary': 50000,
-                'HRA': 20000,
+                'House Rent Allowance': 20000,
                 'Conveyance': 2000,
                 'Special Allowance': 3000,
                 'Statutory Bonus': 2000,
-                'Other Allowances': 1000,
+                'Other Allowance': 1000,
                 'BYOD Payment': 500,
                 'Task Based Incentive': 5000,
                 'Arrear Month': 'December',
                 'Arrear Amount': 0,
-                'Special Pay': 0,
-                'Miscellaneous Pay': 0,
+                'Special Pay Adjustable': 0,
+                'Miscellaneous': 0,
+                'Non Working Day Compensation': 0,
                 'Provident Fund': 6000,
                 'ESIC': 750,
                 'Professional Tax': 200,
                 'Leave Without Pay': 0,
-                'Late Without Pay': 0,
-                'Late Arrival Deductions': 500,
+                'Late Arrival Deduction': 0,
                 'TDS': 5000,
-                'Loan Repayment': 2000,
+                'Load Repayment': 2000,
                 'Working Days': 30,
                 'Present Days': 28,
                 'LOP Days': 0

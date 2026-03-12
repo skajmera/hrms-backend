@@ -61,10 +61,13 @@ class PayrollImportService {
                     user = await user_dal_1.userDAL.findByEmployeeId(row.employeeId);
                 }
                 else if (importBasedOn === 'employeeName' && row.employeeName) {
-                    // Search by name (approximate match)
-                    const searchResult = await user_dal_1.userDAL.search(row.employeeName); //userDAL.search(row.employeeName, { page: 1, limit: 1 });
-                    //   user = searchResult.data[0];
-                    user = searchResult[0];
+                    // Search by full name for better accuracy
+                    user = await user_dal_1.userDAL.findByName(row.employeeName);
+                    // Fallback to broader search if not found by exact name
+                    if (!user) {
+                        const searchResult = await user_dal_1.userDAL.search(row.employeeName);
+                        user = searchResult[0];
+                    }
                 }
                 if (!user) {
                     failed.push({
@@ -84,16 +87,22 @@ class PayrollImportService {
                     });
                     continue;
                 }
+                // Calculate totals
+                const basic = row.basic || 0;
+                const hra = row.hra || 0;
+                const totalAllowances = (row.conveyance || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) +
+                    (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) +
+                    (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.nonWorkingDayCompensation || 0) + (row.otherAllowances || 0);
+                const totalDeductions = (row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) +
+                    (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) +
+                    (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0);
+                const grossSalary = basic + hra + totalAllowances;
+                const netSalary = grossSalary - totalDeductions;
                 // Create payroll data
                 const payrollData = {
-                    // //////  this is for calculation of gross salary, total deductions and net salary based on the components provided in the file.
-                    // grossSalary: (row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0),
-                    // totalDeductions: (row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0),
-                    // netSalary: ((row.basic || 0) + (row.hra || 0) + (row.specialAllowance || 0) + (row.statutoryBonus || 0) + (row.byodPayment || 0) + (row.taskBasedIncentive || 0) + (row.arrearAmount || 0) + (row.specialPay || 0) + (row.miscellaneousPay || 0) + (row.otherAllowances || 0)) - ((row.providentFund || 0) + (row.professionalTax || 0) + (row.tds || 0) + (row.esic || 0) + (row.leaveWithoutPay || 0) + (row.lateWithoutPay || 0) + (row.lateArrivalDeductions || 0) + (row.loanRepayment || 0)), 
-                    grossSalary: 0,
-                    totalDeductions: 0,
-                    netSalary: 0,
-                    ////
+                    grossSalary,
+                    totalDeductions,
+                    netSalary,
                     userId: user._id,
                     employeeId: user.professionalDetails.employeeId,
                     month: row.month,
@@ -113,7 +122,7 @@ class PayrollImportService {
                             arrearMonth: row.arrearMonth,
                             specialPay: row.specialPay || 0,
                             miscellaneous: row.miscellaneousPay || 0,
-                            nonWorkingDayCompensation: 0,
+                            nonWorkingDayCompensation: row.nonWorkingDayCompensation || 0,
                             other: row.otherAllowances || 0
                         },
                         deductions: {
@@ -141,6 +150,7 @@ class PayrollImportService {
                 };
                 // Create payroll
                 const payroll = await payroll_dal_1.payrollDAL.create(payrollData);
+                await payroll.populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
                 successful.push(payroll);
             }
             catch (error) {

@@ -20,6 +20,6 @@ export const queryAnnouncementsValidation = [
   query('expiryDate').optional().isISO8601().withMessage('expiryDate must be a valid date'),
   query('announcementType')
     .optional()
-    .isIn(['GENERAL', 'BIRTHDAY', 'ANNIVERSARY'])
+    .isIn(['GENERAL', 'BIRTHDAY', 'ANNIVERSARY', 'EVENT', 'EMERGENCY', 'OTHER', 'NEWHIRE'])
     .withMessage('Invalid announcementType')
 ];

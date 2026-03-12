@@ -30,9 +30,9 @@ export declare class DepartmentDAL {
      * Hard delete department
      */
     hardDelete(id: string): Promise<IDepartment | null>; /**
-    
-    Find department by code
-    */
+      
+      Find department by code
+      */
     findByCode(code: string): Promise<IDepartment | null>;
     /**
     
@@ -61,9 +61,9 @@ export declare class DepartmentDAL {
     */
     getDepartmentStats(): Promise<any>;
     /**
-* Sync employees in department
-* Called when user department changes
-*/
+  * Sync employees in department
+  * Called when user department changes
+  */
     syncEmployees(departmentId: string): Promise<void>;
     /**
      * Get all employees in department and sub-departments

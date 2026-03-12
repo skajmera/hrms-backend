@@ -28,9 +28,9 @@ class OffboardingDAL {
             }
         })
             .populate('department', 'name code')
-            .populate('approvedBy', 'firstName lastName')
-            .populate('rejectedBy', 'firstName lastName')
-            .populate('createdBy', 'firstName lastName');
+            .populate('approvedBy', 'firstName lastName profilePicture')
+            .populate('rejectedBy', 'firstName lastName profilePicture')
+            .populate('createdBy', 'firstName lastName profilePicture');
     }
     /**
      * Get all offboarding records with pagination
@@ -43,7 +43,7 @@ class OffboardingDAL {
             offboarding_model_1.OffboardingModel.find(filters)
                 .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
                 .populate('department', 'name code')
-                .populate('approvedBy', 'firstName lastName')
+                .populate('approvedBy', 'firstName lastName profilePicture')
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
@@ -73,7 +73,7 @@ class OffboardingDAL {
     //   }
     static async updateById(offboardingId, updateData) {
         const updated = await offboarding_model_1.OffboardingModel.findByIdAndUpdate(offboardingId, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email')
+            .populate('userId', 'firstName lastName email profilePicture')
             .populate('department', 'name code');
         if (!updated) {
             throw new Error('Offboarding record not found');

@@ -7,7 +7,7 @@ const constants_1 = require("../../../../config/constants");
 class ManagerLeaveController {
     async approveLeave(req, res, next) {
         try {
-            const leave = await leave_service_1.managerLeaveService.approveTeamLeave(req.user._id.toString(), req.params.id);
+            const leave = await leave_service_1.managerLeaveService.approveTeamLeave(req.user._id.toString(), req.params.id, req.user.role);
             (0, response_1.sendSuccessResponse)(res, 'Leave approved successfully', leave);
         }
         catch (error) {
@@ -17,7 +17,7 @@ class ManagerLeaveController {
     async rejectLeave(req, res, next) {
         try {
             const { rejectionReason } = req.body;
-            const leave = await leave_service_1.managerLeaveService.rejectTeamLeave(req.user._id.toString(), req.params.id, rejectionReason);
+            const leave = await leave_service_1.managerLeaveService.rejectTeamLeave(req.user._id.toString(), req.params.id, rejectionReason, req.user.role);
             (0, response_1.sendSuccessResponse)(res, 'Leave rejected successfully', leave);
         }
         catch (error) {

@@ -71,6 +71,7 @@ export interface INotificationSettings extends Document {
         earlyExit: boolean;
     };
     leaves: {
+        application: boolean;
         newRequest: boolean;
         approval: boolean;
         rejection: boolean;

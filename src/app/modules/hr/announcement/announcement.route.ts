@@ -27,6 +27,19 @@ import { authenticate, authorize } from '../../../../shared/middlewares/auth.mid
 import { validate } from '../../../../shared/middlewares/validation';
 import { USER_ROLES } from '../../../../config/constants';
 import { createAnnouncementValidation, queryAnnouncementsValidation } from './announcement.validation';
+import { announcementUpload } from '../../../../shared/middlewares/upload.middleware';
+import { Request, Response, NextFunction } from 'express';
+
+const parseAnnouncementBody = (req: Request, res: Response, next: NextFunction) => {
+    if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
+        try {
+            req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        } catch (e) {
+            // let validation handle the error
+        }
+    }
+    next();
+};
 
 const router = Router();
 
@@ -134,39 +147,13 @@ router.get('/', validate(queryAnnouncementsValidation), announcementController.g
  */
 router.get('/my-announcements', announcementController.getMyAnnouncements.bind(announcementController));
 
-/**
- * @swagger
- * /hr/announcements/{id}:
- *   get:
- *     summary: Get announcement by ID
- *     tags: [Announcements]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Announcement ID
- *     responses:
- *       200:
- *         description: Announcement retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/Announcement'
- *       404:
- *         description: Announcement not found
- */
+// Typed dashboard routes — must be above /:id to prevent route hijacking
+router.get('/new-hires', (req: any, res, next) => { req.params.announcementType = 'NEWHIRE'; announcementController.getTypedAnnouncements(req, res, next); });
+router.get('/birthdays', (req: any, res, next) => { req.params.announcementType = 'BIRTHDAY'; announcementController.getTypedAnnouncements(req, res, next); });
+router.get('/anniversaries', (req: any, res, next) => { req.params.announcementType = 'ANNIVERSARY'; announcementController.getTypedAnnouncements(req, res, next); });
+
 router.get('/:id', announcementController.getAnnouncementById.bind(announcementController));
+
 
 /**
  * @swagger
@@ -271,7 +258,7 @@ router.get('/:id', announcementController.getAnnouncementById.bind(announcementC
  *       400:
  *         description: Validation error
  */
-router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), validate(createAnnouncementValidation), announcementController.createAnnouncement.bind(announcementController));
+router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), announcementUpload.array('attachments', 5), parseAnnouncementBody, validate(createAnnouncementValidation), announcementController.createAnnouncement.bind(announcementController));
 
 /**
  * @swagger
@@ -313,7 +300,7 @@ router.post('/', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), validat
  *       404:
  *         description: Announcement not found
  */
-router.put('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), announcementController.updateAnnouncement.bind(announcementController));
+router.put('/:id', authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN), announcementUpload.array('attachments', 5), parseAnnouncementBody, announcementController.updateAnnouncement.bind(announcementController));
 
 /**
  * @swagger
@@ -496,5 +483,43 @@ router.post('/:id/comments/:commentId/like', announcementController.toggleCommen
  *         description: Comment deleted
  */
 router.delete('/:id/comments/:commentId', announcementController.deleteComment.bind(announcementController));
+
+/**
+ * @swagger
+ * /hr/announcements/{id}/comments/{commentId}/replies:
+ *   post:
+ *     summary: Add a threaded reply to a comment
+ *     tags: [Announcements]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Comment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reply added successfully
+ */
+router.post('/:id/comments/:commentId/replies', announcementController.replyToComment.bind(announcementController));
 
 export default router;

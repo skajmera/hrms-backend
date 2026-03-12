@@ -22,7 +22,7 @@ export class OffboardingDAL {
    */
   static async findById(offboardingId: string): Promise<IOffboarding | null> {
     return await OffboardingModel.findById(offboardingId)
-    
+
       .populate({
         path: 'userId',
         select: 'firstName lastName email professionalDetails profilePicture',
@@ -32,9 +32,9 @@ export class OffboardingDAL {
         }
       })
       .populate('department', 'name code')
-      .populate('approvedBy', 'firstName lastName')
-      .populate('rejectedBy', 'firstName lastName')
-      .populate('createdBy', 'firstName lastName');
+      .populate('approvedBy', 'firstName lastName profilePicture')
+      .populate('rejectedBy', 'firstName lastName profilePicture')
+      .populate('createdBy', 'firstName lastName profilePicture');
   }
 
   /**
@@ -58,7 +58,7 @@ export class OffboardingDAL {
       OffboardingModel.find(filters)
         .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
         .populate('department', 'name code')
-        .populate('approvedBy', 'firstName lastName')
+        .populate('approvedBy', 'firstName lastName profilePicture')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -84,32 +84,32 @@ export class OffboardingDAL {
   /**
    * Update offboarding
    */
-//   static async updateById(offboardingId: string, updateData: Partial<IOffboarding>): Promise<IOffboarding | null> {
-//     return await OffboardingModel.findByIdAndUpdate(offboardingId, updateData, { new: true })
-//       .populate('userId', 'firstName lastName email')
-//       .populate('department', 'name code');
-//   }
+  //   static async updateById(offboardingId: string, updateData: Partial<IOffboarding>): Promise<IOffboarding | null> {
+  //     return await OffboardingModel.findByIdAndUpdate(offboardingId, updateData, { new: true })
+  //       .populate('userId', 'firstName lastName email')
+  //       .populate('department', 'name code');
+  //   }
 
   static async updateById(
     offboardingId: string,
     updateData: Partial<IOffboarding>
   ): Promise<IOffboarding> {
-  
+
     const updated = await OffboardingModel.findByIdAndUpdate(
       offboardingId,
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email')
+      .populate('userId', 'firstName lastName email profilePicture')
       .populate('department', 'name code');
-  
+
     if (!updated) {
       throw new Error('Offboarding record not found');
     }
-  
+
     return updated;
   }
-  
+
   /**
    * Delete offboarding
    */
@@ -151,7 +151,7 @@ export class OffboardingDAL {
    */
   static async getStats(month?: number, year?: number): Promise<any> {
     const matchStage: any = {};
-    
+
     if (month && year) {
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0);

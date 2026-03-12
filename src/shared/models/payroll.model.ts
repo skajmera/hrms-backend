@@ -31,8 +31,8 @@ const SalaryComponentSchema = new Schema({
     loanDeduction: { type: Number, default: 0 },
     other: { type: Number, default: 0 }
   },
-   // Custom Fields
-   customEarnings: [{
+  // Custom Fields
+  customEarnings: [{
     fieldName: { type: String },
     fieldValue: { type: Number, default: 0 }
   }],
@@ -43,23 +43,23 @@ const SalaryComponentSchema = new Schema({
 }, { _id: false });
 
 const PayrollSchema = new Schema<IPayroll>({
-  userId: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   employeeId: { type: String, required: true },
   month: { type: Number, required: true, min: 1, max: 12 },
   year: { type: Number, required: true },
-  
+
   // Salary Components
-  salaryComponents: { type: SalaryComponentSchema , required: true },
-  
+  salaryComponents: { type: SalaryComponentSchema, required: true },
+
   // Calculations
   grossSalary: { type: Number, required: true },
   totalDeductions: { type: Number, required: true },
   netSalary: { type: Number, required: true },
-  
+
   // Attendance Data
   workingDays: { type: Number, required: true },
   presentDays: { type: Number, required: true },
@@ -68,46 +68,46 @@ const PayrollSchema = new Schema<IPayroll>({
   unpaidLeaveDays: { type: Number, default: 0 },
   weekendDays: { type: Number, default: 0 },
   holidayDays: { type: Number, default: 0 },
-  
+
   // Overtime & Bonus
   overtimeHours: { type: Number, default: 0 },
   overtimeAmount: { type: Number, default: 0 },
   bonus: { type: Number, default: 0 },
   incentives: { type: Number, default: 0 },
-  
-    // Revision
-    isRevised: { type: Boolean, default: false },
-    revisionDate: { type: Date },
-    revisionReason: { type: String },
+
+  // Revision
+  isRevised: { type: Boolean, default: false },
+  revisionDate: { type: Date },
+  revisionReason: { type: String },
 
   // Payment Details
   paymentDate: { type: Date },
-  paymentStatus: { 
-    type: String, 
+  paymentStatus: {
+    type: String,
     enum: Object.values(PAYMENT_STATUS),
     default: PAYMENT_STATUS.PENDING
   },
-  paymentMode: { 
-    type: String, 
-    enum: ['BANK_TRANSFER', 'CASH', 'CHEQUE'] 
+  paymentMode: {
+    type: String,
+    enum: ['BANK_TRANSFER', 'CASH', 'CHEQUE']
   },
   transactionId: { type: String },
   bankName: { type: String },
   accountNumber: { type: String },
-  
+
   // Additional Info
   remarks: { type: String },
   payslipPath: { type: String },
-  
+
   // Approval
-  generatedBy: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  generatedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   approvedAt: { type: Date },
-    
+
   // Status tracking for Figma design
   isDraft: { type: Boolean, default: true },
   isGenerated: { type: Boolean, default: false },
@@ -127,49 +127,55 @@ PayrollSchema.index({ paymentStatus: 1 });
 //   const { basic, hra, allowances } = this.salaryComponents;
 //   const totalAllowances = Object.values(allowances).reduce((sum: number, val: any) => sum + val, 0);
 //   this.grossSalary = basic + hra + totalAllowances + (this.bonus || 0) + (this.incentives || 0) + (this.overtimeAmount || 0);
-  
+
 //   // Calculate total deductions
 //   const deductions = this.salaryComponents.deductions;
 //   this.totalDeductions = Object.values(deductions).reduce((sum: number, val: any) => sum + val, 0);
-  
+
 //   // Calculate net salary
 //   this.netSalary = this.grossSalary - this.totalDeductions;
-  
+
 
 // Calculate gross and net salary before save
-PayrollSchema.pre('save', function(next) {
+PayrollSchema.pre('save', function (next) {
   const allowances = this.salaryComponents.allowances;
   const deductions = this.salaryComponents.deductions;
-  
+
   // Calculate total allowances
   const totalAllowances = Object.values(allowances).reduce((sum: number, val: any) => {
     if (typeof val === 'number') return sum + val;
     return sum;
   }, 0);
-  
+
   // Calculate custom earnings
   const customEarningsTotal = this.salaryComponents.customEarnings?.reduce((sum, item) => sum + (item.fieldValue || 0), 0) || 0;
-  
+
   // Calculate gross salary
-  this.grossSalary = this.salaryComponents.basic + 
-                     this.salaryComponents.hra + 
-                     totalAllowances + 
-                     customEarningsTotal;
-  
+  this.grossSalary = this.salaryComponents.basic +
+    this.salaryComponents.hra +
+    totalAllowances +
+    customEarningsTotal;
+
   // Calculate total deductions
   const totalStandardDeductions = Object.values(deductions).reduce((sum: number, val: any) => {
     if (typeof val === 'number') return sum + val;
     return sum;
   }, 0);
-  
+
   // Calculate custom deductions
   const customDeductionsTotal = this.salaryComponents.customDeductions?.reduce((sum, item) => sum + (item.fieldValue || 0), 0) || 0;
-  
+
   this.totalDeductions = totalStandardDeductions + customDeductionsTotal;
-  
+
   // Calculate net salary
   this.netSalary = this.grossSalary - this.totalDeductions;
-  
+
+  // Status flag enforcement
+  if (this.isGenerated) {
+    this.isDraft = false;
+    this.isPending = false;
+  }
+
   next();
 });
 

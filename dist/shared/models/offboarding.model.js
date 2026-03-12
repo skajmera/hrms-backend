@@ -45,6 +45,7 @@ const OffboardingSchema = new mongoose_1.Schema({
         type: String,
         required: true
     },
+    biometricId: { type: String },
     employeeName: {
         type: String,
         required: true

@@ -11,7 +11,7 @@ export class AuthController {
   async register(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.register(req.body);
-      
+
       sendSuccessResponse(
         res,
         'User registered successfully',
@@ -29,7 +29,7 @@ export class AuthController {
   async login(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.login(req.body);
-      
+
       sendSuccessResponse(res, 'Login successful', result);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.UNAUTHORIZED);
@@ -42,7 +42,7 @@ export class AuthController {
   async logout(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.logout(req.user._id.toString());
-      
+
       sendSuccessResponse(res, 'Logout successful');
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -55,7 +55,7 @@ export class AuthController {
   async forgotPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.forgotPassword(req.body.email);
-      
+
       sendSuccessResponse(res, 'Password reset email sent');
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -68,7 +68,7 @@ export class AuthController {
   async resetPassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await authService.resetPassword(req.body.token, req.body.password);
-      
+
       sendSuccessResponse(res, 'Password reset successful');
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
@@ -81,7 +81,7 @@ export class AuthController {
   async refreshToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.refreshToken(req.body.refreshToken);
-      
+
       sendSuccessResponse(res, 'Token refreshed successfully', result);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.UNAUTHORIZED);
@@ -94,10 +94,28 @@ export class AuthController {
   async getProfile(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = await authService.getProfile(req.user._id.toString());
-      
+
       sendSuccessResponse(res, 'Profile retrieved successfully', user);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
+    }
+  }
+
+  /**
+   * Update FCM Token
+   */
+  async updateFcmToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { fcmToken } = req.body;
+      if (!fcmToken) {
+        throw new Error('FCM Token is required');
+      }
+
+      await authService.updateFcmToken(req.user._id.toString(), fcmToken);
+
+      sendSuccessResponse(res, 'FCM Token updated successfully');
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
     }
   }
 }

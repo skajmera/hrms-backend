@@ -20,9 +20,9 @@ export declare class PermissionDAL {
      */
     findAll(filters?: FilterQuery<IUserPermission>, options?: IPaginationOptions): Promise<IPaginatedResponse<IUserPermission>>;
     /**
-     * Update user permission
+     * Upsert user permission (creates if not exists, updates if exists)
      */
-    updateByUserId(userId: string, updateData: Partial<IUserPermission>): Promise<IUserPermission | null>;
+    updateByUserId(userId: string, updateData: Partial<IUserPermission>, upsertData?: any): Promise<IUserPermission | null>;
     /**
      * Delete user permission
      */

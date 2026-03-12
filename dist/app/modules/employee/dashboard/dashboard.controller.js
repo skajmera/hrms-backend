@@ -13,6 +13,59 @@ class EmployeeDashboardController {
             (0, response_1.sendErrorResponse)(res, error.message);
         }
     }
+    async getBirthdays(req, res, next) {
+        try {
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getBirthdays(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'Birthdays retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getAnniversary(req, res, next) {
+        try {
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getAnniversary(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'Anniversaries retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getNewHires(req, res, next) {
+        try {
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getNewHires(userId, userRole, deptId);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'New hires retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getAllAnnouncements(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+            const userId = req.user._id.toString();
+            const userRole = req.user.role;
+            const dept = req.user.professionalDetails?.department;
+            const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+            const result = await dashboard_service_1.employeeDashboardService.getAllAnnouncements(userId, userRole, deptId, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder });
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
 }
 exports.EmployeeDashboardController = EmployeeDashboardController;
 exports.employeeDashboardController = new EmployeeDashboardController();

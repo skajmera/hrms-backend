@@ -7,7 +7,16 @@ const constants_1 = require("../../../../config/constants");
 class AnnouncementController {
     async createAnnouncement(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.createAnnouncement({ ...req.body, createdBy: req.user._id });
+            const payload = { ...req.body, createdBy: req.user._id };
+            if (req.files && Array.isArray(req.files)) {
+                payload.attachments = req.files.map((file) => ({
+                    name: file.originalname,
+                    url: `/uploads/announcements/${file.filename}`,
+                    type: file.mimetype,
+                    size: file.size
+                }));
+            }
+            const announcement = await announcement_service_1.announcementService.createAnnouncement(payload);
             (0, response_1.sendSuccessResponse)(res, 'Announcement created successfully', announcement, constants_1.HTTP_STATUS.CREATED);
         }
         catch (error) {
@@ -25,14 +34,13 @@ class AnnouncementController {
     }
     async getAllAnnouncements(req, res, next) {
         try {
-            // Keep controller minimal: extract paging/sort and forward remaining query params
             const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', ...filters } = req.query;
             const result = await announcement_service_1.announcementService.getAllAnnouncements(filters, {
                 page: Number(page),
                 limit: Number(limit),
                 sortBy: sortBy,
                 sortOrder: sortOrder
-            }, req.user._id.toString());
+            }, req.user._id.toString(), req.user.role);
             (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
         }
         catch (error) {
@@ -41,7 +49,16 @@ class AnnouncementController {
     }
     async updateAnnouncement(req, res, next) {
         try {
-            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, req.body, req.user._id.toString());
+            const payload = { ...req.body };
+            if (req.files && Array.isArray(req.files)) {
+                payload.attachments = req.files.map((file) => ({
+                    name: file.originalname,
+                    url: `/uploads/announcements/${file.filename}`,
+                    type: file.mimetype,
+                    size: file.size
+                }));
+            }
+            const announcement = await announcement_service_1.announcementService.updateAnnouncement(req.params.id, payload, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Announcement updated successfully', announcement);
         }
         catch (error) {
@@ -115,11 +132,33 @@ class AnnouncementController {
             (0, response_1.sendErrorResponse)(res, error.message);
         }
     }
+    async replyToComment(req, res, next) {
+        try {
+            const { id, commentId } = req.params;
+            const { content } = req.body;
+            const announcement = await announcement_service_1.announcementService.addReplyToComment(id, commentId, req.user._id.toString(), content);
+            (0, response_1.sendSuccessResponse)(res, 'Reply added successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
     async deleteComment(req, res, next) {
         try {
             const { id, commentId } = req.params;
             const announcement = await announcement_service_1.announcementService.deleteComment(id, commentId, req.user._id.toString());
             (0, response_1.sendSuccessResponse)(res, 'Comment deleted successfully', announcement);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    async getTypedAnnouncements(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+            const { announcementType } = req.params;
+            const result = await announcement_service_1.announcementService.getTypedAnnouncements(announcementType, { page: Number(page), limit: Number(limit), sortBy: sortBy, sortOrder: sortOrder }, req.user._id.toString(), req.user.role);
+            (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, Number(page), Number(limit), `${announcementType} announcements retrieved successfully`);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

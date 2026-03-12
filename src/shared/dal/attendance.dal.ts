@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { AttendanceModel } from '../models/attendance.model';
 import { IAttendance, IAttendanceCreateInput, IAttendanceReport } from '../interfaces/attendance.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
@@ -15,7 +16,7 @@ export class AttendanceDAL {
    */
   async findById(id: string): Promise<IAttendance | null> {
     return await AttendanceModel.findById(id)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId');
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
   }
 
   /**
@@ -44,8 +45,8 @@ export class AttendanceDAL {
     const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
     const records = await AttendanceModel.find(filters)
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
-      .populate('approvedBy', 'firstName lastName')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
+      .populate('approvedBy', 'firstName lastName profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -64,7 +65,7 @@ export class AttendanceDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email');
+      .populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
@@ -80,11 +81,13 @@ export class AttendanceDAL {
   async findByUserAndDateRange(
     userId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    additionalFilters: IQueryFilters = {}
   ): Promise<IAttendance[]> {
     return await AttendanceModel.find({
       userId,
-      date: { $gte: startDate, $lte: endDate }
+      date: { $gte: startDate, $lte: endDate },
+      ...additionalFilters
     }).sort({ date: 1 });
   }
 
@@ -101,14 +104,13 @@ export class AttendanceDAL {
     return await AttendanceModel.find({
       date: { $gte: today, $lt: tomorrow }
     })
-      .populate('userId', 'firstName lastName shiftTime email professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName shiftTime email profilePicture professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
    * Get attendance statistics for a user
    */
   async getUserAttendanceStats(userId: string, month: number, year: number): Promise<any> {
-    const mongoose = require('mongoose');
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
@@ -129,6 +131,75 @@ export class AttendanceDAL {
   }
 
   /**
+   * Get monthly check-in summary (total, late, on-time)
+   */
+  async getUserMonthlyCheckInSummary(userId: string, month: number, year: number): Promise<any> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const stats = await AttendanceModel.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          date: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          checkin: { $sum: 1 },
+          late: { $sum: { $cond: [{ $eq: ['$isLate', true] }, 1, 0] } },
+          ontime: { $sum: { $cond: [{ $eq: ['$isLate', false] }, 1, 0] } }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          checkin: 1,
+          late: 1,
+          ontime: 1
+        }
+      }
+    ]);
+
+    return stats[0] || { checkin: 0, late: 0, ontime: 0 };
+  }
+
+  /**
+   * Get monthly check-in summary for all users (total, late, on-time)
+   */
+  async getMonthlyCheckInSummary(month: number, year: number): Promise<any> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const stats = await AttendanceModel.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          checkin: { $sum: 1 },
+          late: { $sum: { $cond: [{ $eq: ['$isLate', true] }, 1, 0] } },
+          ontime: { $sum: { $cond: [{ $eq: ['$isLate', false] }, 1, 0] } }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          checkin: 1,
+          late: 1,
+          ontime: 1
+        }
+      }
+    ]);
+
+    return stats[0] || { checkin: 0, late: 0, ontime: 0 };
+  }
+
+  /**
    * Get late arrivals
    */
   async getLateArrivals(startDate: Date, endDate: Date): Promise<IAttendance[]> {
@@ -136,7 +207,7 @@ export class AttendanceDAL {
       date: { $gte: startDate, $lte: endDate },
       isLate: true
     })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
       .sort({ date: -1 });
   }
 

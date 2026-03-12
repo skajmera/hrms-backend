@@ -83,9 +83,69 @@ export const attendanceUpload = multer({
 });
 
 
+// --- Avatar Upload ---
+const avatarDir = './uploads/avatars';
+if (!fs.existsSync(avatarDir)) {
+  fs.mkdirSync(avatarDir, { recursive: true });
+}
+
+const avatarStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    cb(null, avatarDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `avatar-${uniqueSuffix}${ext}`);
+  }
+});
+
+export const avatarUpload = multer({
+  storage: avatarStorage,
+  fileFilter: imageFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB
+  }
+});
+
+
 // Cleanup uploaded file helper
 export const cleanupFile = (filePath: string) => {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }
 };
+
+// --- Announcement Upload ---
+const announcementDir = './uploads/announcements';
+if (!fs.existsSync(announcementDir)) {
+  fs.mkdirSync(announcementDir, { recursive: true });
+}
+
+const announcementStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    cb(null, announcementDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `announcement-${uniqueSuffix}${ext}`);
+  }
+});
+
+const announcementFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only .jpg, .jpeg, .png, .pdf, .doc, and .docx formats are supported for announcements'));
+  }
+};
+
+export const announcementUpload = multer({
+  storage: announcementStorage,
+  fileFilter: announcementFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for announcements to support PDFs
+  }
+});

@@ -69,6 +69,7 @@ const ExperienceSchema = new mongoose_1.Schema({
     startDate: { type: Date, required: false },
     endDate: { type: Date },
     isCurrent: { type: Boolean, default: false },
+    isRelevant: { type: Boolean, default: false }, // NEW
     responsibilities: { type: String },
     location: { type: String }
 }, { _id: false });
@@ -92,11 +93,11 @@ const SalaryDetailsSchema = new mongoose_1.Schema({
 }, { _id: false });
 const ProfessionalDetailsSchema = new mongoose_1.Schema({
     sourceOfHire: { type: String, required: false },
-    employeeId: { type: String, required: true, unique: true },
+    employeeId: { type: String, required: false, unique: true, sparse: true },
     biometricId: { type: String, unique: true, sparse: true }, // NEW - For biometric attendance integration
-    designation: { type: String, required: true },
-    department: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Department', required: true },
-    joiningDate: { type: Date, required: true },
+    designation: { type: String, required: false },
+    department: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Department', required: false },
+    joiningDate: { type: Date, required: false },
     employmentStatus: {
         type: String,
         enum: Object.values(constants_1.EMPLOYMENT_STATUS),
@@ -116,7 +117,9 @@ const ProfessionalDetailsSchema = new mongoose_1.Schema({
     },
     shiftTime: ShiftTimeSchema, // Custom shift time
     workLocation: { type: String, required: false },
-    salaryDetails: SalaryDetailsSchema
+    salaryDetails: SalaryDetailsSchema,
+    totalExperience: { type: String }, // NEW
+    currentExperience: { type: String } // NEW
 }, { _id: false });
 const UserSchema = new mongoose_1.Schema({
     organizationId: {
@@ -129,8 +132,9 @@ const UserSchema = new mongoose_1.Schema({
     lastName: { type: String, required: true, trim: true },
     email: {
         type: String,
-        required: true,
+        required: false, // Changed for Drafts
         unique: true,
+        sparse: true, // Allow multiple nulls/undefined for Drafts
         lowercase: true,
         trim: true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
@@ -143,7 +147,7 @@ const UserSchema = new mongoose_1.Schema({
         trim: true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
     },
-    password: { type: String, required: true, minlength: 6, select: false },
+    password: { type: String, required: false, minlength: 6, select: false },
     phone: { type: String, required: false },
     alternatePhone: { type: String },
     dateOfBirth: { type: Date, required: false },
@@ -158,6 +162,10 @@ const UserSchema = new mongoose_1.Schema({
     // Address
     currentAddress: { type: AddressSchema, required: false },
     permanentAddress: AddressSchema,
+    separationInfo: {
+        dateOfExit: { type: Date },
+        previousCompany: { type: String }
+    },
     // Professional Details
     professionalDetails: { type: ProfessionalDetailsSchema, required: false },
     // Education & Experience
@@ -184,6 +192,7 @@ const UserSchema = new mongoose_1.Schema({
     lastLogin: { type: Date },
     registeredDeviceId: { type: String, unique: true, sparse: true },
     azurePersonId: { type: String, unique: true, sparse: true },
+    fcmTokens: [{ type: String }], // Array of Firebase Cloud Messaging device tokens
     // Metadata
     createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
     updatedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' }
@@ -200,6 +209,12 @@ UserSchema.index({ role: 1 });
 // Virtual for full name
 UserSchema.virtual('fullName').get(function () {
     return `${this.firstName} ${this.lastName}`;
+});
+// Virtual for profileImage (alias for profilePicture)
+UserSchema.virtual('profileImage').get(function () {
+    return this.profilePicture;
+}).set(function (val) {
+    this.profilePicture = val;
 });
 // Pre-save middleware to hash password
 UserSchema.pre('save', async function (next) {
@@ -263,7 +278,7 @@ UserSchema.post('findOneAndUpdate', async function (doc) {
 });
 // Pre-save middleware to set default shift time if not provided
 UserSchema.pre('save', function (next) {
-    if (this.professionalDetails.shift && !this.professionalDetails.shiftTime) {
+    if (this.professionalDetails?.shift && !this.professionalDetails?.shiftTime) {
         const shiftType = this.professionalDetails.shift;
         const defaultTiming = constants_1.SHIFT_TIMINGS[shiftType];
         this.professionalDetails.shiftTime = {

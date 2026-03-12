@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.employeeLeaveService = exports.EmployeeLeaveService = void 0;
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
+const user_dal_1 = require("../../../../shared/dal/user.dal");
+const notifications_service_1 = require("../../notifications/notifications.service");
+const notification_interface_1 = require("../../../../shared/interfaces/notification.interface");
+const constants_1 = require("../../../../config/constants");
 class EmployeeLeaveService {
     /**
      * Apply for leave
@@ -18,10 +22,42 @@ class EmployeeLeaveService {
                 throw new Error(`Insufficient ${leaveData.leaveType} leave balance. Available: ${currentBalance.remaining} days`);
             }
         }
-        return await leave_dal_1.leaveDAL.create({
+        const leave = await leave_dal_1.leaveDAL.create({
             ...leaveData,
             userId
         });
+        // --- TRIGGER NOTIFICATION ---
+        try {
+            const employee = await user_dal_1.userDAL.findById(userId);
+            if (employee && employee.professionalDetails?.reportingManager) {
+                const managerId = employee.professionalDetails.reportingManager.toString();
+                await notifications_service_1.notificationsService.sendNotification({
+                    userId: managerId,
+                    type: notification_interface_1.NotificationType.LEAVE_REQUESTED,
+                    title: 'New Leave Request',
+                    message: `${employee.fullName} has applied for ${leaveData.leaveType} leave from ${new Date(leaveData.startDate).toDateString()} to ${new Date(leaveData.endDate).toDateString()}.`,
+                    targetApp: 'HR',
+                    data: { leaveId: leave._id }
+                });
+            }
+            // Also notify HR Admin for global visibility
+            const hrAdmins = await user_dal_1.userDAL.findAll({ role: constants_1.USER_ROLES.HR_ADMIN }, { limit: 100, page: 1 });
+            if (hrAdmins.users.length > 0) {
+                const hrPromises = hrAdmins.users.map(hr => notifications_service_1.notificationsService.sendNotification({
+                    userId: hr._id.toString(),
+                    type: notification_interface_1.NotificationType.LEAVE_REQUESTED,
+                    title: 'New Leave Request (HR Copy)',
+                    message: `${employee?.fullName || 'An employee'} applied for leave.`,
+                    targetApp: 'HR',
+                    data: { leaveId: leave._id }
+                }));
+                await Promise.allSettled(hrPromises);
+            }
+        }
+        catch (error) {
+            console.error('[EmployeeLeaveService] Failed to send leave application notification:', error);
+        }
+        return leave;
     }
     /**
      * Get own leaves

@@ -199,6 +199,9 @@ router.use(authenticate);
  *         leaves:
  *           type: object
  *           properties:
+ *             application:
+ *               type: boolean
+ *               example: true
  *             newRequest:
  *               type: boolean
  *               example: true
@@ -707,6 +710,7 @@ router.get('/notifications', SettingsController.getNotifications);
  *               lateArrival: true
  *               earlyExit: false
  *             leaves:
+ *               application: true
  *               newRequest: true
  *               approval: true
  *               rejection: true

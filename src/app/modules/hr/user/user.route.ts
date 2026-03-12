@@ -118,8 +118,10 @@ import {
   createUserValidation,
   updateUserValidation,
   getUserValidation,
-  queryUsersValidation
+  queryUsersValidation,
+  createDraftValidation
 } from './user.validation';
+import { avatarUpload } from '../../../../shared/middlewares/upload.middleware';
 
 const router = Router();
 
@@ -194,7 +196,7 @@ router.use(authenticate);
  */
 router.get(
   '/',
-  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER, USER_ROLES.EMPLOYEE),
   validate(queryUsersValidation),
   userController.getAllUsers.bind(userController)
 );
@@ -235,7 +237,7 @@ router.get(
  */
 router.get(
   '/search',
-  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER, USER_ROLES.EMPLOYEE),
   userController.searchUsers.bind(userController)
 );
 
@@ -309,8 +311,69 @@ router.get(
  */
 router.get(
   '/department/:departmentId',
-  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER, USER_ROLES.EMPLOYEE),
   userController.getUsersByDepartment.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/draft:
+ *   post:
+ *     summary: Create draft user (partial data)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post(
+  '/draft',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
+  validate(createDraftValidation),
+  userController.createDraftEmployee.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/drafts:
+ *   get:
+ *     summary: Get all draft employees
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get(
+  '/drafts',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(queryUsersValidation),
+  userController.getDraftEmployees.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/upload-avatar:
+ *   post:
+ *     summary: Upload user profile picture
+ *     tags: [Users]
+ */
+router.post(
+  '/upload-avatar',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
+  userController.uploadAvatar.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/draft/{id}:
+ *   delete:
+ *     summary: Delete draft employee
+ *     tags: [Users]
+ */
+router.delete(
+  '/draft/:id',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(getUserValidation),
+  userController.deleteDraftEmployee.bind(userController)
 );
 
 /**
@@ -321,29 +384,6 @@ router.get(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found
  */
 router.get(
   '/:id',
@@ -485,9 +525,12 @@ router.get(
 router.post(
   '/',
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
   validate(createUserValidation),
   userController.createUser.bind(userController)
 );
+
+// NOTE: /draft and /drafts routes moved above /:id to prevent route hijacking
 
 /**
  * @swagger
@@ -543,9 +586,102 @@ router.post(
 router.put(
   '/:id',
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
   validate(updateUserValidation),
   userController.updateUser.bind(userController)
 );
+
+/**
+ * @swagger
+ * /hr/users/employee/{employeeId}:
+ *   get:
+ *     summary: Get user by employee ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Employee ID (e.g., EMP001)
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get(
+  '/employee/:employeeId',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN, USER_ROLES.MANAGER),
+  userController.getUserByEmployeeId.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/{id}/clear-device:
+ *   post:
+ *     summary: Clear user registered device
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Device cleared successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ */
+router.post(
+  '/:id/clear-device',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(getUserValidation),
+  userController.clearUserDevice.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/device-token:
+ *   post:
+ *     summary: Register Firebase Cloud Messaging (FCM) device token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm_token_xyz..."
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ *       400:
+ *         description: Validation error
+ */
+router.post(
+  '/device-token',
+  userController.addDeviceToken.bind(userController)
+);
+
+// NOTE: /upload-avatar route moved above /:id to prevent route hijacking
+
+// NOTE: /draft/:id route moved above /:id to prevent route hijacking
 
 /**
  * @swagger

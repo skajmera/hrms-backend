@@ -12,7 +12,7 @@ export class PermissionDAL {
   /**
    * Create user permission
    */
-   async create(permissionData: IInviteUserInput & { invitedBy: string }): Promise<IUserPermission> {
+  async create(permissionData: IInviteUserInput & { invitedBy: string }): Promise<IUserPermission> {
     const permission = await UserPermissionModel.create(permissionData);
     return permission;
   }
@@ -20,16 +20,16 @@ export class PermissionDAL {
   /**
    * Find permission by user ID
    */
-   async findByUserId(userId: string): Promise<IUserPermission | null> {
+  async findByUserId(userId: string): Promise<IUserPermission | null> {
     return await UserPermissionModel.findOne({ userId })
       .populate('userId', 'firstName lastName email profilePicture')
-      .populate('invitedBy', 'firstName lastName email');
+      .populate('invitedBy', 'firstName lastName email profilePicture');
   }
 
   /**
    * Get all user permissions with pagination
    */
-   async findAll(
+  async findAll(
     filters: FilterQuery<IUserPermission> = {},
     options: IPaginationOptions = {}
   ): Promise<IPaginatedResponse<IUserPermission>> {
@@ -46,7 +46,7 @@ export class PermissionDAL {
     const [data, totalItems] = await Promise.all([
       UserPermissionModel.find(filters)
         .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-        .populate('invitedBy', 'firstName lastName')
+        .populate('invitedBy', 'firstName lastName profilePicture')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -70,33 +70,42 @@ export class PermissionDAL {
   }
 
   /**
-   * Update user permission
+   * Upsert user permission (creates if not exists, updates if exists)
    */
-   async updateByUserId(userId: string, updateData: Partial<IUserPermission>): Promise<IUserPermission | null> {
+  async updateByUserId(
+    userId: string,
+    updateData: Partial<IUserPermission>,
+    upsertData?: any
+  ): Promise<IUserPermission | null> {
+    // Merge upsertData (base fields) with updateData (incoming changes) for a reliable upsert.
+    // Using $set for all fields ensures required fields (userId, email, invitedBy) are always
+    // present regardless of whether the document is being created or updated.
+    const mergedData = { ...(upsertData || {}), ...updateData };
+
     return await UserPermissionModel.findOneAndUpdate(
       { userId },
-      updateData,
-      { new: true }
-    ).populate('userId', 'firstName lastName email');
+      { $set: mergedData },
+      { new: true, upsert: true, runValidators: false }
+    ).populate('userId', 'firstName lastName email profilePicture');
   }
 
   /**
    * Delete user permission
    */
-   async deleteByUserId(userId: string): Promise<IUserPermission | null> {
+  async deleteByUserId(userId: string): Promise<IUserPermission | null> {
     return await UserPermissionModel.findOneAndDelete({ userId });
   }
 
   /**
    * Check if user has permission for a module
    */
-   async hasPermission(
-    userId: string, 
-    module: string, 
+  async hasPermission(
+    userId: string,
+    module: string,
     action: 'view' | 'edit' | 'fullAccess'
   ): Promise<boolean> {
     const permission = await this.findByUserId(userId);
-    
+
     if (!permission || !permission.isActive) {
       return false;
     }
@@ -115,7 +124,7 @@ export class PermissionDAL {
   /**
    * Get all active users with permissions
    */
-   async getActiveUsers(): Promise<IUserPermission[]> {
+  async getActiveUsers(): Promise<IUserPermission[]> {
     return await UserPermissionModel.find({ isActive: true })
       .populate('userId', 'firstName lastName email profilePicture')
       .sort({ createdAt: -1 });
@@ -124,7 +133,7 @@ export class PermissionDAL {
   /**
    * Deactivate user permission
    */
-   async deactivate(userId: string): Promise<IUserPermission | null> {
+  async deactivate(userId: string): Promise<IUserPermission | null> {
     return await UserPermissionModel.findOneAndUpdate(
       { userId },
       { isActive: false },
@@ -135,7 +144,7 @@ export class PermissionDAL {
   /**
    * Activate user permission
    */
-   async activate(userId: string): Promise<IUserPermission | null> {
+  async activate(userId: string): Promise<IUserPermission | null> {
     return await UserPermissionModel.findOneAndUpdate(
       { userId },
       { isActive: true },

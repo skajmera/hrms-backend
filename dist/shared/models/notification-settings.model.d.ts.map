@@ -1,1 +1,1 @@
-{"version":3,"file":"notification-settings.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/notification-settings.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,qBAAqB,EAAE,MAAM,kCAAkC,CAAC;AAkDzE,eAAO,MAAM,yBAAyB;;;;OAA4F,CAAC"}
+{"version":3,"file":"notification-settings.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/notification-settings.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,qBAAqB,EAAE,MAAM,kCAAkC,CAAC;AAmDzE,eAAO,MAAM,yBAAyB;;;;OAA4F,CAAC"}

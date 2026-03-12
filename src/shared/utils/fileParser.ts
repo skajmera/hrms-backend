@@ -19,6 +19,7 @@ export interface ParsedPayrollData {
   arrearAmount?: number;
   specialPay?: number;
   miscellaneousPay?: number;
+  nonWorkingDayCompensation?: number;
   providentFund?: number;
   esic?: number;
   professionalTax?: number;
@@ -42,13 +43,13 @@ export class FileParser {
       const workbook = XLSX.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      
+
       // Convert to JSON
       const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
         raw: false,
         defval: null
       });
-      
+
       // Map to our structure
       return this.mapDataToPayroll(jsonData);
     } catch (error) {
@@ -62,7 +63,7 @@ export class FileParser {
   static async parseCSV(filePath: string): Promise<ParsedPayrollData[]> {
     return new Promise((resolve, reject) => {
       const results: any[] = [];
-      
+
       fs.createReadStream(filePath)
         .pipe(csvParser())
         .on('data', (data) => results.push(data))
@@ -82,50 +83,56 @@ export class FileParser {
    * Map parsed data to payroll structure
    */
   private static mapDataToPayroll(data: any[]): ParsedPayrollData[] {
-    return data.map((row) => {
-      // Normalize keys (remove spaces, convert to camelCase)
-      const normalizedRow: any = {};
-      Object.keys(row).forEach(key => {
-        const normalizedKey = this.normalizeKey(key);
-        normalizedRow[normalizedKey] = row[key];
-      });
+    return data
+      .filter((row) => {
+        // Skip rows that are completely empty
+        return Object.values(row).some(val => val !== null && val !== undefined && val !== '');
+      })
+      .map((row) => {
+        // Normalize keys (remove spaces, convert to camelCase)
+        const normalizedRow: any = {};
+        Object.keys(row).forEach(key => {
+          const normalizedKey = this.normalizeKey(key);
+          normalizedRow[normalizedKey] = row[key];
+        });
 
-      return {
-        employeeName: normalizedRow.employeeName || normalizedRow.name || null,
-        employeeId: normalizedRow.employeeId || normalizedRow.empId || normalizedRow.employeeCode || null,
-        month: this.parseNumber(normalizedRow.month || normalizedRow.paymentMonth),
-        year: this.parseNumber(normalizedRow.year || normalizedRow.paymentYear),
-        
-        // Earnings
-        basic: this.parseNumber(normalizedRow.basic || normalizedRow.basicSalary),
-        hra: this.parseNumber(normalizedRow.hra || normalizedRow.houseRentAllowance),
-        conveyance: this.parseNumber(normalizedRow.conveyance || normalizedRow.transport),
-        specialAllowance: this.parseNumber(normalizedRow.specialAllowance),
-        statutoryBonus: this.parseNumber(normalizedRow.statutoryBonus),
-        otherAllowances: this.parseNumber(normalizedRow.otherAllowances),
-        byodPayment: this.parseNumber(normalizedRow.byodPayment),
-        taskBasedIncentive: this.parseNumber(normalizedRow.taskBasedIncentive),
-        arrearMonth: normalizedRow.arrearMonth || null,
-        arrearAmount: this.parseNumber(normalizedRow.arrearAmount),
-        specialPay: this.parseNumber(normalizedRow.specialPay),
-        miscellaneousPay: this.parseNumber(normalizedRow.miscellaneousPay || normalizedRow.miscellaneous),
-        
-        // Deductions
-        providentFund: this.parseNumber(normalizedRow.providentFund || normalizedRow.pf),
-        esic: this.parseNumber(normalizedRow.esic || normalizedRow.esi),
-        professionalTax: this.parseNumber(normalizedRow.professionalTax || normalizedRow.pt),
-        leaveWithoutPay: this.parseNumber(normalizedRow.leaveWithoutPay || normalizedRow.lwp),
-        lateWithoutPay: this.parseNumber(normalizedRow.lateWithoutPay),
-        lateArrivalDeductions: this.parseNumber(normalizedRow.lateArrivalDeductions),
-        tds: this.parseNumber(normalizedRow.tds || normalizedRow.incomeTax),
-        loanRepayment: this.parseNumber(normalizedRow.loanRepayment),
-        
-        // Attendance
-        workingDays: this.parseNumber(normalizedRow.workingDays),
-        presentDays: this.parseNumber(normalizedRow.presentDays || normalizedRow.paidDays),
-        lopDays: this.parseNumber(normalizedRow.lopDays || normalizedRow.lop)
-      };
-    });
+        return {
+          employeeName: normalizedRow.employeeName || normalizedRow.name || null,
+          employeeId: normalizedRow.employeeId || normalizedRow.empId || normalizedRow.employeeCode || null,
+          month: this.parseNumber(normalizedRow.month || normalizedRow.paymentMonth),
+          year: this.parseNumber(normalizedRow.year || normalizedRow.paymentYear),
+
+          // Earnings
+          basic: this.parseNumber(normalizedRow.basic || normalizedRow.basicSalary),
+          hra: this.parseNumber(normalizedRow.hra || normalizedRow.houseRentAllowance),
+          conveyance: this.parseNumber(normalizedRow.conveyance || normalizedRow.transport),
+          specialAllowance: this.parseNumber(normalizedRow.specialAllowance),
+          statutoryBonus: this.parseNumber(normalizedRow.statutoryBonus),
+          otherAllowances: this.parseNumber(normalizedRow.otherAllowances || normalizedRow.otherAllowance),
+          byodPayment: this.parseNumber(normalizedRow.byodPayment),
+          taskBasedIncentive: this.parseNumber(normalizedRow.taskBasedIncentive),
+          arrearMonth: normalizedRow.arrearMonth || null,
+          arrearAmount: this.parseNumber(normalizedRow.arrearAmount || normalizedRow.arrear),
+          specialPay: this.parseNumber(normalizedRow.specialPay || normalizedRow.specialPayAdjustable),
+          miscellaneousPay: this.parseNumber(normalizedRow.miscellaneousPay || normalizedRow.miscellaneous),
+          nonWorkingDayCompensation: this.parseNumber(normalizedRow.nonWorkingDayCompensation),
+
+          // Deductions
+          providentFund: this.parseNumber(normalizedRow.providentFund || normalizedRow.pf),
+          esic: this.parseNumber(normalizedRow.esic || normalizedRow.esi),
+          professionalTax: this.parseNumber(normalizedRow.professionalTax || normalizedRow.pt),
+          leaveWithoutPay: this.parseNumber(normalizedRow.leaveWithoutPay || normalizedRow.lwp),
+          lateWithoutPay: this.parseNumber(normalizedRow.lateWithoutPay),
+          lateArrivalDeductions: this.parseNumber(normalizedRow.lateArrivalDeductions || normalizedRow.lateArrivalDeduction),
+          tds: this.parseNumber(normalizedRow.tds || normalizedRow.incomeTax),
+          loanRepayment: this.parseNumber(normalizedRow.loanRepayment || normalizedRow.loadRepayment),
+
+          // Attendance
+          workingDays: this.parseNumber(normalizedRow.workingDays),
+          presentDays: this.parseNumber(normalizedRow.presentDays || normalizedRow.paidDays),
+          lopDays: this.parseNumber(normalizedRow.lopDays || normalizedRow.lop)
+        };
+      });
   }
 
   /**
@@ -134,7 +141,8 @@ export class FileParser {
   private static normalizeKey(key: string): string {
     return key
       .trim()
-      .replace(/\s+/g, ' ')
+      .replace(/[^a-zA-Z0-9\s]/g, ' ') // Replace non-alphanumeric (except spaces) with space
+      .replace(/\s+/g, ' ') // Collapse multiple spaces
       .split(' ')
       .map((word, index) => {
         if (index === 0) {
@@ -152,11 +160,11 @@ export class FileParser {
     if (value === null || value === undefined || value === '') {
       return 0;
     }
-    
+
     // Remove currency symbols and commas
     const cleanValue = String(value).replace(/[₹$,\s]/g, '');
     const parsed = parseFloat(cleanValue);
-    
+
     return isNaN(parsed) ? 0 : parsed;
   }
 
@@ -212,25 +220,25 @@ export class FileParser {
         'Month': 1,
         'Year': 2026,
         'Basic Salary': 50000,
-        'HRA': 20000,
+        'House Rent Allowance': 20000,
         'Conveyance': 2000,
         'Special Allowance': 3000,
         'Statutory Bonus': 2000,
-        'Other Allowances': 1000,
+        'Other Allowance': 1000,
         'BYOD Payment': 500,
         'Task Based Incentive': 5000,
         'Arrear Month': 'December',
         'Arrear Amount': 0,
-        'Special Pay': 0,
-        'Miscellaneous Pay': 0,
+        'Special Pay Adjustable': 0,
+        'Miscellaneous': 0,
+        'Non Working Day Compensation': 0,
         'Provident Fund': 6000,
         'ESIC': 750,
         'Professional Tax': 200,
         'Leave Without Pay': 0,
-        'Late Without Pay': 0,
-        'Late Arrival Deductions': 500,
+        'Late Arrival Deduction': 0,
         'TDS': 5000,
-        'Loan Repayment': 2000,
+        'Load Repayment': 2000,
         'Working Days': 30,
         'Present Days': 28,
         'LOP Days': 0

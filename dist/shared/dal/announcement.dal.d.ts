@@ -58,6 +58,37 @@ export declare class AnnouncementDAL {
      * Delete comment from announcement
      */
     deleteComment(id: string, commentId: string, userId: string): Promise<IAnnouncement | null>;
+    /**
+     * Add a reply to a comment
+     */
+    addReply(id: string, commentId: string, userId: string, content: string): Promise<IAnnouncement | null>;
+    /**
+     * Reusable active + date validity filter for employee-side visibility
+     */
+    getActiveFilter(): {
+        isActive: boolean;
+        startDate: {
+            $lte: Date;
+        };
+        $or: ({
+            expiryDate: {
+                $exists: boolean;
+                $gte?: undefined;
+            };
+        } | {
+            expiryDate: {
+                $gte: Date;
+                $exists?: undefined;
+            };
+        })[];
+    };
+    /**
+     * Get typed announcements (NEWHIRE/BIRTHDAY/ANNIVERSARY) with target employee data embedded
+     */
+    findTypedWithUsers(announcementType: string, options?: IPaginationOptions, applyActiveFilter?: boolean): Promise<{
+        announcements: any[];
+        total: number;
+    }>;
 }
 export declare const announcementDAL: AnnouncementDAL;
 //# sourceMappingURL=announcement.dal.d.ts.map

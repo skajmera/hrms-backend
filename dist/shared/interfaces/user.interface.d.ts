@@ -30,6 +30,7 @@ export interface IExperience {
     startDate: Date;
     endDate?: Date;
     isCurrent: boolean;
+    isRelevant?: boolean;
     responsibilities?: string;
     location?: string;
 }
@@ -66,6 +67,8 @@ export interface IProfessionalDetails {
     shiftTime?: IShiftTime;
     workLocation: string;
     salaryDetails?: ISalaryDetails;
+    totalExperience?: string;
+    currentExperience?: string;
 }
 export interface IUser extends Document {
     organizationId: Types.ObjectId | string;
@@ -82,6 +85,11 @@ export interface IUser extends Document {
     bloodGroup?: string;
     maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
     profilePicture?: string;
+    profileImage?: string;
+    separationInfo?: {
+        dateOfExit: Date;
+        previousCompany: string;
+    };
     currentAddress?: IAddress;
     permanentAddress?: IAddress;
     professionalDetails?: IProfessionalDetails | any;
@@ -105,10 +113,12 @@ export interface IUser extends Document {
     lastLogin?: Date;
     registeredDeviceId?: string;
     azurePersonId?: string;
+    fcmTokens?: string[];
     createdAt: Date;
     updatedAt: Date;
     createdBy?: Types.ObjectId | string;
     updatedBy?: Types.ObjectId | string;
+    fullName?: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
     generateAuthToken(): string;
     getFullName(): string;
@@ -117,7 +127,7 @@ export interface IUserCreateInput {
     createdBy?: Types.ObjectId | string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
     password?: string;
     personalEmail?: string;
     phone?: string;
@@ -150,6 +160,7 @@ export interface IUserUpdateInput {
     };
     isActive?: boolean;
     professionalDetails?: IProfessionalDetails | any;
+    registeredDeviceId?: string | null;
 }
 export interface ILoginInput {
     email: string;

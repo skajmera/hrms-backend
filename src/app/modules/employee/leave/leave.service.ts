@@ -1,5 +1,9 @@
 import { leaveDAL } from '../../../../shared/dal/leave.dal';
+import { userDAL } from '../../../../shared/dal/user.dal';
 import { ILeaveCreateInput } from '../../../../shared/interfaces/leave.interface';
+import { notificationsService } from '../../notifications/notifications.service';
+import { NotificationType } from '../../../../shared/interfaces/notification.interface';
+import { USER_ROLES } from '../../../../config/constants';
 
 export class EmployeeLeaveService {
   /**
@@ -21,10 +25,45 @@ export class EmployeeLeaveService {
       }
     }
 
-    return await leaveDAL.create({
+    const leave = await leaveDAL.create({
       ...leaveData,
       userId
     });
+
+    // --- TRIGGER NOTIFICATION ---
+    try {
+      const employee = await userDAL.findById(userId);
+      if (employee && employee.professionalDetails?.reportingManager) {
+        const managerId = employee.professionalDetails.reportingManager.toString();
+
+        await notificationsService.sendNotification({
+          userId: managerId,
+          type: NotificationType.LEAVE_REQUESTED,
+          title: 'New Leave Request',
+          message: `${employee.fullName} has applied for ${leaveData.leaveType} leave from ${new Date(leaveData.startDate).toDateString()} to ${new Date(leaveData.endDate).toDateString()}.`,
+          targetApp: 'HR',
+          data: { leaveId: leave._id }
+        });
+      }
+
+      // Also notify HR Admin for global visibility
+      const hrAdmins = await userDAL.findAll({ role: USER_ROLES.HR_ADMIN }, { limit: 100, page: 1 });
+      if (hrAdmins.users.length > 0) {
+        const hrPromises = hrAdmins.users.map(hr => notificationsService.sendNotification({
+          userId: hr._id.toString(),
+          type: NotificationType.LEAVE_REQUESTED,
+          title: 'New Leave Request (HR Copy)',
+          message: `${employee?.fullName || 'An employee'} applied for leave.`,
+          targetApp: 'HR',
+          data: { leaveId: leave._id }
+        }));
+        await Promise.allSettled(hrPromises);
+      }
+    } catch (error) {
+      console.error('[EmployeeLeaveService] Failed to send leave application notification:', error);
+    }
+
+    return leave;
   }
 
   /**

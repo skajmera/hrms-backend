@@ -16,15 +16,25 @@ export declare class PermissionsController {
      */
     static getAllPermissions(req: Request, res: Response, next: NextFunction): Promise<void>;
     /**
+     * Get permissions for the currently logged-in user
+     * GET /api/v1/hr/permissions/my
+     */
+    static getMyPermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    /**
      * Get permission by user ID
      * GET /api/v1/hr/permissions/:userId
      */
     static getPermissionByUserId(req: Request, res: Response, next: NextFunction): Promise<void>;
     /**
+     * Get exact assigned permission for the currently logged-in user (Returns object, empty if not found)
+     * GET /api/v1/hr/permissions/my-assigned
+     */
+    static getMyAssignedPermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    /**
      * Update user permissions
      * PUT /api/v1/hr/permissions/:userId
      */
-    static updatePermissions(req: Request, res: Response, next: NextFunction): Promise<void>;
+    static updatePermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     /**
      * Delete user permissions
      * DELETE /api/v1/hr/permissions/:userId

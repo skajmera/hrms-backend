@@ -9,7 +9,7 @@ export class AuthService {
    * Register new user
    */
   async register(userData: IUserCreateInput): Promise<IAuthResponse> {
-    const existingUser = await userDAL.findByEmail(userData.email);
+    const existingUser = await userDAL.findByEmail(userData.email!);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
@@ -226,6 +226,26 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  /**
+   * Update FCM Token for push notifications
+   */
+  async updateFcmToken(userId: string, fcmToken: string): Promise<void> {
+    const user = await userDAL.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Add token if it doesn't exist
+    if (!user.fcmTokens) {
+      user.fcmTokens = [];
+    }
+
+    if (!user.fcmTokens.includes(fcmToken)) {
+      user.fcmTokens.push(fcmToken);
+      await user.save({ validateBeforeSave: false });
+    }
   }
 }
 
