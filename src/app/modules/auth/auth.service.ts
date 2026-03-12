@@ -227,6 +227,26 @@ export class AuthService {
 
     return user;
   }
+
+  /**
+   * Update FCM Token for push notifications
+   */
+  async updateFcmToken(userId: string, fcmToken: string): Promise<void> {
+    const user = await userDAL.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Add token if it doesn't exist
+    if (!user.fcmTokens) {
+      user.fcmTokens = [];
+    }
+
+    if (!user.fcmTokens.includes(fcmToken)) {
+      user.fcmTokens.push(fcmToken);
+      await user.save({ validateBeforeSave: false });
+    }
+  }
 }
 
 export const authService = new AuthService();

@@ -4,12 +4,14 @@ import { Router } from 'express';
 import authRoutes from '../app/modules/auth/auth.route';
 import organizationRoutes from '../app/modules/organization/organization.route';
 import settingsRoutes from '../app/modules/settings/settings.route';
+import notificationsRoutes from '../app/modules/notifications/notifications.route';
 // Employee
 import employeeProfileRoutes from '../app/modules/employee/profile/profile.route';
 import employeeAttendanceRoutes from '../app/modules/employee/attendance/attendance.route';
 import employeeLeaveRoutes from '../app/modules/employee/leave/leave.route';
 import employeePayrollRoutes from '../app/modules/employee/payroll/payroll.route';
 import employeeDashboardRoutes from '../app/modules/employee/dashboard/dashboard.route';
+import employeeNotificationsRoutes from '../app/modules/employee/notifications/notifications.route';
 
 // Manager
 import managerTeamRoutes from '../app/modules/manager/team/team.route';
@@ -28,6 +30,7 @@ import reportsRoutes from '../app/modules/hr/reports/reports.route';
 import holidaysRoutes from '../app/modules/hr/holidays/holidays.route';
 import analyticsRoutes from '../app/modules/hr/analytics/analytics.route';
 import shiftsRoutes from '../app/modules/hr/shifts/shifts.route';
+import hrNotificationsRoutes from '../app/modules/hr/notifications/notifications.route';
 import permissionsRoutes from '../app/modules/hr/permissions/permissions.route'; // NEW
 import offboardingRoutes from '../app/modules/hr/offboarding/offboarding.route'; // NEW
 
@@ -37,12 +40,14 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/organization', organizationRoutes);
 router.use('/settings', settingsRoutes);
+
 // Employee routes (Self-service)
 router.use('/employee/profile', employeeProfileRoutes);
 router.use('/employee/attendance', employeeAttendanceRoutes);
 router.use('/employee/leave', employeeLeaveRoutes);
 router.use('/employee/payroll', employeePayrollRoutes);
 router.use('/employee/dashboard', employeeDashboardRoutes);
+router.use('/employee/notifications', employeeNotificationsRoutes);
 
 // Manager routes (Team management)
 router.use('/manager/team', managerTeamRoutes);
@@ -53,11 +58,11 @@ router.use('/manager/reports', managerReportsRoutes);
 router.use('/hr/users', userRoutes);
 router.use('/hr/attendance', attendanceRoutes);
 router.use('/hr/leave', leaveRoutes);
-router.use('/leaves', leaveRoutes);
 router.use('/hr/payroll', payrollRoutes);
 router.use('/hr/announcements', announcementRoutes);
 router.use('/hr/departments', departmentRoutes);
 router.use('/hr/dashboard', dashboardRoutes);
+router.use('/hr/notifications', hrNotificationsRoutes);
 router.use('/hr/reports', reportsRoutes);
 router.use('/hr/holidays', holidaysRoutes);
 router.use('/hr/analytics', analyticsRoutes);

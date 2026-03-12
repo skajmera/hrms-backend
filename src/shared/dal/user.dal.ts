@@ -20,7 +20,7 @@ export class UserDAL {
    */
   async findById(id: string, selectPassword = false): Promise<IUser | null> {
     const query = UserModel.findById(id)
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email profilePicture')
@@ -51,7 +51,7 @@ export class UserDAL {
    */
   async findByEmployeeId(employeeId: string): Promise<IUser | null> {
     return await UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email profilePicture')
@@ -71,7 +71,7 @@ export class UserDAL {
     const query: any = { ...filters };
 
     const users = await UserModel.find(query)
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email profilePicture')
@@ -150,7 +150,7 @@ export class UserDAL {
    */
   async findByRole(role: string): Promise<IUser[]> {
     return await UserModel.find({ role, isActive: true })
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
@@ -279,7 +279,7 @@ export class UserDAL {
         }
       },
 
-      // 4️⃣ Lookup New Hire Announcements
+      // 4️⃣ Lookup New Hire Announcements (Including Drafts & Scheduled)
       {
         $lookup: {
           from: "announcements",
@@ -289,15 +289,7 @@ export class UserDAL {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$isActive", true] },
                     { $eq: ["$announcementType", "NEWHIRES"] },
-                    { $lte: ["$startDate", today] },
-                    {
-                      $or: [
-                        { $eq: ["$expiryDate", null] },
-                        { $gte: ["$expiryDate", today] }
-                      ]
-                    },
                     {
                       $or: [
                         { $eq: ["$targetAudience.isGlobal", true] },
@@ -308,12 +300,12 @@ export class UserDAL {
                 }
               }
             },
+            { $sort: { createdAt: -1 } },
+            { $limit: 1 },
             {
               $project: {
                 title: 1,
                 content: 1,
-                priority: 1,
-                isPinned: 1,
                 attachments: 1
               }
             }
@@ -322,13 +314,39 @@ export class UserDAL {
         }
       },
 
-      // 5️⃣ Final response shape
+      // 5️⃣ Final Optimized Response Shape
       {
         $project: {
-          password: 0,
-          emailVerificationToken: 0,
-          passwordResetToken: 0,
-          passwordResetExpires: 0
+          _id: 1,
+          fullName: { $concat: [{ $ifNull: ["$firstName", ""] }, " ", { $ifNull: ["$lastName", ""] }] },
+          profileImage: { $ifNull: ["$profilePicture", ""] },
+          designation: "$designation.name",
+          department: "$department.name",
+          joiningDate: "$professionalDetails.joiningDate",
+
+          announcement: {
+            $let: {
+              vars: {
+                firstAnn: { $arrayElemAt: ["$newHireAnnouncements", 0] }
+              },
+              in: {
+                $cond: {
+                  if: { $ne: ["$$firstAnn", null] },
+                  then: {
+                    _id: "$$firstAnn._id",
+                    title: { $ifNull: ["$$firstAnn.title", ""] },
+                    description: { $ifNull: ["$$firstAnn.content", ""] },
+                    attachments: { $cond: { if: { $isArray: "$$firstAnn.attachments" }, then: "$$firstAnn.attachments", else: [] } }
+                  },
+                  else: {
+                    title: "",
+                    description: "",
+                    attachments: []
+                  }
+                }
+              }
+            }
+          }
         }
       }
     ]);
@@ -381,7 +399,7 @@ export class UserDAL {
       $or: orQuery,
       isActive: true
     })
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture')
@@ -411,7 +429,7 @@ export class UserDAL {
     }
 
     return await UserModel.findOne({ ...query, isActive: true })
-      .populate('professionalDetails.department', 'name code')
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');

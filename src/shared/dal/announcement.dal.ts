@@ -106,6 +106,7 @@ export class AnnouncementDAL {
       .populate('likes', 'firstName lastName profilePicture')
       .populate('comments.userId', 'firstName lastName profilePicture')
       .populate('comments.likes', 'firstName lastName profilePicture')
+      .populate('targetAudience.specificUsers', 'firstName lastName profilePicture professionalDetails.designation professionalDetails.department professionalDetails.joiningDate')
       .sort({ isPinned: -1, priority: -1, createdAt: -1 });
   }
 
@@ -259,6 +260,66 @@ export class AnnouncementDAL {
       .populate('comments.likes', 'firstName lastName profilePicture')
       .populate('comments.replies.userId', 'firstName lastName profilePicture')
       .populate('comments.replies.likes', 'firstName lastName profilePicture');
+  }
+
+  /**
+   * Reusable active + date validity filter for employee-side visibility
+   */
+  getActiveFilter() {
+    const now = new Date();
+    return {
+      isActive: true,
+      startDate: { $lte: now },
+      $or: [{ expiryDate: { $exists: false } }, { expiryDate: { $gte: now } }]
+    };
+  }
+
+  /**
+   * Get typed announcements (NEWHIRE/BIRTHDAY/ANNIVERSARY) with target employee data embedded
+   */
+  async findTypedWithUsers(
+    announcementType: string,
+    options: IPaginationOptions = {},
+    applyActiveFilter = false
+  ): Promise<{ announcements: any[]; total: number }> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = options;
+    const skip = (page - 1) * limit;
+
+    const match: any = { announcementType };
+    if (applyActiveFilter) Object.assign(match, this.getActiveFilter());
+
+    const pipeline: any[] = [
+      { $match: match },
+      // Embed target employee details from specificUsers
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'targetAudience.specificUsers',
+          foreignField: '_id',
+          pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1, 'professionalDetails.designation': 1, 'professionalDetails.department': 1, 'professionalDetails.joiningDate': 1 } }],
+          as: 'targetEmployees'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1 } }],
+          as: 'createdByUser'
+        }
+      },
+      { $addFields: { createdBy: { $arrayElemAt: ['$createdByUser', 0] } } },
+      { $project: { createdByUser: 0 } },
+      { $sort: { isPinned: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1 } }
+    ];
+
+    const [announcements, countResult] = await Promise.all([
+      AnnouncementModel.aggregate([...pipeline, { $skip: skip }, { $limit: limit }]),
+      AnnouncementModel.aggregate([...pipeline, { $count: 'total' }])
+    ]);
+
+    return { announcements, total: countResult[0]?.total ?? 0 };
   }
 }
 

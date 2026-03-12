@@ -81,11 +81,13 @@ export class AttendanceDAL {
   async findByUserAndDateRange(
     userId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    additionalFilters: IQueryFilters = {}
   ): Promise<IAttendance[]> {
     return await AttendanceModel.find({
       userId,
-      date: { $gte: startDate, $lte: endDate }
+      date: { $gte: startDate, $lte: endDate },
+      ...additionalFilters
     }).sort({ date: 1 });
   }
 

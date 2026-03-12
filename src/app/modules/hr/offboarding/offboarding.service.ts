@@ -217,6 +217,21 @@ export class OffboardingService {
   }
 
   /**
+   * Schedule exit interview
+   */
+  static async scheduleExitInterview(offboardingId: string, exitInterviewDate: string, exitInterviewNotes?: string): Promise<IOffboarding> {
+    const offboarding = await this.getResignationById(offboardingId);
+
+    const updateData: Partial<IOffboarding> = {
+      exitInterviewScheduled: true,
+      exitInterviewDate: new Date(exitInterviewDate),
+      exitInterviewNotes
+    };
+
+    return await OffboardingDAL.updateById(offboardingId, updateData);
+  }
+
+  /**
    * Get pending resignations
    */
   static async getPendingResignations() {

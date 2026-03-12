@@ -147,39 +147,13 @@ router.get('/', validate(queryAnnouncementsValidation), announcementController.g
  */
 router.get('/my-announcements', announcementController.getMyAnnouncements.bind(announcementController));
 
-/**
- * @swagger
- * /hr/announcements/{id}:
- *   get:
- *     summary: Get announcement by ID
- *     tags: [Announcements]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Announcement ID
- *     responses:
- *       200:
- *         description: Announcement retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/Announcement'
- *       404:
- *         description: Announcement not found
- */
+// Typed dashboard routes — must be above /:id to prevent route hijacking
+router.get('/new-hires', (req: any, res, next) => { req.params.announcementType = 'NEWHIRE'; announcementController.getTypedAnnouncements(req, res, next); });
+router.get('/birthdays', (req: any, res, next) => { req.params.announcementType = 'BIRTHDAY'; announcementController.getTypedAnnouncements(req, res, next); });
+router.get('/anniversaries', (req: any, res, next) => { req.params.announcementType = 'ANNIVERSARY'; announcementController.getTypedAnnouncements(req, res, next); });
+
 router.get('/:id', announcementController.getAnnouncementById.bind(announcementController));
+
 
 /**
  * @swagger

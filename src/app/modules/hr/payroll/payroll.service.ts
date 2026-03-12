@@ -44,13 +44,13 @@
 //     }
 //     return payroll;
 //   }
- 
+
 //   /**
 //    * Download payslip
 //    */
 //   async downloadPayslip(payrollId: string): Promise<string> {
 //     const payroll = await payrollDAL.findById(payrollId);
-    
+
 //     if (!payroll) {
 //       throw new Error('Payroll not found');
 //     }
@@ -65,7 +65,7 @@
 //       const pdfPath = await PDFGenerator.generateSalarySlip({ payroll, user });
 //       payroll.payslipPath = pdfPath;
 //       await payroll.save();
-      
+
 //       return pdfPath;
 //     }
 
@@ -77,7 +77,7 @@
 //    */
 //   async regeneratePayslip(payrollId: string): Promise<string> {
 //     const payroll = await payrollDAL.findById(payrollId);
-    
+
 //     if (!payroll) {
 //       throw new Error('Payroll not found');
 //     }
@@ -105,7 +105,7 @@
 //     }
 
 //     const users = await userDAL.findAll(filters, { limit: 1000 });
-    
+
 //     const payrollPromises = users.users.map(async (user) => {
 //       try {
 //         // Check if already exists
@@ -137,7 +137,7 @@
 //         };
 
 //         const payroll = await this.generatePayroll(payrollData);
-        
+
 //         return { success: true, user: user.email, payrollId: payroll._id };
 //       } catch (error: any) {
 //         return { success: false, user: user.email, error: error.message };
@@ -145,13 +145,12 @@
 //     });
 
 //     const results = await Promise.allSettled(payrollPromises);
-    
+
 //     return results.map(result => result.status === 'fulfilled' ? result.value : { success: false, error: 'Failed' });
 //   }
 // }
 
 // export const payrollService = new PayrollService();
-
 import { payrollDAL } from '../../../../shared/dal/payroll.dal';
 // import { UserDAL } from '../../../../shared/dal/user.dal';
 import { userDAL } from '../../../../shared/dal/user.dal';
@@ -159,6 +158,8 @@ import { userDAL } from '../../../../shared/dal/user.dal';
 import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { IPayroll } from '../../../../shared/interfaces/payroll.interface';
+import { notificationsService } from '../../notifications/notifications.service';
+import { NotificationType } from '../../../../shared/interfaces/notification.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 import { PAYMENT_STATUS } from '../../../../config/constants';
 import { PDFGenerator } from '../../../../shared/utils/pdfGenerator';
@@ -200,7 +201,7 @@ export class PayrollService {
     const workingDays = payrollData.workingDays || 30;
     const presentDays = attendanceReport.presentDays + attendanceReport.wfhDays;
     const absentDays = attendanceReport.absentDays;
-    
+
     // Get LOP (Leave without pay) days
     const startDate = new Date(payrollData.year!, payrollData.month! - 1, 1);
     const endDate = new Date(payrollData.year!, payrollData.month!, 0);
@@ -297,19 +298,35 @@ export class PayrollService {
     const updateData: Partial<IPayroll> = {
       isDraft: false,
       isGenerated: true,
-      isPending: true,
+      isPending: false, // Mutual exclusivity with generated
       approvedBy,
       approvedAt: new Date()
     };
 
-    return await payrollDAL.updateById(payrollId, updateData);
+    const updatedPayroll = await payrollDAL.updateById(payrollId, updateData);
+
+    // --- TRIGGER NOTIFICATION ---
+    try {
+      await notificationsService.sendNotification({
+        userId: payroll.userId.toString(),
+        type: NotificationType.PAYROLL_GENERATED,
+        title: 'Payslip Generated',
+        message: `Your payslip for ${payroll.month}/${payroll.year} has been generated. You can now view and download it.`,
+        targetApp: 'EMPLOYEE',
+        data: { payrollId: updatedPayroll._id }
+      });
+    } catch (error) {
+      console.error('[PayrollService] Failed to send payroll notification:', error);
+    }
+
+    return updatedPayroll;
   }
 
   /**
    * Mark payroll as paid
    */
   static async markAsPaid(
-    payrollId: string, 
+    payrollId: string,
     paymentDetails: {
       paymentMode: 'BANK_TRANSFER' | 'CASH' | 'CHEQUE';
       transactionId?: string;
@@ -335,8 +352,8 @@ export class PayrollService {
    * Get payroll statistics for dashboard
    */
   static async getPayrollStats(month: number, year: number) {
-    const stats = await payrollDAL.getPayrollStats(month, year);
-    
+    const stats = await payrollDAL.getPayrollStatsDashboard(month, year);
+
     // Calculate percentage changes (mock for now - you can implement actual comparison)
     const percentageChange = stats.totalEmployees > 0 ? 3 : 0;
 
@@ -347,8 +364,8 @@ export class PayrollService {
       averageSalary: Math.round(stats.averageSalary || 0),
       totalEmployees: stats.totalEmployees || 0,
       percentageChange,
-      paidPercentage: stats.totalEmployees > 0 
-        ? Math.round((stats.paidEmployees / stats.totalEmployees) * 100) 
+      paidPercentage: stats.totalEmployees > 0
+        ? Math.round((stats.paidEmployees / stats.totalEmployees) * 100)
         : 0
     };
   }
@@ -426,7 +443,8 @@ export class PayrollService {
       revisionDate: new Date(),
       revisionReason,
       isDraft: true,
-      isGenerated: false
+      isGenerated: false,
+      isPending: false
     };
 
     const payroll = await payrollDAL.update(payrollId, updateData);
@@ -448,7 +466,7 @@ export class PayrollService {
    */
   // static async downloadPayslip(payrollId: string): Promise<string> {
   //   const payroll = await this.getPayrollById(payrollId);
-    
+
   //   if (payroll.isDraft) {
   //     throw new Error('Cannot download payslip for draft payroll');
   //   }
@@ -463,7 +481,7 @@ export class PayrollService {
    */
   static async downloadPayslip(payrollId: string): Promise<string> {
     const payroll = await payrollDAL.findById(payrollId);
-    
+
     if (!payroll) {
       throw new Error('Payroll not found');
     }
@@ -478,7 +496,7 @@ export class PayrollService {
       const pdfPath = await PDFGenerator.generateSalarySlip({ payroll, user });
       payroll.payslipPath = pdfPath;
       await payroll.save();
-      
+
       return pdfPath;
     }
 
@@ -490,7 +508,7 @@ export class PayrollService {
    */
   async regeneratePayslip(payrollId: string): Promise<string> {
     const payroll = await payrollDAL.findById(payrollId);
-    
+
     if (!payroll) {
       throw new Error('Payroll not found');
     }

@@ -2,6 +2,8 @@ import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { userDAL } from '../../../../shared/dal/user.dal';
 import { sendLeaveApprovalEmail } from '../../../../shared/utils/email';
 import { USER_ROLES } from '../../../../config/constants';
+import { notificationsService } from '../../notifications/notifications.service';
+import { NotificationType } from '../../../../shared/interfaces/notification.interface';
 
 export class ManagerLeaveService {
   /**
@@ -44,6 +46,20 @@ export class ManagerLeaveService {
     if (approvedLeave) {
       await leaveDAL.updateLeaveBalanceAfterApproval(approvedLeave);
 
+      // --- TRIGGER NOTIFICATION ---
+      try {
+        await notificationsService.sendNotification({
+          userId: user._id.toString(),
+          type: NotificationType.LEAVE_APPROVED,
+          title: 'Leave Approved',
+          message: `Your leave request for ${leave.leaveType} from ${leave.startDate.toDateString()} to ${leave.endDate.toDateString()} has been approved.`,
+          targetApp: 'EMPLOYEE',
+          data: { leaveId: approvedLeave._id }
+        });
+      } catch (error) {
+        console.error('[ManagerLeaveService] Failed to send approval notification:', error);
+      }
+
       // Send email notification
       try {
         await sendLeaveApprovalEmail(
@@ -76,7 +92,6 @@ export class ManagerLeaveService {
     }
 
     // userId may be populated (object) or plain ID — safely extract string
-    console.log("leave : ", leave)
     const userId = (leave.userId as any)?._id?.toString() ?? leave.userId?.toString();
     console.log(`[ManagerLeaveService] Leave found. userId: ${userId}, status: ${leave.status}`);
 
@@ -97,8 +112,26 @@ export class ManagerLeaveService {
       }
     }
 
+    const rejectedLeave = await leaveDAL.reject(leaveId, managerId, rejectionReason);
+
+    // --- TRIGGER NOTIFICATION ---
+    if (rejectedLeave) {
+      try {
+        await notificationsService.sendNotification({
+          userId: user._id.toString(),
+          type: NotificationType.LEAVE_REJECTED,
+          title: 'Leave Rejected',
+          message: `Your leave request for ${leave.leaveType} has been rejected. Reason: ${rejectionReason}`,
+          targetApp: 'EMPLOYEE',
+          data: { leaveId: rejectedLeave._id }
+        });
+      } catch (error) {
+        console.error('[ManagerLeaveService] Failed to send rejection notification:', error);
+      }
+    }
+
     console.log(`[ManagerLeaveService] Leave rejected successfully: ${leaveId}`);
-    return await leaveDAL.reject(leaveId, managerId, rejectionReason);
+    return rejectedLeave;
   }
 }
 

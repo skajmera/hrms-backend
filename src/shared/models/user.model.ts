@@ -166,6 +166,7 @@ const UserSchema = new Schema<IUser>({
   lastLogin: { type: Date },
   registeredDeviceId: { type: String, unique: true, sparse: true },
   azurePersonId: { type: String, unique: true, sparse: true },
+  fcmTokens: [{ type: String }], // Array of Firebase Cloud Messaging device tokens
 
   // Metadata
   createdBy: { type: Schema.Types.ObjectId, ref: 'User' },

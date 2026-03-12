@@ -327,6 +327,7 @@ router.get(
 router.post(
   '/draft',
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
   validate(createDraftValidation),
   userController.createDraftEmployee.bind(userController)
 );
@@ -524,6 +525,7 @@ router.get(
 router.post(
   '/',
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
   validate(createUserValidation),
   userController.createUser.bind(userController)
 );
@@ -584,6 +586,7 @@ router.post(
 router.put(
   '/:id',
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  avatarUpload.single('profilePicture'),
   validate(updateUserValidation),
   userController.updateUser.bind(userController)
 );
@@ -643,6 +646,37 @@ router.post(
   authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
   validate(getUserValidation),
   userController.clearUserDevice.bind(userController)
+);
+
+/**
+ * @swagger
+ * /hr/users/device-token:
+ *   post:
+ *     summary: Register Firebase Cloud Messaging (FCM) device token
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "fcm_token_xyz..."
+ *     responses:
+ *       200:
+ *         description: Token registered successfully
+ *       400:
+ *         description: Validation error
+ */
+router.post(
+  '/device-token',
+  userController.addDeviceToken.bind(userController)
 );
 
 // NOTE: /upload-avatar route moved above /:id to prevent route hijacking
