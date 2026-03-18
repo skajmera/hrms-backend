@@ -390,7 +390,10 @@ class PayrollService {
         }
         if (!payroll.payslipPath) {
             // Generate PDF if not exists
-            const user = await user_dal_1.userDAL.findById(payroll.userId._id.toString());
+            const uid = payroll.userId?._id?.toString?.() ?? payroll.userId?.toString?.();
+            if (!uid)
+                throw new Error('Payroll userId missing');
+            const user = await user_dal_1.userDAL.findById(uid);
             if (!user) {
                 throw new Error('User not found');
             }

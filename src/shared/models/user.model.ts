@@ -112,8 +112,7 @@ const UserSchema = new Schema<IUser>({
   personalEmail: {
     type: String,
     required: false,
-    unique: true,
-    sparse: true,
+    default: undefined,
     lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
@@ -180,6 +179,10 @@ const UserSchema = new Schema<IUser>({
 
 // Indexes
 UserSchema.index({ email: 1 });
+UserSchema.index(
+  { personalEmail: 1 },
+  { unique: true, partialFilterExpression: { personalEmail: { $type: 'string', $ne: '' } } }
+);
 UserSchema.index({ 'professionalDetails.employeeId': 1 });
 UserSchema.index({ 'professionalDetails.department': 1 });
 UserSchema.index({ role: 1 });

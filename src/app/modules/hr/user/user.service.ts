@@ -12,7 +12,7 @@ export class UserService {
     // Clean empty strings for unique fields to avoid duplicate-key errors
     const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
     uniqueFields.forEach(field => {
-      if (userData[field] === '') {
+      if (userData[field] === '' || userData[field] === null) {
         delete userData[field];
       }
     });
@@ -94,7 +94,7 @@ export class UserService {
     // Prevent MongoDB unique sparse index duplicate key errors for empty string inputs
     const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
     uniqueFields.forEach(field => {
-      if (userData[field] === '') {
+      if (userData[field] === '' || userData[field] === null) {
         delete userData[field];
       }
     });

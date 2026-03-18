@@ -25,19 +25,26 @@ export class PDFGenerator {
 
     // Lazy import to keep startup light
     const puppeteer = await import('puppeteer');
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const args = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote', '--single-process', '--disable-gpu'];
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || (puppeteer as any).executablePath?.();
     try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      await page.pdf({
-        path: filePath,
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }
-      });
-      return `/uploads/payslips/${fileName}`;
-    } finally {
-      await browser.close();
+      const browser = await puppeteer.launch({ args, executablePath, headless: 'new' as any });
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'load' });
+        await page.pdf({
+          path: filePath,
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }
+        });
+        return `/uploads/payslips/${fileName}`;
+      } finally {
+        await browser.close();
+      }
+    } catch (e: any) {
+      console.error('[PayslipPDF] Failed to generate PDF:', e?.message || e);
+      throw new Error('Payslip PDF generation failed on server. If running on Render, ensure Chromium can launch (install deps or set PUPPETEER_EXECUTABLE_PATH).');
     }
   }
 
