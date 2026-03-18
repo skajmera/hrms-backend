@@ -94,7 +94,7 @@ class UserController {
      */
     async getAllUsers(req, res, next) {
         try {
-            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, status, ...filters } = req.query;
             const rawExclude = excludeRole || 'SUPER_ADMIN';
             if (rawExclude) {
                 const rolesToExclude = rawExclude.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
@@ -102,13 +102,19 @@ class UserController {
                     filters.role = { $nin: rolesToExclude };
                 }
             }
-            const result = await user_service_1.userService.getAllUsers(filters, {
+            if (status)
+                filters['professionalDetails.employmentStatus'] = String(status).trim().toUpperCase();
+            const result = await user_service_1.userService.getAllUsersWithDrafts(filters, {
                 page: Number(page),
                 limit: Number(limit),
                 sortBy: sortBy,
                 sortOrder: sortOrder
             });
-            (0, response_1.sendPaginatedResponse)(res, result.users, result.total, Number(page), Number(limit), 'Users retrieved successfully');
+            const dataWithStatus = result.users.map((u) => ({
+                ...u.toObject?.() ?? u,
+                status: u.professionalDetails?.employmentStatus || 'ACTIVE'
+            }));
+            (0, response_1.sendPaginatedResponse)(res, dataWithStatus, result.total, Number(page), Number(limit), 'Users retrieved successfully');
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

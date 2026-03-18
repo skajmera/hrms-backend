@@ -10,7 +10,7 @@ export class EmployeeDashboardService {
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
 
-    const [attendanceStatsRaw, checkInSummary, leaveBalance, myLeaves, announcements, workingDays] = await Promise.all([
+    const [attendanceStatsRaw, checkInSummaryRaw, leaveBalance, myLeaves, announcements, workingDays] = await Promise.all([
       attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear),
       attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear),
       leaveDAL.getLeaveBalance(userId, currentYear),
@@ -24,9 +24,21 @@ export class EmployeeDashboardService {
       return acc;
     }, {});
 
+    const checkInSummary = {
+      total: checkInSummaryRaw?.checkin || 0,
+      onTime: checkInSummaryRaw?.ontime || 0,
+      late: checkInSummaryRaw?.late || 0,
+      remaining: Math.max(workingDays - (checkInSummaryRaw?.checkin || 0), 0),
+      workingDays,
+      // backward compatible keys (older apps)
+      checkin: checkInSummaryRaw?.checkin || 0,
+      ontime: checkInSummaryRaw?.ontime || 0
+    };
+
     return {
       attendance: {
-        present: (attendanceStats.PRESENT || 0) + (attendanceStats.LATE || 0),
+        total: workingDays,
+        present: attendanceStats.PRESENT || 0,
         absent: attendanceStats.ABSENT || 0,
         late: attendanceStats.LATE || 0,
         wfh: attendanceStats.WFH || 0,

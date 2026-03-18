@@ -27,12 +27,6 @@ export class DashboardController {
     try {
       const { days = 30, date } = req.query;
       const newHires = await dashboardService.getNewHires(Number(days), date as string);
-      console.log('[HRDashboard][NewHires]', {
-        days,
-        date,
-        count: Array.isArray(newHires) ? newHires.length : 0,
-        ids: Array.isArray(newHires) ? newHires.map((u: any) => u._id) : []
-      });
       sendSuccessResponse(res, 'New hires retrieved successfully', newHires);
     } catch (error: any) {
       sendErrorResponse(res, error.message);

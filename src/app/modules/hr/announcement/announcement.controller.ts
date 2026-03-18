@@ -27,7 +27,8 @@ export class AnnouncementController {
 
   async getAnnouncementById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const announcement = await announcementService.getAnnouncementById(req.params.id, req.user._id.toString());
+      const announcement: any = await announcementService.getAnnouncementById(req.params.id, req.user._id.toString());
+      if (announcement && !Array.isArray(announcement.attachments)) announcement.attachments = announcement.attachments ? [announcement.attachments] : [];
       sendSuccessResponse(res, 'Announcement retrieved successfully', announcement);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);

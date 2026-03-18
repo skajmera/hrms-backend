@@ -10,7 +10,7 @@ export async function getWorkingDaysForMonth(year: number, month: number, organi
   if (organizationId) {
     const org = await OrganizationDAL.findById(organizationId);
     if (org?.settings?.workingDays) {
-      workingDaysConfig = { ...org.settings.workingDays } as Record<string, boolean>;
+      workingDaysConfig = { ...workingDaysConfig, ...(org.settings.workingDays as any) } as Record<string, boolean>;
     }
   }
 

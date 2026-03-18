@@ -22,13 +22,14 @@ export class AnnouncementDAL {
    * Find announcement by ID
    */
   async findById(id: string): Promise<IAnnouncement | null> {
-    return await AnnouncementModel.findById(id)
+    const a: any = await AnnouncementModel.findById(id)
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('targetAudience.departments', 'name code')
       .populate('targetAudience.specificUsers', 'firstName lastName email profilePicture')
       .populate('likes', 'firstName lastName profilePicture')
       .populate('comments.userId', 'firstName lastName profilePicture')
       .populate('comments.likes', 'firstName lastName profilePicture');
+    return a;
   }
 
   /**

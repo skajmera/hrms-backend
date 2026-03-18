@@ -2,6 +2,7 @@ export declare class DashboardService {
     getDashboardStats(organizationId?: string): Promise<{
         totalEmployees: number;
         attendance: {
+            total: number;
             present: number;
             absent: number;
             late: number;
@@ -11,6 +12,7 @@ export declare class DashboardService {
             workingDays: number;
         };
         checkInSummary: {
+            total: number;
             totalEmployees: number;
             checkedIn: number;
             onTime: number;

@@ -115,15 +115,16 @@ class AttendanceDAL {
             {
                 $match: {
                     userId: new mongoose_1.default.Types.ObjectId(userId),
-                    date: { $gte: startDate, $lte: endDate }
+                    date: { $gte: startDate, $lte: endDate },
+                    checkInTime: { $ne: null }
                 }
             },
             {
                 $group: {
                     _id: null,
                     checkin: { $sum: 1 },
-                    late: { $sum: { $cond: [{ $eq: ['$isLate', true] }, 1, 0] } },
-                    ontime: { $sum: { $cond: [{ $eq: ['$isLate', false] }, 1, 0] } }
+                    late: { $sum: { $cond: [{ $or: [{ $eq: ['$isLate', true] }, { $gt: ['$lateByMinutes', 0] }] }, 1, 0] } },
+                    ontime: { $sum: { $cond: [{ $and: [{ $ne: ['$isLate', true] }, { $not: [{ $gt: ['$lateByMinutes', 0] }] }] }, 1, 0] } }
                 }
             },
             {
@@ -146,15 +147,16 @@ class AttendanceDAL {
         const stats = await attendance_model_1.AttendanceModel.aggregate([
             {
                 $match: {
-                    date: { $gte: startDate, $lte: endDate }
+                    date: { $gte: startDate, $lte: endDate },
+                    checkInTime: { $ne: null }
                 }
             },
             {
                 $group: {
                     _id: null,
                     checkin: { $sum: 1 },
-                    late: { $sum: { $cond: [{ $eq: ['$isLate', true] }, 1, 0] } },
-                    ontime: { $sum: { $cond: [{ $eq: ['$isLate', false] }, 1, 0] } }
+                    late: { $sum: { $cond: [{ $or: [{ $eq: ['$isLate', true] }, { $gt: ['$lateByMinutes', 0] }] }, 1, 0] } },
+                    ontime: { $sum: { $cond: [{ $and: [{ $ne: ['$isLate', true] }, { $not: [{ $gt: ['$lateByMinutes', 0] }] }] }, 1, 0] } }
                 }
             },
             {

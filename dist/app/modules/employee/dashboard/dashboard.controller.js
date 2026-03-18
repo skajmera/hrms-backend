@@ -49,18 +49,6 @@ class EmployeeDashboardController {
             const dept = req.user.professionalDetails?.department;
             const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
             const result = await dashboard_service_1.employeeDashboardService.getNewHires(userId, userRole, deptId);
-            console.log('[EmployeeDashboard][NewHires]', {
-                userId,
-                role: userRole,
-                deptId,
-                total: result.total,
-                ids: result.announcements?.map((a) => a._id),
-                targetEmployees: result.announcements?.flatMap((a) => a.targetEmployees?.map((e) => ({
-                    id: e._id,
-                    isActive: e.isActive,
-                    status: e.professionalDetails?.employmentStatus
-                })) || [])
-            });
             (0, response_1.sendPaginatedResponse)(res, result.announcements, result.total, 1, 10, 'New hires retrieved successfully');
         }
         catch (error) {

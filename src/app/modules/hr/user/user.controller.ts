@@ -91,7 +91,7 @@ export class UserController {
    */
   async getAllUsers(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
+      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, status, ...filters } = req.query;
 
       const rawExclude = (excludeRole as string | undefined) || 'SUPER_ADMIN';
       if (rawExclude) {
@@ -101,16 +101,23 @@ export class UserController {
         }
       }
 
-      const result = await userService.getAllUsers(filters, {
+      if (status) (filters as any)['professionalDetails.employmentStatus'] = String(status).trim().toUpperCase();
+
+      const result = await userService.getAllUsersWithDrafts(filters, {
         page: Number(page),
         limit: Number(limit),
         sortBy: sortBy as string,
         sortOrder: sortOrder as 'asc' | 'desc'
       });
 
+      const dataWithStatus = result.users.map((u: any) => ({
+        ...u.toObject?.() ?? u,
+        status: u.professionalDetails?.employmentStatus || 'ACTIVE'
+      }));
+
       sendPaginatedResponse(
         res,
-        result.users,
+        dataWithStatus,
         result.total,
         Number(page),
         Number(limit),

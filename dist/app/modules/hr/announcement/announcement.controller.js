@@ -26,6 +26,8 @@ class AnnouncementController {
     async getAnnouncementById(req, res, next) {
         try {
             const announcement = await announcement_service_1.announcementService.getAnnouncementById(req.params.id, req.user._id.toString());
+            if (announcement && !Array.isArray(announcement.attachments))
+                announcement.attachments = announcement.attachments ? [announcement.attachments] : [];
             (0, response_1.sendSuccessResponse)(res, 'Announcement retrieved successfully', announcement);
         }
         catch (error) {

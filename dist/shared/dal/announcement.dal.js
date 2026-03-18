@@ -20,13 +20,14 @@ class AnnouncementDAL {
      * Find announcement by ID
      */
     async findById(id) {
-        return await announcement_model_1.AnnouncementModel.findById(id)
+        const a = await announcement_model_1.AnnouncementModel.findById(id)
             .populate('createdBy', 'firstName lastName email profilePicture')
             .populate('targetAudience.departments', 'name code')
             .populate('targetAudience.specificUsers', 'firstName lastName email profilePicture')
             .populate('likes', 'firstName lastName profilePicture')
             .populate('comments.userId', 'firstName lastName profilePicture')
             .populate('comments.likes', 'firstName lastName profilePicture');
+        return a;
     }
     /**
      * Find all announcements

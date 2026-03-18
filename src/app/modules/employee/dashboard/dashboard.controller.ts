@@ -58,18 +58,6 @@ export class EmployeeDashboardController {
       const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
 
       const result = await employeeDashboardService.getNewHires(userId, userRole, deptId);
-      console.log('[EmployeeDashboard][NewHires]', {
-        userId,
-        role: userRole,
-        deptId,
-        total: result.total,
-        ids: result.announcements?.map((a: any) => a._id),
-        targetEmployees: result.announcements?.flatMap((a: any) => a.targetEmployees?.map((e: any) => ({
-          id: e._id,
-          isActive: e.isActive,
-          status: e.professionalDetails?.employmentStatus
-        })) || [])
-      });
       sendPaginatedResponse(res, result.announcements, result.total, 1, 10, 'New hires retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);

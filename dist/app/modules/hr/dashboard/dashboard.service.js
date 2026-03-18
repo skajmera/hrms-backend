@@ -37,8 +37,8 @@ class DashboardService {
         const yetToCheckIn = Math.max(expectedToCheckIn - checkedInCount, 0);
         return {
             totalEmployees,
-            attendance: { present: presentCount, absent: absentCount, late: lateCount, wfh: wfhCount, onLeave: employeesOnLeave.length, yetToCheckIn, workingDays },
-            checkInSummary: { totalEmployees, checkedIn: checkedInCount, onTime: onTimeCount, late: lateCount, yetToCheckIn, workingDays },
+            attendance: { total: totalEmployees, present: presentCount, absent: absentCount, late: lateCount, wfh: wfhCount, onLeave: employeesOnLeave.length, yetToCheckIn, workingDays },
+            checkInSummary: { total: checkedInCount, totalEmployees, checkedIn: checkedInCount, onTime: onTimeCount, late: lateCount, yetToCheckIn, workingDays },
             leaves: { pending: pendingLeaves.length, onLeaveToday: employeesOnLeave.length },
             newHires: newHires.length
         };

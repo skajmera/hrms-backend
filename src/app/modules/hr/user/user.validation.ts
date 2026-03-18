@@ -65,7 +65,8 @@ export const queryUsersValidation = [
   query('page').optional().toInt().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().toInt().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('sortBy').optional().isString(),
-  query('sortOrder').optional().isIn(['asc', 'desc'])
+  query('sortOrder').optional().isIn(['asc', 'desc']),
+  query('status').optional().customSanitizer(v => String(v).trim().toUpperCase()).isIn(['ACTIVE', 'PROBATION', 'RESIGNED', 'TERMINATED', 'RETIRED', 'DRAFT']).withMessage('Invalid status')
 ];
 
 export const createDraftValidation = [

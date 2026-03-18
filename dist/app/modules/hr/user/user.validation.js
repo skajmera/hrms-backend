@@ -59,7 +59,8 @@ exports.queryUsersValidation = [
     (0, express_validator_1.query)('page').optional().toInt().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
     (0, express_validator_1.query)('limit').optional().toInt().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
     (0, express_validator_1.query)('sortBy').optional().isString(),
-    (0, express_validator_1.query)('sortOrder').optional().isIn(['asc', 'desc'])
+    (0, express_validator_1.query)('sortOrder').optional().isIn(['asc', 'desc']),
+    (0, express_validator_1.query)('status').optional().customSanitizer(v => String(v).trim().toUpperCase()).isIn(['ACTIVE', 'PROBATION', 'RESIGNED', 'TERMINATED', 'RETIRED', 'DRAFT']).withMessage('Invalid status')
 ];
 exports.createDraftValidation = [
     (0, express_validator_1.body)('firstName').trim().notEmpty().withMessage('First name is required'),

@@ -10,7 +10,7 @@ async function getWorkingDaysForMonth(year, month, organizationId) {
     if (organizationId) {
         const org = await organization_dal_1.OrganizationDAL.findById(organizationId);
         if (org?.settings?.workingDays) {
-            workingDaysConfig = { ...org.settings.workingDays };
+            workingDaysConfig = { ...workingDaysConfig, ...org.settings.workingDays };
         }
     }
     const allHolidays = await holiday_dal_1.holidayDAL.getHolidaysByYear(year);
