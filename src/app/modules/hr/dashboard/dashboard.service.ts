@@ -3,46 +3,105 @@ import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { announcementDAL } from '../../../../shared/dal/announcement.dal';
 import { LeaveModel, LeaveBalanceModel } from '../../../../shared/models/leave.model';
+import { OrganizationDAL } from '../../../../shared/dal/organization.dal';
+import { holidayDAL } from '../../../../shared/dal/holiday.dal';
+import { EMPLOYMENT_STATUS } from '../../../../config/constants';
 
 export class DashboardService {
-  async getDashboardStats() {
+  async getDashboardStats(organizationId?: string) {
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
 
-    const totalUsers = await userDAL.findAll({ isActive: true });
-    const todayAttendance = await attendanceDAL.getTodayAttendance();
-    const pendingLeaves = await leaveDAL.getPendingLeaves();
-    const employeesOnLeave = await leaveDAL.getEmployeesOnLeaveToday();
-    const getYetToCheckInCount = await userDAL.getYetToCheckInCount();
+    const userFilters: any = { isActive: true, 'professionalDetails.employmentStatus': { $in: [EMPLOYMENT_STATUS.ACTIVE, EMPLOYMENT_STATUS.PROBATION] }, ...(organizationId ? { organizationId } : {}) };
+    const [employeeIds, todayAttendanceRaw, pendingLeaves, employeesOnLeaveRaw, newHires, workingDays] = await Promise.all([
+      userDAL.findIds(userFilters),
+      attendanceDAL.getTodayAttendance(),
+      leaveDAL.getPendingLeaves(),
+      leaveDAL.getEmployeesOnLeaveToday(),
+      userDAL.getNewHires(30),
+      this.getWorkingDaysForMonth(currentYear, currentMonth, organizationId)
+    ]);
 
-    // Get aggregate monthly check-in summary
-    const checkInSummary = await attendanceDAL.getMonthlyCheckInSummary(currentMonth, currentYear);
+    const empSet = new Set(employeeIds);
+    const todayAttendance = (todayAttendanceRaw || []).filter((a: any) => empSet.has((a.userId?._id || a.userId)?.toString?.()));
+    const employeesOnLeave = (employeesOnLeaveRaw || []).filter((l: any) => empSet.has((l.userId?._id || l.userId)?.toString?.()));
 
-    const presentCount = todayAttendance.filter(a => a.status === 'PRESENT').length;
+    const presentCount = todayAttendance.filter(a => a.status === 'PRESENT' || a.status === 'LATE').length;
     const absentCount = todayAttendance.filter(a => a.status === 'ABSENT').length;
-    const lateCount = todayAttendance.filter(a => a.isLate).length;
+    const lateCount = todayAttendance.filter((a: any) => !!a.checkInTime && (a.isLate === true || (a.lateByMinutes ?? 0) > 0)).length;
     const wfhCount = todayAttendance.filter(a => a.status === 'WFH').length;
 
-    const newHires = await userDAL.getNewHires(30);
+    const totalEmployees = employeeIds.length;
+    const checkedInCount = todayAttendance.filter((a: any) => !!a.checkInTime).length;
+    const onTimeCount = Math.max(checkedInCount - lateCount, 0);
+    const expectedToCheckIn = Math.max(totalEmployees - employeesOnLeave.length, 0);
+    const yetToCheckIn = Math.max(expectedToCheckIn - checkedInCount, 0);
 
     return {
-      totalEmployees: totalUsers.total,
-      attendance: {
-        present: presentCount,
-        absent: absentCount,
-        late: lateCount,
-        wfh: wfhCount,
-        onLeave: employeesOnLeave.length,
-        yetToCheckIn: getYetToCheckInCount
-      },
-      checkInSummary,
-      leaves: {
-        pending: pendingLeaves.length,
-        onLeaveToday: employeesOnLeave.length
-      },
+      totalEmployees,
+      attendance: { present: presentCount, absent: absentCount, late: lateCount, wfh: wfhCount, onLeave: employeesOnLeave.length, yetToCheckIn, workingDays },
+      checkInSummary: { totalEmployees, checkedIn: checkedInCount, onTime: onTimeCount, late: lateCount, yetToCheckIn, workingDays },
+      leaves: { pending: pendingLeaves.length, onLeaveToday: employeesOnLeave.length },
       newHires: newHires.length
     };
+  }
+
+  private async getWorkingDaysForMonth(year: number, month: number, organizationId?: string): Promise<number> {
+    const totalDays = new Date(year, month, 0).getDate();
+    let workingDaysConfig: Record<string, boolean> = { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: false, sunday: false };
+
+    if (organizationId) {
+      const org = await OrganizationDAL.findById(organizationId);
+      if (org?.settings?.workingDays) {
+        workingDaysConfig = {
+          monday: org.settings.workingDays.monday,
+          tuesday: org.settings.workingDays.tuesday,
+          wednesday: org.settings.workingDays.wednesday,
+          thursday: org.settings.workingDays.thursday,
+          friday: org.settings.workingDays.friday,
+          saturday: org.settings.workingDays.saturday,
+          sunday: org.settings.workingDays.sunday
+        };
+      }
+    }
+
+    const allHolidays = await holidayDAL.getHolidaysByYear(year);
+    const monthHolidays = allHolidays.filter(h => new Date(h.date).getMonth() + 1 === month);
+
+    const isHoliday = (date: Date) =>
+      monthHolidays.some(h => {
+        const hd = new Date(h.date);
+        return hd.getFullYear() === date.getFullYear() && hd.getMonth() === date.getMonth() && hd.getDate() === date.getDate();
+      });
+
+    let workingDays = 0;
+
+    for (let day = 1; day <= totalDays; day++) {
+      const date = new Date(year, month - 1, day);
+      const dayOfWeek = date.getDay(); // 0 = Sunday
+
+      const key =
+        dayOfWeek === 0
+          ? 'sunday'
+          : dayOfWeek === 1
+          ? 'monday'
+          : dayOfWeek === 2
+          ? 'tuesday'
+          : dayOfWeek === 3
+          ? 'wednesday'
+          : dayOfWeek === 4
+          ? 'thursday'
+          : dayOfWeek === 5
+          ? 'friday'
+          : 'saturday';
+
+      if (workingDaysConfig[key] && !isHoliday(date)) {
+        workingDays++;
+      }
+    }
+
+    return workingDays;
   }
 
   async getBirthdays() {
@@ -72,36 +131,23 @@ export class DashboardService {
     lastMonth.setMonth(lastMonth.getMonth() - 1);
 
     // Total leave requests (all time or current year)
-    const totalLeaveRequests = await LeaveModel.countDocuments({
-      appliedDate: { $gte: new Date(currentYear, 0, 1) }
-    });
+    const totalLeaveRequests = await LeaveModel.countDocuments({ appliedDate: { $gte: new Date(currentYear, 0, 1) } });
 
     // Approved leaves
-    const approvedLeaves = await LeaveModel.countDocuments({
-      status: 'APPROVED',
-      appliedDate: { $gte: new Date(currentYear, 0, 1) }
-    });
+    const approvedLeaves = await LeaveModel.countDocuments({ status: 'APPROVED', appliedDate: { $gte: new Date(currentYear, 0, 1) } });
 
     // Pending approvals
-    const pendingApprovals = await LeaveModel.countDocuments({
-      status: 'PENDING'
-    });
+    const pendingApprovals = await LeaveModel.countDocuments({ status: 'PENDING' });
 
     // Last month's requests for comparison
     const lastMonthRequests = await LeaveModel.countDocuments({
-      appliedDate: {
-        $gte: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1),
-        $lt: new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 1)
-      }
+      appliedDate: { $gte: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1), $lt: new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 1) }
     });
 
     // Current month's requests
     const currentMonth = new Date();
     const currentMonthRequests = await LeaveModel.countDocuments({
-      appliedDate: {
-        $gte: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1),
-        $lt: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-      }
+      appliedDate: { $gte: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1), $lt: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) }
     });
 
     // Calculate percentage change
@@ -116,9 +162,7 @@ export class DashboardService {
 
     // Total leave balance remaining across all employees
     const leaveBalances = await LeaveBalanceModel.aggregate([
-      {
-        $match: { year: currentYear }
-      },
+      { $match: { year: currentYear } },
       {
         $group: {
           _id: null,
@@ -148,19 +192,8 @@ export class DashboardService {
 
     // Leave type breakdown
     const leaveTypeBreakdown = await LeaveModel.aggregate([
-      {
-        $match: {
-          status: 'APPROVED',
-          startDate: { $gte: new Date(currentYear, 0, 1) }
-        }
-      },
-      {
-        $group: {
-          _id: '$leaveType',
-          count: { $sum: 1 },
-          totalDays: { $sum: '$numberOfDays' }
-        }
-      }
+      { $match: { status: 'APPROVED', startDate: { $gte: new Date(currentYear, 0, 1) } } },
+      { $group: { _id: '$leaveType', count: { $sum: 1 }, totalDays: { $sum: '$numberOfDays' } } }
     ]);
 
     // Monthly trend (last 6 months)
@@ -168,11 +201,7 @@ export class DashboardService {
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
     const monthlyTrend = await LeaveModel.aggregate([
-      {
-        $match: {
-          appliedDate: { $gte: sixMonthsAgo }
-        }
-      },
+      { $match: { appliedDate: { $gte: sixMonthsAgo } } },
       {
         $group: {
           _id: {
@@ -198,44 +227,13 @@ export class DashboardService {
 
     // Department-wise leave statistics
     const departmentStats = await LeaveModel.aggregate([
-      {
-        $match: {
-          status: 'APPROVED',
-          startDate: { $gte: new Date(currentYear, 0, 1) }
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
-      {
-        $lookup: {
-          from: 'departments',
-          localField: 'user.professionalDetails.department',
-          foreignField: '_id',
-          as: 'department'
-        }
-      },
-      {
-        $unwind: { path: '$department', preserveNullAndEmptyArrays: true }
-      },
-      {
-        $group: {
-          _id: '$department.name',
-          totalLeaves: { $sum: 1 },
-          totalDays: { $sum: '$numberOfDays' }
-        }
-      },
-      {
-        $sort: { totalDays: -1 }
-      }
+      { $match: { status: 'APPROVED', startDate: { $gte: new Date(currentYear, 0, 1) } } },
+      { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+      { $lookup: { from: 'departments', localField: 'user.professionalDetails.department', foreignField: '_id', as: 'department' } },
+      { $unwind: { path: '$department', preserveNullAndEmptyArrays: true } },
+      { $group: { _id: '$department.name', totalLeaves: { $sum: 1 }, totalDays: { $sum: '$numberOfDays' } } },
+      { $sort: { totalDays: -1 } }
     ]);
 
     return {
@@ -275,70 +273,26 @@ export class DashboardService {
     const currentYear = new Date().getFullYear();
 
     return await LeaveModel.aggregate([
-      {
-        $match: {
-          status: 'APPROVED',
-          startDate: { $gte: new Date(currentYear, 0, 1) }
-        }
-      },
-      {
-        $group: {
-          _id: '$userId',
-          totalDays: { $sum: '$numberOfDays' },
-          leaveCount: { $sum: 1 }
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
+      { $match: { status: 'APPROVED', startDate: { $gte: new Date(currentYear, 0, 1) } } },
+      { $group: { _id: '$userId', totalDays: { $sum: '$numberOfDays' }, leaveCount: { $sum: 1 } } },
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
       {
         $project: {
           _id: 1,
           totalDays: 1,
           leaveCount: 1,
-          name: {
-            $concat: ['$user.firstName', ' ', '$user.lastName']
-          },
+          name: { $concat: ['$user.firstName', ' ', '$user.lastName'] },
           email: '$user.email',
           employeeId: '$user.professionalDetails.employeeId',
           department: '$user.professionalDetails.department'
         }
       },
-      {
-        $lookup: {
-          from: 'departments',
-          localField: 'department',
-          foreignField: '_id',
-          as: 'departmentInfo'
-        }
-      },
-      {
-        $unwind: { path: '$departmentInfo', preserveNullAndEmptyArrays: true }
-      },
-      {
-        $project: {
-          totalDays: 1,
-          leaveCount: 1,
-          name: 1,
-          email: 1,
-          employeeId: 1,
-          departmentName: '$departmentInfo.name'
-        }
-      },
-      {
-        $sort: { totalDays: -1 }
-      },
-      {
-        $limit: limit
-      }
+      { $lookup: { from: 'departments', localField: 'department', foreignField: '_id', as: 'departmentInfo' } },
+      { $unwind: { path: '$departmentInfo', preserveNullAndEmptyArrays: true } },
+      { $project: { totalDays: 1, leaveCount: 1, name: 1, email: 1, employeeId: 1, departmentName: '$departmentInfo.name' } },
+      { $sort: { totalDays: -1 } },
+      { $limit: limit }
     ]);
   }
 }

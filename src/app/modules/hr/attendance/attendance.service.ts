@@ -9,13 +9,28 @@ import { AzureFaceService } from '../../../../shared/utils/azureFace';
 import { AttendanceModel } from '../../../../shared/models/attendance.model';
 
 export class AttendanceService {
+  private pickUserId(value: any): string {
+    const raw = value?._id || value?.id || value;
+    if (!raw) return '';
+    if (typeof raw === 'string') return raw.match(/[a-f\d]{24}/i)?.[0] || '';
+    if (typeof raw === 'object' && typeof raw.toString === 'function') return raw.toString().match(/[a-f\d]{24}/i)?.[0] || '';
+    return '';
+  }
   /**
    * Mark attendance with Zero-Trust Validation
    */
   async markAttendance(attendanceData: IAttendanceCreateInput) {
-    const user = await userDAL.findById(attendanceData.userId);
+    const userId = this.pickUserId((attendanceData as any).userId);
+    if (!userId) throw new Error('User ID is required');
+
+    const data: any = { ...attendanceData, userId };
+    const user = await userDAL.findById(userId);
     if (!user) {
       throw new Error('User not found');
+    }
+
+    if (!user.organizationId) {
+      throw new Error('Organization not set for user');
     }
 
     const organization = await OrganizationDAL.findById(user.organizationId.toString());
@@ -24,12 +39,12 @@ export class AttendanceService {
     }
 
     // Zero-Trust Validation Sequence
-    await this.validateAttendance(attendanceData, user, organization);
+    await this.validateAttendance(data, user, organization);
 
     // Check if attendance record exists for today
     let attendance = await attendanceDAL.findByUserAndDate(
-      attendanceData.userId,
-      new Date(attendanceData.date)
+      userId,
+      new Date(data.date)
     );
 
     const shiftTime = user.professionalDetails?.shiftTime;
@@ -39,15 +54,15 @@ export class AttendanceService {
 
     if (!attendance) {
       // --- CHECK-IN ---
-      const checkInTime = attendanceData.checkInTime || new Date();
+      const checkInTime = data.checkInTime || new Date();
       const lateCheck = ShiftHelper.isLate(new Date(checkInTime), shiftTime);
 
       attendance = await attendanceDAL.create({
-        ...attendanceData,
+        ...data,
         checkInTime,
         isLate: lateCheck.isLate,
         lateByMinutes: lateCheck.lateByMinutes,
-        status: attendanceData.status || 'PRESENT',
+        status: data.status || 'PRESENT',
         isApproved: false
       });
       return { type: 'CHECK_IN', attendance };
@@ -57,7 +72,7 @@ export class AttendanceService {
         throw new Error('Already checked out for today');
       }
 
-      const checkOutTime = attendanceData.checkOutTime || new Date();
+      const checkOutTime = data.checkOutTime || new Date();
       const earlyExitCheck = ShiftHelper.isEarlyExit(new Date(checkOutTime), shiftTime);
 
       // Calculate working hours
@@ -74,9 +89,9 @@ export class AttendanceService {
         earlyExitByMinutes: earlyExitCheck.earlyExitByMinutes,
         workingHours,
         overtimeHours,
-        gpsLatitude: attendanceData.gpsLatitude,
-        gpsLongitude: attendanceData.gpsLongitude,
-        remarks: attendanceData.remarks || attendance.remarks
+        gpsLatitude: data.gpsLatitude,
+        gpsLongitude: data.gpsLongitude,
+        remarks: data.remarks || attendance.remarks
       });
 
       return { type: 'CHECK_OUT', attendance: updatedAttendance };
@@ -249,7 +264,12 @@ export class AttendanceService {
     }
 
     // Get user for shift time
-    const user = await userDAL.findById(attendance.userId.toString());
+    const attendanceUserId = this.pickUserId(attendance.userId);
+    if (!attendanceUserId) {
+      throw new Error('Invalid attendance userId');
+    }
+
+    const user = await userDAL.findById(attendanceUserId);
     if (!user || !user.professionalDetails.shiftTime) {
       throw new Error('Shift time not configured');
     }
@@ -292,6 +312,85 @@ export class AttendanceService {
   }
 
   /**
+   * Upsert attendance for a user by HR (no device/geo/face checks)
+   * - If record exists for given user + date -> update it
+   * - If not -> create a new record
+   */
+  async upsertAttendanceByAdmin(payload: {
+    userId: string;
+    date: string | Date;
+    status: 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LATE' | 'WFH' | 'ON_LEAVE';
+    shift: string;
+    checkInTime?: string | Date;
+    checkOutTime?: string | Date;
+    remarks?: string;
+  }) {
+    const userId = this.pickUserId((payload as any).userId);
+    if (!userId) throw new Error('User ID is required');
+
+    const user = await userDAL.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const shiftTime = user.professionalDetails?.shiftTime;
+    if (!shiftTime) {
+      throw new Error('Shift time not configured for user');
+    }
+
+    const targetDate = new Date(payload.date || new Date());
+
+    const existing = await attendanceDAL.findByUserAndDate(userId, targetDate);
+
+    if (existing) {
+      const updateData: any = {
+        status: payload.status,
+        shift: payload.shift,
+        remarks: payload.remarks
+      };
+
+      if (payload.checkInTime) {
+        updateData.checkInTime = new Date(payload.checkInTime);
+      }
+      if (payload.checkOutTime) {
+        updateData.checkOutTime = new Date(payload.checkOutTime);
+      }
+
+      const updated = await this.updateAttendance(existing._id.toString(), updateData);
+      return { attendance: updated, isNew: false };
+    }
+
+    const checkInTime = payload.checkInTime ? new Date(payload.checkInTime) : undefined;
+    const checkOutTime = payload.checkOutTime ? new Date(payload.checkOutTime) : undefined;
+
+    const lateCheck = checkInTime ? ShiftHelper.isLate(checkInTime, shiftTime) : { isLate: false, lateByMinutes: 0 };
+
+    let workingHours = 0;
+    let overtimeHours = 0;
+
+    if (checkInTime && checkOutTime) {
+      workingHours = ShiftHelper.calculateWorkingHours(checkInTime, checkOutTime);
+      overtimeHours = ShiftHelper.calculateOvertimeHours(workingHours, shiftTime);
+    }
+
+    const created = await attendanceDAL.create({
+      userId,
+      date: targetDate,
+      status: payload.status,
+      shift: payload.shift,
+      checkInTime,
+      checkOutTime,
+      isLate: lateCheck.isLate,
+      lateByMinutes: lateCheck.lateByMinutes,
+      workingHours,
+      overtimeHours,
+      remarks: payload.remarks
+    } as any);
+
+    return { attendance: created, isNew: true };
+  }
+
+  /**
    * Get today's attendance
    */
   async getTodayAttendance() {
@@ -302,7 +401,21 @@ export class AttendanceService {
    * Get user attendance report
    */
   async getUserAttendanceReport(userId: string, month: number, year: number) {
-    return await attendanceDAL.getUserAttendanceStats(userId, month, year);
+    const raw = await attendanceDAL.getUserAttendanceStats(userId, month, year);
+
+    const counts = (raw || []).reduce((acc: Record<string, number>, row: any) => {
+      if (row?._id) acc[String(row._id)] = Number(row.count) || 0;
+      return acc;
+    }, {});
+
+    return {
+      present: (counts.PRESENT || 0) + (counts.LATE || 0),
+      absent: counts.ABSENT || 0,
+      wfh: counts.WFH || 0,
+      onLeave: counts.ON_LEAVE || 0,
+      late: counts.LATE || 0,
+      halfDay: counts.HALF_DAY || 0
+    };
   }
 
   /**

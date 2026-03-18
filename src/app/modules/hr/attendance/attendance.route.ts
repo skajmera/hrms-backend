@@ -24,7 +24,7 @@ import { attendanceController } from './attendance.controller';
 import { authenticate, authorize } from '../../../../shared/middlewares/auth.middleware';
 import { validate } from '../../../../shared/middlewares/validation';
 import { USER_ROLES } from '../../../../config/constants';
-import { markAttendanceValidation, updateAttendanceValidation, getAttendanceValidation, registerDeviceValidation } from './attendance.validation';
+import { markAttendanceValidation, updateAttendanceValidation, getAttendanceValidation, registerDeviceValidation, adminUpsertAttendanceValidation } from './attendance.validation';
 import { attendanceUpload } from '../../../../shared/middlewares/upload.middleware';
 
 
@@ -374,6 +374,67 @@ router.post('/register-device', attendanceUpload.single('selfie'), validate(regi
  *         description: Attendance marked successfully
  */
 router.post('/mark', attendanceUpload.single('selfie'), validate(markAttendanceValidation), attendanceController.markAttendance.bind(attendanceController));
+
+/**
+ * @swagger
+ * /hr/attendance/admin/upsert:
+ *   post:
+ *     summary: Create or update attendance for a user on a specific date (HR override)
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - date
+ *               - status
+ *               - shift
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               status:
+ *                 type: string
+ *                 enum: [PRESENT, ABSENT, HALF_DAY, LATE, WFH, ON_LEAVE]
+ *               shift:
+ *                 type: string
+ *                 enum: [MORNING, EVENING, NIGHT, FLEXIBLE]
+ *               checkInTime:
+ *                 type: string
+ *                 format: date-time
+ *               checkOutTime:
+ *                 type: string
+ *                 format: date-time
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Attendance created/updated successfully
+ */
+router.post(
+  '/admin/upsert',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(adminUpsertAttendanceValidation),
+  attendanceController.upsertAttendanceByAdmin.bind(attendanceController)
+);
+
+/**
+ * Cleaner HR URL to update attendance by attendanceId
+ * PUT /hr/attendance/update/{attendanceId}
+ */
+router.put(
+  '/update/:id',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(updateAttendanceValidation),
+  attendanceController.updateAttendance.bind(attendanceController)
+);
 
 
 /**

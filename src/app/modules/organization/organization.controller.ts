@@ -15,8 +15,9 @@ export class OrganizationController {
   static async createOrganization(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const organizationData = req.body;
-      const ownerId = req.user?.id;
+      const ownerId = req.user?._id?.toString();
 
+      if (!ownerId) throw new Error('Not authenticated');
       const organization = await OrganizationService.createOrganization(organizationData, ownerId);
 
       sendSuccessResponse(res, 'Organization created successfully',
@@ -83,8 +84,10 @@ export class OrganizationController {
    */
   static async getMyOrganization(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.id;
-      const organization = await OrganizationService.getUserOrganization(userId);
+      const userId = req.user?._id?.toString();
+      const organizationId = req.user?.organizationId?.toString?.() ?? req.user?.organizationId;
+      if (!userId) throw new Error('Not authenticated');
+      const organization = await OrganizationService.getUserOrganization({ userId, organizationId });
 
       sendSuccessResponse(res, 'Organization retrieved successfully',
         organization

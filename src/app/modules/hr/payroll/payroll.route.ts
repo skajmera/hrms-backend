@@ -157,7 +157,7 @@ router.get('/user/:userId', PayrollController.getUserPayrollHistory);
  *         name: status
  *         schema:
  *           type: string
- *           enum: [PENDING, PROCESSING, PAID, FAILED]
+ *           enum: [DRAFT, PENDING, GENERATED, PROCESSING, PAID, FAILED]
  *       - in: query
  *         name: page
  *         schema:

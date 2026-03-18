@@ -55,6 +55,11 @@ export declare class OffboardingController {
      */
     static updateClearance(req: Request, res: Response, next: NextFunction): Promise<void>;
     /**
+     * Schedule exit interview
+     * PUT /api/v1/hr/offboarding/:id/exit-interview
+     */
+    static scheduleExitInterview(req: Request, res: Response, next: NextFunction): Promise<void>;
+    /**
      * Get pending resignations
      * GET /api/v1/hr/offboarding/pending
      */

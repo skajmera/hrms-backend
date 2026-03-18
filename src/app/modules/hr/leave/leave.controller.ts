@@ -42,10 +42,6 @@ export class LeaveController {
 
   async approveLeave(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log('--- Approve Leave Request ---');
-      console.log('User from request:', JSON.stringify(req.user, null, 2));
-      console.log('Leave ID from params:', req.params.id);
-
       if (!req.user || !req.user._id) {
         throw new Error('Authentication failed: User information missing from request');
       }
@@ -53,7 +49,6 @@ export class LeaveController {
       const leave = await leaveService.approveLeave(req.params.id, req.user._id.toString());
       sendSuccessResponse(res, 'Leave approved successfully', leave);
     } catch (error: any) {
-      console.error('Error in approveLeave:', error.message);
       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
     }
   }

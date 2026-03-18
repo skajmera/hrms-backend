@@ -70,6 +70,12 @@ export const PAYMENT_STATUS = {
   FAILED: 'FAILED'
 } as const;
 
+export const PAYROLL_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING: 'PENDING',
+  GENERATED: 'GENERATED'
+} as const;
+
 export const ANNOUNCEMENT_PRIORITY = {
   LOW: 'LOW',
   MEDIUM: 'MEDIUM',

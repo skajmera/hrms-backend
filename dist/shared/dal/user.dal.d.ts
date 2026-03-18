@@ -24,6 +24,14 @@ export declare class UserDAL {
         users: IUser[];
         total: number;
     }>;
+    findIds(filters?: IQueryFilters): Promise<string[]>;
+    /**
+     * Find all users including drafts
+     */
+    findAllWithDrafts(filters?: IQueryFilters, options?: IPaginationOptions): Promise<{
+        users: IUser[];
+        total: number;
+    }>;
     update(id: string, updateData: any): Promise<IUser | null>;
     /**
      * Delete user by ID (soft delete)

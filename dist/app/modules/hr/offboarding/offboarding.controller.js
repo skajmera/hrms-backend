@@ -164,6 +164,21 @@ class OffboardingController {
         }
     }
     /**
+     * Schedule exit interview
+     * PUT /api/v1/hr/offboarding/:id/exit-interview
+     */
+    static async scheduleExitInterview(req, res, next) {
+        try {
+            const { id } = req.params;
+            const { exitInterviewDate, exitInterviewNotes } = req.body;
+            const offboarding = await offboarding_service_1.OffboardingService.scheduleExitInterview(id, exitInterviewDate, exitInterviewNotes);
+            (0, response_1.sendSuccessResponse)(res, 'Exit interview scheduled successfully', offboarding);
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    /**
      * Get pending resignations
      * GET /api/v1/hr/offboarding/pending
      */

@@ -4,18 +4,34 @@ exports.employeeDashboardService = exports.EmployeeDashboardService = void 0;
 const attendance_dal_1 = require("../../../../shared/dal/attendance.dal");
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
 const announcement_dal_1 = require("../../../../shared/dal/announcement.dal");
+const workingDays_1 = require("../../../../shared/utils/workingDays");
 class EmployeeDashboardService {
-    async getMyDashboard(userId, userRole, userDepartment) {
+    async getMyDashboard(userId, userRole, userDepartment, organizationId) {
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
-        const attendanceStats = await attendance_dal_1.attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear);
-        const checkInSummary = await attendance_dal_1.attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear);
-        const leaveBalance = await leave_dal_1.leaveDAL.getLeaveBalance(userId, currentYear);
-        const myLeaves = await leave_dal_1.leaveDAL.findAll({ userId, status: 'PENDING' }, {});
-        const announcements = await announcement_dal_1.announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);
+        const [attendanceStatsRaw, checkInSummary, leaveBalance, myLeaves, announcements, workingDays] = await Promise.all([
+            attendance_dal_1.attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear),
+            attendance_dal_1.attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear),
+            leave_dal_1.leaveDAL.getLeaveBalance(userId, currentYear),
+            leave_dal_1.leaveDAL.findAll({ userId, status: 'PENDING' }, {}),
+            announcement_dal_1.announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment),
+            (0, workingDays_1.getWorkingDaysForMonth)(currentYear, currentMonth, organizationId)
+        ]);
+        const attendanceStats = (attendanceStatsRaw || []).reduce((acc, row) => {
+            acc[row._id] = row.count;
+            return acc;
+        }, {});
         return {
-            attendance: attendanceStats,
+            attendance: {
+                present: (attendanceStats.PRESENT || 0) + (attendanceStats.LATE || 0),
+                absent: attendanceStats.ABSENT || 0,
+                late: attendanceStats.LATE || 0,
+                wfh: attendanceStats.WFH || 0,
+                halfDay: attendanceStats.HALF_DAY || 0,
+                onLeave: attendanceStats.ON_LEAVE || 0,
+                workingDays
+            },
             checkInSummary,
             leaveBalance,
             pendingLeaves: myLeaves.total,
@@ -32,7 +48,18 @@ class EmployeeDashboardService {
     }
     async getNewHires(userId, userRole, deptId) {
         const options = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
-        return await this.getAllAnnouncementsByType('NEWHIRE', userId, userRole, deptId, options);
+        const { announcements, total } = await announcement_dal_1.announcementDAL.findTypedWithUsers('NEWHIRE', options, true);
+        const visible = (announcements || []).filter((a) => {
+            const ta = a.targetAudience || {};
+            const roles = ta.roles || [];
+            const departments = ta.departments || [];
+            const specificUsers = ta.specificUsers || [];
+            return (ta.isGlobal === true ||
+                roles.includes(userRole) ||
+                departments.some(d => (d?._id || d)?.toString?.() === deptId) ||
+                specificUsers.some(u => (u?._id || u)?.toString?.() === userId));
+        });
+        return { announcements: visible, total: visible.length };
     }
     async getAllAnnouncementsByType(type, userId, userRole, deptId, options) {
         const filters = {

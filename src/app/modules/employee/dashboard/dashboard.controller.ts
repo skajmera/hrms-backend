@@ -6,10 +6,15 @@ import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '.
 export class EmployeeDashboardController {
   async getMyDashboard(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const dept = req.user.professionalDetails?.department;
+      const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+      const organizationId = (req.user as any).organizationId?.toString?.() || undefined;
+
       const dashboard = await employeeDashboardService.getMyDashboard(
         req.user._id.toString(),
         req.user.role,
-        req.user.professionalDetails.department._id.toString()
+        deptId,
+        organizationId
       );
       sendSuccessResponse(res, 'Dashboard retrieved successfully', dashboard);
     } catch (error: any) {
@@ -53,6 +58,18 @@ export class EmployeeDashboardController {
       const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
 
       const result = await employeeDashboardService.getNewHires(userId, userRole, deptId);
+      console.log('[EmployeeDashboard][NewHires]', {
+        userId,
+        role: userRole,
+        deptId,
+        total: result.total,
+        ids: result.announcements?.map((a: any) => a._id),
+        targetEmployees: result.announcements?.flatMap((a: any) => a.targetEmployees?.map((e: any) => ({
+          id: e._id,
+          isActive: e.isActive,
+          status: e.professionalDetails?.employmentStatus
+        })) || [])
+      });
       sendPaginatedResponse(res, result.announcements, result.total, 1, 10, 'New hires retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);

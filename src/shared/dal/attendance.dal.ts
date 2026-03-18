@@ -348,7 +348,7 @@ export class AttendanceDAL {
     };
 
     attendances.forEach(att => {
-      if (att.status === 'PRESENT') report.presentDays++;
+      if (att.status === 'PRESENT' || att.status === 'LATE') report.presentDays++;
       if (att.status === 'ABSENT') report.absentDays++;
       if (att.status === 'WFH') report.wfhDays++;
       if (att.status === 'HALF_DAY') report.halfDays++;

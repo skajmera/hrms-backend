@@ -4,6 +4,18 @@ exports.attendanceController = exports.AttendanceController = void 0;
 const attendance_service_1 = require("./attendance.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
+const pickUserId = (value) => {
+    const raw = value?._id || value?.id || value;
+    if (typeof raw === 'string') {
+        const v = raw.trim();
+        if (/^[a-f\d]{24}$/i.test(v))
+            return v;
+        const m = v.match(/[a-f\d]{24}/i);
+        if (m)
+            return m[0];
+    }
+    return '';
+};
 class AttendanceController {
     /**
      * Mark attendance (Check-In / Check-Out)
@@ -11,25 +23,25 @@ class AttendanceController {
      */
     async markAttendance(req, res, next) {
         try {
-            let attendanceData = req.body;
-            // If multipart (from multer), the file might be in req.file
-            if (req.file) {
-                attendanceData.selfie = `/${req.file.path.replace(/\\/g, '/')}`;
-            }
-            // Use userId from body if provided (HR marking for others), otherwise use token ID
-            const userId = req.body.userId || req.user?._id?.toString() || req.user?.id;
-            if (!userId) {
+            const userId = pickUserId(req.body.userId) || req.user?._id?.toString() || req.user?.id;
+            if (!userId)
                 throw new Error('User ID is required');
+            console.log('userId : ', userId);
+            const attendanceData = { ...req.body, userId, ...(req.file ? { selfie: `/${req.file.path.replace(/\\/g, '/')}` } : {}) };
+            const isHrOverride = [constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN].includes(req.user?.role) && !!req.body.userId && userId !== req.user?._id?.toString();
+            console.log('isHrOverride : ', isHrOverride);
+            console.log('attendanceData : ', attendanceData);
+            console.log('userId : ', userId);
+            if (isHrOverride) {
+                const result = await attendance_service_1.attendanceService.upsertAttendanceByAdmin({ ...attendanceData, userId, date: attendanceData.date || new Date() });
+                (0, response_1.sendSuccessResponse)(res, result.isNew ? 'Attendance created successfully' : 'Attendance updated successfully', result.attendance);
+                return;
             }
-            const result = await attendance_service_1.attendanceService.markAttendance({
-                ...attendanceData,
-                userId,
-                date: attendanceData.date || new Date()
-            });
+            const result = await attendance_service_1.attendanceService.markAttendance({ ...attendanceData, userId, date: attendanceData.date || new Date() });
             (0, response_1.sendSuccessResponse)(res, `${result.type} successful`, result.attendance, constants_1.HTTP_STATUS.CREATED);
         }
         catch (error) {
-            // Handle custom status codes from service
+            console.error('[AttendanceMark][Error]', { path: req.path, method: req.method, message: error?.message, name: error?.name, stack: error?.stack });
             if (error.statusCode) {
                 (0, response_1.sendErrorResponse)(res, error.message, error.statusCode);
             }
@@ -75,14 +87,13 @@ class AttendanceController {
     }
     async getAllAttendance(req, res, next) {
         try {
-            const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc', ...filters } = req.query;
+            const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = req.query;
             const { userId, startDate, endDate, status, checkIn, checkOut, workHours } = req.query;
             const filterData = {};
             if (userId)
                 filterData.userId = userId;
             if (status)
                 filterData.status = status;
-            // Date constraints (set hours to hit the boundaries of the day gracefully)
             if (startDate || endDate) {
                 filterData.date = {};
                 if (startDate) {
@@ -94,7 +105,6 @@ class AttendanceController {
                     filterData.date.$lte = endDay;
                 }
             }
-            // Advanced Arrays Filtering 
             const buildOrQuery = (param, handlers) => {
                 if (!param)
                     return null;
@@ -113,15 +123,15 @@ class AttendanceController {
                 '0-5-mins': { isLate: true, lateByMinutes: { $gt: 0, $lte: 5 } },
                 '6-10-mins': { isLate: true, lateByMinutes: { $gt: 5, $lte: 10 } },
                 '11-15-mins': { isLate: true, lateByMinutes: { $gt: 10, $lte: 15 } },
-                'more-than-15': { isLate: true, lateByMinutes: { $gt: 15 } },
+                'more-than-15': { isLate: true, lateByMinutes: { $gt: 15 } }
             };
             const checkOutHandlers = {
                 'before-checkout': { earlyExit: true },
-                'after-checkout': { earlyExit: false, checkOutTime: { $exists: true, $ne: null } },
+                'after-checkout': { earlyExit: false, checkOutTime: { $exists: true, $ne: null } }
             };
             const workHoursHandlers = {
                 'less-than-8': { workingHours: { $lt: 8 }, checkOutTime: { $exists: true, $ne: null } },
-                'more-than-8': { workingHours: { $gte: 8 }, checkOutTime: { $exists: true, $ne: null } },
+                'more-than-8': { workingHours: { $gte: 8 }, checkOutTime: { $exists: true, $ne: null } }
             };
             const andConditions = [];
             const checkInQuery = buildOrQuery(checkIn, checkInHandlers);
@@ -133,7 +143,6 @@ class AttendanceController {
             const workHoursQuery = buildOrQuery(workHours, workHoursHandlers);
             if (workHoursQuery)
                 andConditions.push(workHoursQuery);
-            // Merge native $and
             if (andConditions.length > 0) {
                 filterData.$and = andConditions;
             }
@@ -194,6 +203,22 @@ class AttendanceController {
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    /**
+     * HR upsert attendance (create or update for a specific date)
+     * POST /api/v1/hr/attendance/admin/upsert
+     */
+    async upsertAttendanceByAdmin(req, res, next) {
+        try {
+            const userId = pickUserId(req.params.userId) || pickUserId(req.body.userId);
+            if (!userId)
+                throw new Error('User ID is required');
+            const result = await attendance_service_1.attendanceService.upsertAttendanceByAdmin({ ...req.body, userId });
+            (0, response_1.sendSuccessResponse)(res, result.isNew ? 'Attendance created successfully' : 'Attendance updated successfully', result.attendance);
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
         }
     }
 }

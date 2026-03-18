@@ -50,6 +50,11 @@ export declare const PAYMENT_STATUS: {
     readonly PAID: "PAID";
     readonly FAILED: "FAILED";
 };
+export declare const PAYROLL_STATUS: {
+    readonly DRAFT: "DRAFT";
+    readonly PENDING: "PENDING";
+    readonly GENERATED: "GENERATED";
+};
 export declare const ANNOUNCEMENT_PRIORITY: {
     readonly LOW: "LOW";
     readonly MEDIUM: "MEDIUM";

@@ -1,23 +1,39 @@
 import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { leaveDAL } from '../../../../shared/dal/leave.dal';
 import { announcementDAL } from '../../../../shared/dal/announcement.dal';
-import { userDAL } from '../../../../shared/dal/user.dal';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
+import { getWorkingDaysForMonth } from '../../../../shared/utils/workingDays';
 
 export class EmployeeDashboardService {
-  async getMyDashboard(userId: string, userRole: string, userDepartment: string) {
+  async getMyDashboard(userId: string, userRole: string, userDepartment: string, organizationId?: string) {
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
 
-    const attendanceStats = await attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear);
-    const checkInSummary = await attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear);
-    const leaveBalance = await leaveDAL.getLeaveBalance(userId, currentYear);
-    const myLeaves = await leaveDAL.findAll({ userId, status: 'PENDING' }, {});
-    const announcements = await announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment);
+    const [attendanceStatsRaw, checkInSummary, leaveBalance, myLeaves, announcements, workingDays] = await Promise.all([
+      attendanceDAL.getUserAttendanceStats(userId, currentMonth, currentYear),
+      attendanceDAL.getUserMonthlyCheckInSummary(userId, currentMonth, currentYear),
+      leaveDAL.getLeaveBalance(userId, currentYear),
+      leaveDAL.findAll({ userId, status: 'PENDING' }, {}),
+      announcementDAL.getActiveAnnouncementsForUser(userId, userRole, userDepartment),
+      getWorkingDaysForMonth(currentYear, currentMonth, organizationId)
+    ]);
+
+    const attendanceStats = (attendanceStatsRaw || []).reduce((acc: any, row: any) => {
+      acc[row._id] = row.count;
+      return acc;
+    }, {});
 
     return {
-      attendance: attendanceStats,
+      attendance: {
+        present: (attendanceStats.PRESENT || 0) + (attendanceStats.LATE || 0),
+        absent: attendanceStats.ABSENT || 0,
+        late: attendanceStats.LATE || 0,
+        wfh: attendanceStats.WFH || 0,
+        halfDay: attendanceStats.HALF_DAY || 0,
+        onLeave: attendanceStats.ON_LEAVE || 0,
+        workingDays
+      },
       checkInSummary,
       leaveBalance,
       pendingLeaves: myLeaves.total,
@@ -37,7 +53,22 @@ export class EmployeeDashboardService {
 
   async getNewHires(userId: string, userRole: string, deptId: string) {
     const options: IPaginationOptions = { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' };
-    return await this.getAllAnnouncementsByType('NEWHIRE', userId, userRole, deptId, options);
+    const { announcements, total } = await announcementDAL.findTypedWithUsers('NEWHIRE', options, true);
+
+    const visible = (announcements || []).filter((a: any) => {
+      const ta = a.targetAudience || {};
+      const roles: string[] = ta.roles || [];
+      const departments: any[] = ta.departments || [];
+      const specificUsers: any[] = ta.specificUsers || [];
+      return (
+        ta.isGlobal === true ||
+        roles.includes(userRole) ||
+        departments.some(d => (d?._id || d)?.toString?.() === deptId) ||
+        specificUsers.some(u => (u?._id || u)?.toString?.() === userId)
+      );
+    });
+
+    return { announcements: visible, total: visible.length };
   }
 
   private async getAllAnnouncementsByType(type: string, userId: string, userRole: string, deptId: string, options: IPaginationOptions) {

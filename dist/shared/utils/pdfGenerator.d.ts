@@ -9,22 +9,10 @@ export declare class PDFGenerator {
      * Generate salary slip PDF
      */
     static generateSalarySlip(data: PayslipData): Promise<string>;
-    /**
-     * Add header to PDF
-     */
-    private static addHeader;
-    /**
-     * Add employee details
-     */
-    private static addEmployeeDetails;
-    /**
-     * Add salary details table
-     */
-    private static addSalaryDetails;
-    /**
-     * Add footer
-     */
-    private static addFooter;
+    private static money;
+    private static escapeHtml;
+    private static wordsForINR;
+    private static buildPayslipHtml;
     /**
      * Generate multiple payslips
      */

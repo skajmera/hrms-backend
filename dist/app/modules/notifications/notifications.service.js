@@ -7,6 +7,13 @@ const email_1 = require("../../../shared/utils/email");
 const firebase_service_1 = require("../../../shared/services/firebase.service");
 const notification_interface_1 = require("../../../shared/interfaces/notification.interface");
 class NotificationsService {
+    pickUserId(raw) {
+        const s = raw?._id?.toString?.() ?? raw?.id?.toString?.() ?? raw?.toString?.() ?? String(raw ?? '');
+        const m = s.match(/[a-fA-F0-9]{24}/);
+        if (!m)
+            throw new Error('Invalid notification userId');
+        return m[0];
+    }
     /**
      * Get paginated notifications for the authenticated user and platform
      */
@@ -33,7 +40,7 @@ class NotificationsService {
      * Send notification
      */
     async sendNotification(notification) {
-        const user = await user_model_1.UserModel.findById(notification.userId);
+        const user = await user_model_1.UserModel.findById(this.pickUserId(notification.userId));
         if (!user) {
             throw new Error('User not found');
         }

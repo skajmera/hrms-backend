@@ -175,9 +175,9 @@ class PayrollService {
             absentDays,
             unpaidLeaveDays,
             generatedBy,
-            isDraft: true,
+            isDraft: false,
             isGenerated: false,
-            isPending: false,
+            isPending: true,
             paymentStatus: constants_1.PAYMENT_STATUS.PENDING
         };
         // Calculate deductions for late arrivals
@@ -233,9 +233,8 @@ class PayrollService {
      */
     static async generatePayslip(payrollId, approvedBy) {
         const payroll = await this.getPayrollById(payrollId);
-        if (!payroll.isDraft) {
+        if (payroll.isGenerated)
             throw new Error('Payroll is already generated');
-        }
         const updateData = {
             isDraft: false,
             isGenerated: true,
@@ -353,9 +352,9 @@ class PayrollService {
             isRevised: true,
             revisionDate: new Date(),
             revisionReason,
-            isDraft: true,
+            isDraft: false,
             isGenerated: false,
-            isPending: false
+            isPending: true
         };
         const payroll = await payroll_dal_1.payrollDAL.update(payrollId, updateData);
         if (!payroll) {

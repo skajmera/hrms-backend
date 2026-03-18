@@ -292,7 +292,7 @@ class AttendanceDAL {
             averageWorkingHours: 0
         };
         attendances.forEach(att => {
-            if (att.status === 'PRESENT')
+            if (att.status === 'PRESENT' || att.status === 'LATE')
                 report.presentDays++;
             if (att.status === 'ABSENT')
                 report.absentDays++;

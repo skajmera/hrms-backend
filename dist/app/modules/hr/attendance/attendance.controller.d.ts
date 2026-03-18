@@ -17,6 +17,11 @@ export declare class AttendanceController {
     getTodayAttendance(req: any, res: Response, next: NextFunction): Promise<void>;
     getUserAttendanceReport(req: any, res: Response, next: NextFunction): Promise<void>;
     getEmployeeTodayAttendance(req: any, res: Response, next: NextFunction): Promise<void>;
+    /**
+     * HR upsert attendance (create or update for a specific date)
+     * POST /api/v1/hr/attendance/admin/upsert
+     */
+    upsertAttendanceByAdmin(req: any, res: Response, next: NextFunction): Promise<void>;
 }
 export declare const attendanceController: AttendanceController;
 //# sourceMappingURL=attendance.controller.d.ts.map

@@ -28,6 +28,13 @@ export declare class UserService {
         total: number;
     }>;
     /**
+     * Get all users including drafts
+     */
+    getAllUsersWithDrafts(filters: any | undefined, options: IPaginationOptions): Promise<{
+        users: import("../../../../shared/interfaces/user.interface").IUser[];
+        total: number;
+    }>;
+    /**
      * Update user
      */
     updateUser(id: string, updateData: IUserUpdateInput): Promise<import("../../../../shared/interfaces/user.interface").IUser>;

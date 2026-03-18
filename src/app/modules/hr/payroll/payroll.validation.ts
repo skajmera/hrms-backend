@@ -56,7 +56,7 @@ export class PayrollValidation {
   static getPayrolls = [
     query('month').optional().isInt({ min: 1, max: 12 }).withMessage('Invalid month'),
     query('year').optional().isInt({ min: 2000 }).withMessage('Invalid year'),
-    query('status').optional().isIn(['PENDING', 'PROCESSING', 'PAID', 'FAILED']).withMessage('Invalid status'),
+    query('status').optional().customSanitizer(v => String(v).trim().toUpperCase()).isIn(['DRAFT', 'PENDING', 'GENERATED', 'PROCESSING', 'PAID', 'FAILED']).withMessage('Invalid status'),
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
   ];

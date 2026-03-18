@@ -1,7 +1,15 @@
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 export declare class EmployeeDashboardService {
-    getMyDashboard(userId: string, userRole: string, userDepartment: string): Promise<{
-        attendance: any;
+    getMyDashboard(userId: string, userRole: string, userDepartment: string, organizationId?: string): Promise<{
+        attendance: {
+            present: any;
+            absent: any;
+            late: any;
+            wfh: any;
+            halfDay: any;
+            onLeave: any;
+            workingDays: number;
+        };
         checkInSummary: any;
         leaveBalance: import("../../../../shared/interfaces/leave.interface").ILeaveBalance | null;
         pendingLeaves: number;
@@ -16,7 +24,7 @@ export declare class EmployeeDashboardService {
         total: number;
     }>;
     getNewHires(userId: string, userRole: string, deptId: string): Promise<{
-        announcements: import("../../../../shared/interfaces/announcement.interface").IAnnouncement[];
+        announcements: any[];
         total: number;
     }>;
     private getAllAnnouncementsByType;

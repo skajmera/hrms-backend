@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: "https://zpmnqwjd-5000.inc1.devtunnels.ms/api/v1",//'https://hrms-backend-khq1.onrender.com/api/v1',////`http://localhost:${config.port}/api/v1`,
+        url: "https://pqc778r0-5000.inc1.devtunnels.ms/api/v1",//'https://hrms-backend-khq1.onrender.com/api/v1',////`http://localhost:${config.port}/api/v1`,
         description: 'Development Server'
       },
       {

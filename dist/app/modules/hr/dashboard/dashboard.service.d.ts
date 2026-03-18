@@ -1,5 +1,5 @@
 export declare class DashboardService {
-    getDashboardStats(): Promise<{
+    getDashboardStats(organizationId?: string): Promise<{
         totalEmployees: number;
         attendance: {
             present: number;
@@ -8,14 +8,23 @@ export declare class DashboardService {
             wfh: number;
             onLeave: number;
             yetToCheckIn: number;
+            workingDays: number;
         };
-        checkInSummary: any;
+        checkInSummary: {
+            totalEmployees: number;
+            checkedIn: number;
+            onTime: number;
+            late: number;
+            yetToCheckIn: number;
+            workingDays: number;
+        };
         leaves: {
             pending: number;
             onLeaveToday: number;
         };
         newHires: number;
     }>;
+    private getWorkingDaysForMonth;
     getBirthdays(): Promise<import("../../../../shared/interfaces/user.interface").IUser[]>;
     getNewHires(days?: number, date?: string): Promise<any[]>;
     getRecentAnnouncements(userId: string, userRole: string, userDepartment: string): Promise<import("../../../../shared/interfaces/announcement.interface").IAnnouncement[]>;

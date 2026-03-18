@@ -9,6 +9,14 @@ export class UserService {
    * Create new user
    */
   async createUser(userData: any) {
+    // Clean empty strings for unique fields to avoid duplicate-key errors
+    const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
+    uniqueFields.forEach(field => {
+      if (userData[field] === '') {
+        delete userData[field];
+      }
+    });
+
     let draftUser = (userData._id || userData.id) ? await userDAL.findById(userData._id || userData.id) : null;
 
     if (draftUser && draftUser.professionalDetails?.employmentStatus !== 'DRAFT') {
@@ -161,6 +169,13 @@ export class UserService {
    */
   async getAllUsers(filters: any = {}, options: IPaginationOptions) {
     return await userDAL.findAll(filters, options);
+  }
+
+  /**
+   * Get all users including drafts
+   */
+  async getAllUsersWithDrafts(filters: any = {}, options: IPaginationOptions) {
+    return await userDAL.findAllWithDrafts(filters, options);
   }
 
   /**

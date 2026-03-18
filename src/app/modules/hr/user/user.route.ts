@@ -129,9 +129,83 @@ router.use(authenticate);
 
 /**
  * @swagger
+ * /hr/users/all-with-draft:
+ *   get:
+ *     summary: Get all users including drafts with pagination
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [SUPER_ADMIN, HR_ADMIN, MANAGER, EMPLOYEE]
+ *         description: Filter by role
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *     responses:
+ *       200:
+ *         description: Users (including drafts) retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         data:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ */
+router.get(
+  '/all-with-draft',
+  authorize(USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN),
+  validate(queryUsersValidation),
+  userController.getAllUsersWithDraft.bind(userController)
+);
+
+/**
+ * @swagger
  * /hr/users:
  *   get:
- *     summary: Get all users with pagination
+ *     summary: Get all active users with pagination
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -175,24 +249,6 @@ router.use(authenticate);
  *     responses:
  *       200:
  *         description: Users retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/PaginatedResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         data:
- *                           type: array
- *                           items:
- *                             $ref: '#/components/schemas/User'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Insufficient permissions
  */
 router.get(
   '/',

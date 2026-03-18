@@ -171,10 +171,8 @@ PayrollSchema.pre('save', function (next) {
   this.netSalary = this.grossSalary - this.totalDeductions;
 
   // Status flag enforcement
-  if (this.isGenerated) {
-    this.isDraft = false;
-    this.isPending = false;
-  }
+  if (this.isGenerated) Object.assign(this, { isDraft: false, isPending: false });
+  else Object.assign(this, { isDraft: false, isPending: true });
 
   next();
 });

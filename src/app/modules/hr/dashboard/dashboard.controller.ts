@@ -6,7 +6,8 @@ import { sendSuccessResponse, sendErrorResponse } from '../../../../shared/utils
 export class DashboardController {
   async getDashboardStats(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const stats = await dashboardService.getDashboardStats();
+      const organizationId = (req.user as any).organizationId?.toString?.() || undefined;
+      const stats = await dashboardService.getDashboardStats(organizationId);
       sendSuccessResponse(res, 'Dashboard statistics retrieved successfully', stats);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
@@ -26,6 +27,12 @@ export class DashboardController {
     try {
       const { days = 30, date } = req.query;
       const newHires = await dashboardService.getNewHires(Number(days), date as string);
+      console.log('[HRDashboard][NewHires]', {
+        days,
+        date,
+        count: Array.isArray(newHires) ? newHires.length : 0,
+        ids: Array.isArray(newHires) ? newHires.map((u: any) => u._id) : []
+      });
       sendSuccessResponse(res, 'New hires retrieved successfully', newHires);
     } catch (error: any) {
       sendErrorResponse(res, error.message);

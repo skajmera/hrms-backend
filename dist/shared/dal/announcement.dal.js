@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.announcementDAL = exports.AnnouncementDAL = void 0;
 const announcement_model_1 = require("../models/announcement.model");
+const constants_1 = require("../../config/constants");
 class AnnouncementDAL {
     /**
      * Create announcement
@@ -238,7 +239,19 @@ class AnnouncementDAL {
                     from: 'users',
                     localField: 'targetAudience.specificUsers',
                     foreignField: '_id',
-                    pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1, 'professionalDetails.designation': 1, 'professionalDetails.department': 1, 'professionalDetails.joiningDate': 1 } }],
+                    pipeline: [{
+                            $project: {
+                                firstName: 1,
+                                lastName: 1,
+                                fullName: { $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }] },
+                                profilePicture: 1,
+                                isActive: 1,
+                                'professionalDetails.employmentStatus': 1,
+                                'professionalDetails.designation': 1,
+                                'professionalDetails.department': 1,
+                                'professionalDetails.joiningDate': 1
+                            }
+                        }],
                     as: 'targetEmployees'
                 }
             },
@@ -253,6 +266,24 @@ class AnnouncementDAL {
             },
             { $addFields: { createdBy: { $arrayElemAt: ['$createdByUser', 0] } } },
             { $project: { createdByUser: 0 } },
+            // Drop announcements where all target employees are inactive / non-primary statuses
+            {
+                $addFields: {
+                    targetEmployees: {
+                        $filter: {
+                            input: '$targetEmployees',
+                            as: 'emp',
+                            cond: {
+                                $and: [
+                                    { $eq: ['$$emp.isActive', true] },
+                                    { $in: ['$$emp.professionalDetails.employmentStatus', [constants_1.EMPLOYMENT_STATUS.ACTIVE, constants_1.EMPLOYMENT_STATUS.PROBATION]] }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            { $match: { 'targetEmployees.0': { $exists: true } } },
             { $sort: { isPinned: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1 } }
         ];
         const [announcements, countResult] = await Promise.all([

@@ -1,6 +1,7 @@
 import { UserModel } from '../models/user.model';
 import { IUser, IUserCreateInput, IUserUpdateInput } from '../interfaces/user.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
+import { EMPLOYMENT_STATUS } from '../../config/constants';
 
 export class UserDAL {
   /**
@@ -62,6 +63,46 @@ export class UserDAL {
    * Find all users with filters and pagination
    */
   async findAll(
+    filters: IQueryFilters = {},
+    options: IPaginationOptions = {}
+  ): Promise<{ users: IUser[]; total: number }> {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = options;
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      ...filters
+    };
+
+    if (!query['professionalDetails.employmentStatus']) {
+      query['professionalDetails.employmentStatus'] = { $ne: 'DRAFT' };
+    }
+
+    const users = await UserModel.find(query)
+      .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
+      .populate('professionalDetails.designation', 'name code level')
+      .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
+      .populate('createdBy', 'firstName lastName email profilePicture')
+      .populate('updatedBy', 'firstName lastName email profilePicture')
+      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await UserModel.countDocuments(query);
+
+    return { users, total };
+  }
+
+  async findIds(filters: IQueryFilters = {}): Promise<string[]> {
+    const query: any = { ...filters };
+    if (!query['professionalDetails.employmentStatus']) query['professionalDetails.employmentStatus'] = { $ne: EMPLOYMENT_STATUS.DRAFT };
+    const rows = await UserModel.find(query).select('_id').lean();
+    return rows.map((r: any) => r._id.toString());
+  }
+
+  /**
+   * Find all users including drafts
+   */
+  async findAllWithDrafts(
     filters: IQueryFilters = {},
     options: IPaginationOptions = {}
   ): Promise<{ users: IUser[]; total: number }> {
@@ -139,7 +180,11 @@ export class UserDAL {
    * Find users by department
    */
   async findByDepartment(departmentId: string): Promise<IUser[]> {
-    return await UserModel.find({ 'professionalDetails.department': departmentId, isActive: true })
+    return await UserModel.find({
+      'professionalDetails.department': departmentId,
+      isActive: true,
+      'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
+    })
       .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
       .populate('createdBy', 'firstName lastName email profilePicture')
       .populate('updatedBy', 'firstName lastName email profilePicture');
@@ -149,7 +194,11 @@ export class UserDAL {
    * Find users by role
    */
   async findByRole(role: string): Promise<IUser[]> {
-    return await UserModel.find({ role, isActive: true })
+    return await UserModel.find({
+      role,
+      isActive: true,
+      'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
+    })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('createdBy', 'firstName lastName email profilePicture')
@@ -175,7 +224,9 @@ export class UserDAL {
         $match: {
           birthMonth: month,
           birthDay: day,
-          isActive: true
+          isActive: true,
+          'professionalDetails.employmentStatus': { $ne: 'DRAFT' },
+          role: { $ne: 'SUPER_ADMIN' }
         }
       },
       {
@@ -227,9 +278,7 @@ export class UserDAL {
           lastName: 1,
           email: 1,
           profilePicture: 1,
-          profileImage: "$profilePicture",
-          birthMonth: 0,
-          birthDay: 0
+          profileImage: "$profilePicture"
         }
       }
     ]);
@@ -245,11 +294,12 @@ export class UserDAL {
     dateThreshold.setDate(dateThreshold.getDate() - days);
 
     return await UserModel.aggregate([
-      // 1️⃣ Only active users
       {
         $match: {
           isActive: true,
-          "professionalDetails.joiningDate": { $gte: dateThreshold }
+          'professionalDetails.employmentStatus': { $in: [EMPLOYMENT_STATUS.ACTIVE, EMPLOYMENT_STATUS.PROBATION] },
+          "professionalDetails.joiningDate": { $gte: dateThreshold },
+          role: { $ne: 'SUPER_ADMIN' }
         }
       },
 
@@ -323,6 +373,8 @@ export class UserDAL {
       {
         $project: {
           _id: 1,
+          firstName: 1,
+          lastName: 1,
           fullName: { $concat: [{ $ifNull: ["$firstName", ""] }, " ", { $ifNull: ["$lastName", ""] }] },
           profileImage: { $ifNull: ["$profilePicture", ""] },
           designation: "$designation.name",
@@ -402,7 +454,8 @@ export class UserDAL {
 
     return await UserModel.find({
       $or: orQuery,
-      isActive: true
+      isActive: true,
+      'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
     })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
@@ -434,7 +487,11 @@ export class UserDAL {
       };
     }
 
-    return await UserModel.findOne({ ...query, isActive: true })
+    return await UserModel.findOne({
+      ...query,
+      isActive: true,
+      'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
+    })
       .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
       .populate('professionalDetails.designation', 'name code level')
       .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
@@ -472,7 +529,9 @@ export class UserDAL {
         $match: {
           anniversaryMonth: month,
           anniversary: day,
-          isActive: true
+          isActive: true,
+          'professionalDetails.employmentStatus': { $ne: 'DRAFT' },
+          role: { $ne: 'SUPER_ADMIN' }
         }
       },
       {
@@ -523,9 +582,7 @@ export class UserDAL {
           lastName: 1,
           email: 1,
           profilePicture: 1,
-          profileImage: "$profilePicture",
-          anniversaryMonth: 0,
-          anniversary: 0
+          profileImage: "$profilePicture"
         }
       }
     ]);
@@ -632,7 +689,8 @@ export class UserDAL {
       {
         $match: {
           isActive: true,
-          role: "EMPLOYEE"
+          role: "EMPLOYEE",
+          'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
         }
       },
 
@@ -718,7 +776,8 @@ export class UserDAL {
       {
         $match: {
           isActive: true,
-          role: 'EMPLOYEE'
+          role: 'EMPLOYEE',
+          'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
         }
       },
 

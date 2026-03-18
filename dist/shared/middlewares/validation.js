@@ -16,8 +16,14 @@ const validate = (validations) => {
         if (errors.isEmpty()) {
             return next();
         }
-        // Format errors
-        const formattedErrors = errors.array().map(err => ({
+        const rawErrors = errors.array();
+        // Lightweight debug log to inspect failing payloads and rules
+        console.error('[ValidationError]', {
+            path: req.path,
+            method: req.method,
+            errors: rawErrors
+        });
+        const formattedErrors = rawErrors.map(err => ({
             field: err.type === 'field' ? err.path : 'unknown',
             message: err.msg
         }));

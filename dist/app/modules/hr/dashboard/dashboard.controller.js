@@ -6,7 +6,8 @@ const response_1 = require("../../../../shared/utils/response");
 class DashboardController {
     async getDashboardStats(req, res, next) {
         try {
-            const stats = await dashboard_service_1.dashboardService.getDashboardStats();
+            const organizationId = req.user.organizationId?.toString?.() || undefined;
+            const stats = await dashboard_service_1.dashboardService.getDashboardStats(organizationId);
             (0, response_1.sendSuccessResponse)(res, 'Dashboard statistics retrieved successfully', stats);
         }
         catch (error) {
@@ -26,6 +27,12 @@ class DashboardController {
         try {
             const { days = 30, date } = req.query;
             const newHires = await dashboard_service_1.dashboardService.getNewHires(Number(days), date);
+            console.log('[HRDashboard][NewHires]', {
+                days,
+                date,
+                count: Array.isArray(newHires) ? newHires.length : 0,
+                ids: Array.isArray(newHires) ? newHires.map((u) => u._id) : []
+            });
             (0, response_1.sendSuccessResponse)(res, 'New hires retrieved successfully', newHires);
         }
         catch (error) {

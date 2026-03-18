@@ -224,9 +224,9 @@ export class PayrollService {
       absentDays,
       unpaidLeaveDays,
       generatedBy,
-      isDraft: true,
+      isDraft: false,
       isGenerated: false,
-      isPending: false,
+      isPending: true,
       paymentStatus: PAYMENT_STATUS.PENDING
     };
 
@@ -291,9 +291,7 @@ export class PayrollService {
   static async generatePayslip(payrollId: string, approvedBy: string): Promise<IPayroll> {
     const payroll = await this.getPayrollById(payrollId);
 
-    if (!payroll.isDraft) {
-      throw new Error('Payroll is already generated');
-    }
+    if (payroll.isGenerated) throw new Error('Payroll is already generated');
 
     const updateData: Partial<IPayroll> = {
       isDraft: false,
@@ -442,9 +440,9 @@ export class PayrollService {
       isRevised: true,
       revisionDate: new Date(),
       revisionReason,
-      isDraft: true,
+      isDraft: false,
       isGenerated: false,
-      isPending: false
+      isPending: true
     };
 
     const payroll = await payrollDAL.update(payrollId, updateData);

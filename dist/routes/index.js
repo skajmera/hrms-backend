@@ -46,6 +46,7 @@ router.use('/employee/leave', leave_route_1.default);
 router.use('/employee/payroll', payroll_route_1.default);
 router.use('/employee/dashboard', dashboard_route_1.default);
 router.use('/employee/notifications', notifications_route_1.default);
+router.use('/employee/users', user_route_1.default);
 // Manager routes (Team management)
 router.use('/manager/team', team_route_1.default);
 router.use('/manager/leave', leave_route_2.default);
@@ -54,7 +55,6 @@ router.use('/manager/reports', reports_route_1.default);
 router.use('/hr/users', user_route_1.default);
 router.use('/hr/attendance', attendance_route_2.default);
 router.use('/hr/leave', leave_route_3.default);
-router.use('/leaves', leave_route_3.default);
 router.use('/hr/payroll', payroll_route_2.default);
 router.use('/hr/announcements', announcement_route_1.default);
 router.use('/hr/departments', department_route_1.default);

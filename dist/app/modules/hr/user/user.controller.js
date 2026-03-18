@@ -23,9 +23,12 @@ class UserController {
      */
     async createUser(req, res, next) {
         try {
+            console.log('[CreateEmployee][RawBody]', { body: req.body, files: req.files, file: req.file });
             const createData = parseJsonFields(req.body);
-            console.log("req.body : ", req.body);
+            console.log('[CreateEmployee][ParsedPayload]', { education: createData.education, experience: createData.experience });
             createData.createdBy = req.user._id.toString();
+            if (!createData.organizationId && req.user?.organizationId)
+                createData.organizationId = req.user.organizationId;
             if (req.file) {
                 createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }
@@ -43,6 +46,8 @@ class UserController {
         try {
             const createData = parseJsonFields(req.body);
             createData.createdBy = req.user._id.toString();
+            if (!createData.organizationId && req.user?.organizationId)
+                createData.organizationId = req.user.organizationId;
             if (req.file) {
                 createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }
@@ -90,10 +95,12 @@ class UserController {
     async getAllUsers(req, res, next) {
         try {
             const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
-            // Support excludeRole=EMPLOYEE or comma-separated excludeRole=EMPLOYEE,MANAGER
-            if (excludeRole) {
-                const rolesToExclude = excludeRole.split(',').map(r => r.trim().toUpperCase());
-                filters.role = { $nin: rolesToExclude };
+            const rawExclude = excludeRole || 'SUPER_ADMIN';
+            if (rawExclude) {
+                const rolesToExclude = rawExclude.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
+                if (rolesToExclude.length) {
+                    filters.role = { $nin: rolesToExclude };
+                }
             }
             const result = await user_service_1.userService.getAllUsers(filters, {
                 page: Number(page),
@@ -108,12 +115,45 @@ class UserController {
         }
     }
     /**
+     * Get all users including drafts, with status field
+     */
+    async getAllUsersWithDraft(req, res, next) {
+        try {
+            const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
+            const rawExclude = excludeRole || 'SUPER_ADMIN';
+            if (rawExclude) {
+                const rolesToExclude = rawExclude.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
+                if (rolesToExclude.length) {
+                    filters.role = { $nin: rolesToExclude };
+                }
+            }
+            const result = await user_service_1.userService.getAllUsersWithDrafts(filters, {
+                page: Number(page),
+                limit: Number(limit),
+                sortBy: sortBy,
+                sortOrder: sortOrder
+            });
+            const dataWithStatus = result.users.map((u) => ({
+                ...u.toObject?.() ?? u,
+                status: u.professionalDetails?.employmentStatus || 'ACTIVE'
+            }));
+            (0, response_1.sendPaginatedResponse)(res, dataWithStatus, result.total, Number(page), Number(limit), 'Users (including drafts) retrieved successfully');
+        }
+        catch (error) {
+            (0, response_1.sendErrorResponse)(res, error.message);
+        }
+    }
+    /**
      * Update user
      */
     async updateUser(req, res, next) {
         try {
+            console.log('[UpdateEmployee][RawBody]', { params: req.params, body: req.body, files: req.files, file: req.file });
             const updateData = parseJsonFields(req.body);
+            console.log('[UpdateEmployee][ParsedPayload]', { education: updateData.education, experience: updateData.experience });
             updateData.updatedBy = req.user._id.toString();
+            if (!updateData.organizationId && req.user?.organizationId)
+                updateData.organizationId = req.user.organizationId;
             if (req.file) {
                 updateData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }

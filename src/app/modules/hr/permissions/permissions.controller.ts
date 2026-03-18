@@ -100,7 +100,6 @@ export class PermissionsController {
    */
   static async getMyAssignedPermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("req.user", req.user)
       const userId = req.user?._id?.toString();
       if (!userId) {
         res.status(401).json({ status: 'error', message: 'Unauthorized' });

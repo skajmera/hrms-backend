@@ -9,6 +9,13 @@ class UserService {
      * Create new user
      */
     async createUser(userData) {
+        // Clean empty strings for unique fields to avoid duplicate-key errors
+        const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
+        uniqueFields.forEach(field => {
+            if (userData[field] === '') {
+                delete userData[field];
+            }
+        });
         let draftUser = (userData._id || userData.id) ? await user_dal_1.userDAL.findById(userData._id || userData.id) : null;
         if (draftUser && draftUser.professionalDetails?.employmentStatus !== 'DRAFT') {
             throw new Error('User already exists and is not a draft');
@@ -147,6 +154,12 @@ class UserService {
      */
     async getAllUsers(filters = {}, options) {
         return await user_dal_1.userDAL.findAll(filters, options);
+    }
+    /**
+     * Get all users including drafts
+     */
+    async getAllUsersWithDrafts(filters = {}, options) {
+        return await user_dal_1.userDAL.findAllWithDrafts(filters, options);
     }
     /**
      * Update user

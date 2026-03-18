@@ -9,6 +9,7 @@ interface INotificationPayload {
     data?: any;
 }
 export declare class NotificationsService {
+    private pickUserId;
     /**
      * Get paginated notifications for the authenticated user and platform
      */

@@ -53,11 +53,10 @@ class OrganizationService {
     /**
      * Get user's organization
      */
-    static async getUserOrganization(userId) {
-        const organization = await organization_dal_1.OrganizationDAL.findByOwner(userId);
-        if (!organization) {
+    static async getUserOrganization({ userId, organizationId }) {
+        const organization = organizationId ? await organization_dal_1.OrganizationDAL.findById(organizationId) : await organization_dal_1.OrganizationDAL.findByOwner(userId);
+        if (!organization)
             throw new Error('Organization not found');
-        }
         return organization;
     }
     /**

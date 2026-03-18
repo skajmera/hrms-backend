@@ -14,7 +14,9 @@ class OrganizationController {
     static async createOrganization(req, res, next) {
         try {
             const organizationData = req.body;
-            const ownerId = req.user?.id;
+            const ownerId = req.user?._id?.toString();
+            if (!ownerId)
+                throw new Error('Not authenticated');
             const organization = await organization_service_1.OrganizationService.createOrganization(organizationData, ownerId);
             (0, response_1.sendSuccessResponse)(res, 'Organization created successfully', organization);
         }
@@ -69,8 +71,11 @@ class OrganizationController {
      */
     static async getMyOrganization(req, res, next) {
         try {
-            const userId = req.user?.id;
-            const organization = await organization_service_1.OrganizationService.getUserOrganization(userId);
+            const userId = req.user?._id?.toString();
+            const organizationId = req.user?.organizationId?.toString?.() ?? req.user?.organizationId;
+            if (!userId)
+                throw new Error('Not authenticated');
+            const organization = await organization_service_1.OrganizationService.getUserOrganization({ userId, organizationId });
             (0, response_1.sendSuccessResponse)(res, 'Organization retrieved successfully', organization);
         }
         catch (error) {

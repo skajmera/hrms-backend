@@ -282,6 +282,39 @@ router.post('/:id/complete', (0, validation_1.validate)(offboarding_validation_1
 router.put('/:id/clearance', (0, validation_1.validate)(offboarding_validation_1.OffboardingValidation.offboardingId), offboarding_controller_1.OffboardingController.updateClearance);
 /**
  * @swagger
+ * /hr/offboarding/{id}/exit-interview:
+ *   put:
+ *     summary: Schedule exit interview
+ *     tags: [Offboarding]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - exitInterviewDate
+ *             properties:
+ *               exitInterviewDate:
+ *                 type: string
+ *                 format: date-time
+ *               exitInterviewNotes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Exit interview scheduled successfully
+ */
+router.put('/:id/exit-interview', (0, validation_1.validate)(offboarding_validation_1.OffboardingValidation.scheduleExitInterview), offboarding_controller_1.OffboardingController.scheduleExitInterview);
+/**
+ * @swagger
  * /hr/offboarding/{id}:
  *   put:
  *     summary: Update resignation request

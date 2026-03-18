@@ -48,6 +48,7 @@ router.use('/employee/leave', employeeLeaveRoutes);
 router.use('/employee/payroll', employeePayrollRoutes);
 router.use('/employee/dashboard', employeeDashboardRoutes);
 router.use('/employee/notifications', employeeNotificationsRoutes);
+router.use('/employee/users', userRoutes);
 
 // Manager routes (Team management)
 router.use('/manager/team', managerTeamRoutes);

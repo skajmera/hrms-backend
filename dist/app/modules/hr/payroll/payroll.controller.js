@@ -55,8 +55,11 @@ class PayrollController {
                 filters.month = parseInt(month);
             if (year)
                 filters.year = parseInt(year);
-            if (status)
-                filters.paymentStatus = status;
+            if (status) {
+                const s = String(status).trim().toUpperCase();
+                const map = { PENDING: { isGenerated: false }, DRAFT: { isGenerated: false }, GENERATED: { isGenerated: true } };
+                Object.assign(filters, map[s] ?? { paymentStatus: s });
+            }
             const options = {
                 page: parseInt(page) || 1,
                 limit: parseInt(limit) || 10,

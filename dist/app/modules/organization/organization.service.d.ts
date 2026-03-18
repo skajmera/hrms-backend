@@ -15,7 +15,10 @@ export declare class OrganizationService {
     /**
      * Get user's organization
      */
-    static getUserOrganization(userId: string): Promise<IOrganization>;
+    static getUserOrganization({ userId, organizationId }: {
+        userId: string;
+        organizationId?: string;
+    }): Promise<IOrganization>;
     /**
      * Get all organizations
      */

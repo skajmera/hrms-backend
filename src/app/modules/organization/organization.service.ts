@@ -61,11 +61,9 @@ export class OrganizationService {
   /**
    * Get user's organization
    */
-  static async getUserOrganization(userId: string): Promise<IOrganization> {
-    const organization = await OrganizationDAL.findByOwner(userId);
-    if (!organization) {
-      throw new Error('Organization not found');
-    }
+  static async getUserOrganization({ userId, organizationId }: { userId: string; organizationId?: string }): Promise<IOrganization> {
+    const organization = organizationId ? await OrganizationDAL.findById(organizationId) : await OrganizationDAL.findByOwner(userId);
+    if (!organization) throw new Error('Organization not found');
     return organization;
   }
 

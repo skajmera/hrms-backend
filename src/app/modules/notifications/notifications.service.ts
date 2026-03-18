@@ -17,6 +17,13 @@ interface INotificationPayload {
 }
 
 export class NotificationsService {
+  private pickUserId(raw: any): string {
+    const s = raw?._id?.toString?.() ?? raw?.id?.toString?.() ?? raw?.toString?.() ?? String(raw ?? '');
+    const m = s.match(/[a-fA-F0-9]{24}/);
+    if (!m) throw new Error('Invalid notification userId');
+    return m[0];
+  }
+
   /**
    * Get paginated notifications for the authenticated user and platform
    */
@@ -45,7 +52,7 @@ export class NotificationsService {
    * Send notification
    */
   async sendNotification(notification: INotificationPayload) {
-    const user = await UserModel.findById(notification.userId);
+    const user = await UserModel.findById(this.pickUserId(notification.userId));
 
     if (!user) {
       throw new Error('User not found');

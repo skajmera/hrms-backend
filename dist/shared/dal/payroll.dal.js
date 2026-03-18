@@ -82,7 +82,7 @@ class PayrollDAL {
      * Get user payroll history
      */
     async getUserPayrollHistory(userId, limit = 12) {
-        return await payroll_model_1.PayrollModel.find({ userId })
+        return await payroll_model_1.PayrollModel.find({ userId, isGenerated: true })
             .sort({ year: -1, month: -1 })
             .limit(limit);
     }
@@ -154,7 +154,7 @@ class PayrollDAL {
      * Get pending payrolls
      */
     async getPending(month, year) {
-        const filter = { paymentStatus: 'PENDING', isGenerated: true };
+        const filter = { isGenerated: false };
         if (month)
             filter.month = month;
         if (year)

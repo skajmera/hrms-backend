@@ -109,7 +109,7 @@ export class PayrollDAL {
    * Get user payroll history
    */
   async getUserPayrollHistory(userId: string, limit: number = 12): Promise<IPayroll[]> {
-    return await PayrollModel.find({ userId })
+    return await PayrollModel.find({ userId, isGenerated: true })
       .sort({ year: -1, month: -1 })
       .limit(limit);
   }
@@ -185,7 +185,7 @@ export class PayrollDAL {
    * Get pending payrolls
    */
   async getPending(month?: number, year?: number): Promise<IPayroll[]> {
-    const filter: any = { paymentStatus: 'PENDING', isGenerated: true };
+    const filter: any = { isGenerated: false };
     if (month) filter.month = month;
     if (year) filter.year = year;
 

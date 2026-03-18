@@ -54,7 +54,7 @@ PayrollValidation.bulkGenerate = [
 PayrollValidation.getPayrolls = [
     (0, express_validator_1.query)('month').optional().isInt({ min: 1, max: 12 }).withMessage('Invalid month'),
     (0, express_validator_1.query)('year').optional().isInt({ min: 2000 }).withMessage('Invalid year'),
-    (0, express_validator_1.query)('status').optional().isIn(['PENDING', 'PROCESSING', 'PAID', 'FAILED']).withMessage('Invalid status'),
+    (0, express_validator_1.query)('status').optional().customSanitizer(v => String(v).trim().toUpperCase()).isIn(['DRAFT', 'PENDING', 'GENERATED', 'PROCESSING', 'PAID', 'FAILED']).withMessage('Invalid status'),
     (0, express_validator_1.query)('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
     (0, express_validator_1.query)('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
 ];

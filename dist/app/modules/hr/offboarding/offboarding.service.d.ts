@@ -45,6 +45,10 @@ export declare class OffboardingService {
      */
     static updateClearance(offboardingId: string, clearanceType: 'assetReturn' | 'itClearance' | 'financeClearance' | 'hrClearance', status: 'PENDING' | 'COMPLETED', notes?: string): Promise<IOffboarding>;
     /**
+     * Schedule exit interview
+     */
+    static scheduleExitInterview(offboardingId: string, exitInterviewDate: string, exitInterviewNotes?: string): Promise<IOffboarding>;
+    /**
      * Get pending resignations
      */
     static getPendingResignations(): Promise<IOffboarding[]>;

@@ -144,9 +144,9 @@ class PayrollImportService {
                     absentDays: 0,
                     unpaidLeaveDays: row.lopDays || 0,
                     generatedBy,
-                    isDraft: true,
+                    isDraft: false,
                     isGenerated: false,
-                    isPending: false
+                    isPending: true
                 };
                 // Create payroll
                 const payroll = await payroll_dal_1.payrollDAL.create(payrollData);

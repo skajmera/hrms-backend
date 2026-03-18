@@ -4,7 +4,7 @@
  * Centralized constants for the HRMS application
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EMPLOYMENT_TYPE = exports.SHIFT_TIMINGS = exports.PAGINATION_DEFAULTS = exports.LEAVE_BALANCE_CONFIG = exports.HTTP_STATUS = exports.ANNOUNCEMENT_PRIORITY = exports.PAYMENT_STATUS = exports.EMPLOYMENT_STATUS = exports.SHIFT_TYPES = exports.ATTENDANCE_STATUS = exports.LEAVE_TYPES = exports.LEAVE_STATUS = exports.USER_ROLES = void 0;
+exports.EMPLOYMENT_TYPE = exports.SHIFT_TIMINGS = exports.PAGINATION_DEFAULTS = exports.LEAVE_BALANCE_CONFIG = exports.HTTP_STATUS = exports.ANNOUNCEMENT_PRIORITY = exports.PAYROLL_STATUS = exports.PAYMENT_STATUS = exports.EMPLOYMENT_STATUS = exports.SHIFT_TYPES = exports.ATTENDANCE_STATUS = exports.LEAVE_TYPES = exports.LEAVE_STATUS = exports.USER_ROLES = void 0;
 exports.USER_ROLES = {
     SUPER_ADMIN: 'SUPER_ADMIN',
     HR_ADMIN: 'HR_ADMIN',
@@ -62,6 +62,11 @@ exports.PAYMENT_STATUS = {
     PROCESSING: 'PROCESSING',
     PAID: 'PAID',
     FAILED: 'FAILED'
+};
+exports.PAYROLL_STATUS = {
+    DRAFT: 'DRAFT',
+    PENDING: 'PENDING',
+    GENERATED: 'GENERATED'
 };
 exports.ANNOUNCEMENT_PRIORITY = {
     LOW: 'LOW',

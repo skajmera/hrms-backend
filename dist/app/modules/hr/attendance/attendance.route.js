@@ -344,6 +344,55 @@ router.post('/register-device', upload_middleware_1.attendanceUpload.single('sel
 router.post('/mark', upload_middleware_1.attendanceUpload.single('selfie'), (0, validation_1.validate)(attendance_validation_1.markAttendanceValidation), attendance_controller_1.attendanceController.markAttendance.bind(attendance_controller_1.attendanceController));
 /**
  * @swagger
+ * /hr/attendance/admin/upsert:
+ *   post:
+ *     summary: Create or update attendance for a user on a specific date (HR override)
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - date
+ *               - status
+ *               - shift
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               status:
+ *                 type: string
+ *                 enum: [PRESENT, ABSENT, HALF_DAY, LATE, WFH, ON_LEAVE]
+ *               shift:
+ *                 type: string
+ *                 enum: [MORNING, EVENING, NIGHT, FLEXIBLE]
+ *               checkInTime:
+ *                 type: string
+ *                 format: date-time
+ *               checkOutTime:
+ *                 type: string
+ *                 format: date-time
+ *               remarks:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Attendance created/updated successfully
+ */
+router.post('/admin/upsert', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(attendance_validation_1.adminUpsertAttendanceValidation), attendance_controller_1.attendanceController.upsertAttendanceByAdmin.bind(attendance_controller_1.attendanceController));
+/**
+ * Cleaner HR URL to update attendance by attendanceId
+ * PUT /hr/attendance/update/{attendanceId}
+ */
+router.put('/update/:id', (0, auth_middleware_1.authorize)(constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN), (0, validation_1.validate)(attendance_validation_1.updateAttendanceValidation), attendance_controller_1.attendanceController.updateAttendance.bind(attendance_controller_1.attendanceController));
+/**
+ * @swagger
  * /hr/attendance/{id}:
  *   put:
  *     summary: Update attendance

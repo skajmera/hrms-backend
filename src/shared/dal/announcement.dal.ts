@@ -1,6 +1,7 @@
 import { AnnouncementModel } from '../models/announcement.model';
 import { IAnnouncement, IAnnouncementCreateInput } from '../interfaces/announcement.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
+import { EMPLOYMENT_STATUS } from '../../config/constants';
 
 export class AnnouncementDAL {
   /**
@@ -296,7 +297,19 @@ export class AnnouncementDAL {
           from: 'users',
           localField: 'targetAudience.specificUsers',
           foreignField: '_id',
-          pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1, 'professionalDetails.designation': 1, 'professionalDetails.department': 1, 'professionalDetails.joiningDate': 1 } }],
+          pipeline: [{
+            $project: {
+              firstName: 1,
+              lastName: 1,
+              fullName: { $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }] },
+              profilePicture: 1,
+              isActive: 1,
+              'professionalDetails.employmentStatus': 1,
+              'professionalDetails.designation': 1,
+              'professionalDetails.department': 1,
+              'professionalDetails.joiningDate': 1
+            }
+          }],
           as: 'targetEmployees'
         }
       },
@@ -311,6 +324,24 @@ export class AnnouncementDAL {
       },
       { $addFields: { createdBy: { $arrayElemAt: ['$createdByUser', 0] } } },
       { $project: { createdByUser: 0 } },
+      // Drop announcements where all target employees are inactive / non-primary statuses
+      {
+        $addFields: {
+          targetEmployees: {
+            $filter: {
+              input: '$targetEmployees',
+              as: 'emp',
+              cond: {
+                $and: [
+                  { $eq: ['$$emp.isActive', true] },
+                  { $in: ['$$emp.professionalDetails.employmentStatus', [EMPLOYMENT_STATUS.ACTIVE, EMPLOYMENT_STATUS.PROBATION]] }
+                ]
+              }
+            }
+          }
+        }
+      },
+      { $match: { 'targetEmployees.0': { $exists: true } } },
       { $sort: { isPinned: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1 } }
     ];
 

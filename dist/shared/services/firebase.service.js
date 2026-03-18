@@ -32,14 +32,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.firebaseService = void 0;
 const admin = __importStar(require("firebase-admin"));
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
 class FirebaseService {
     constructor() {
         this.isInitialized = false;
@@ -47,19 +42,43 @@ class FirebaseService {
     }
     init() {
         try {
-            // Look for the service account key inside the src/config folder
-            const serviceAccountPath = path_1.default.join(process.cwd(), 'src', 'config', 'service-account-key.json');
-            if (fs_1.default.existsSync(serviceAccountPath)) {
-                const serviceAccount = require(serviceAccountPath);
+            /**
+             * Preferred: initialize from environment variables so that
+             * credentials are not stored in the repository.
+             *
+             * Required env vars:
+             *  - FIREBASE_PROJECT_ID
+             *  - FIREBASE_CLIENT_EMAIL
+             *  - FIREBASE_PRIVATE_KEY (with \\n for newlines)
+             */
+            const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, GOOGLE_APPLICATION_CREDENTIALS } = process.env;
+            if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && FIREBASE_PRIVATE_KEY) {
+                const privateKey = FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
                 admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount)
+                    credential: admin.credential.cert({
+                        projectId: FIREBASE_PROJECT_ID,
+                        clientEmail: FIREBASE_CLIENT_EMAIL,
+                        privateKey
+                    })
                 });
                 this.isInitialized = true;
-                console.log('Firebase Admin SDK initialized successfully');
+                console.log('Firebase Admin SDK initialized using environment variables');
+                return;
             }
-            else {
-                console.warn('⚠️ Firebase service-account-key.json not found. Push notifications are disabled. Please place the file in the "src/config" folder.');
+            /**
+             * Secondary option: rely on Google Application Default Credentials.
+             * This works when GOOGLE_APPLICATION_CREDENTIALS is set or when
+             * running on GCP with a service account attached.
+             */
+            if (GOOGLE_APPLICATION_CREDENTIALS) {
+                admin.initializeApp({
+                    credential: admin.credential.applicationDefault()
+                });
+                this.isInitialized = true;
+                console.log('Firebase Admin SDK initialized using application default credentials');
+                return;
             }
+            console.warn('⚠️ Firebase credentials not configured. Set FIREBASE_* env vars or GOOGLE_APPLICATION_CREDENTIALS. Push notifications are disabled.');
         }
         catch (error) {
             console.error('Failed to initialize Firebase Admin SDK:', error);

@@ -21,9 +21,11 @@ export class UserController {
    */
   async createUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log('[CreateEmployee][RawBody]', { body: req.body, files: req.files, file: req.file });
       const createData = parseJsonFields(req.body);
-      console.log("req.body : ", req.body)
+      console.log('[CreateEmployee][ParsedPayload]', { education: createData.education, experience: createData.experience });
       createData.createdBy = req.user._id.toString();
+      if (!createData.organizationId && req.user?.organizationId) createData.organizationId = req.user.organizationId;
       if (req.file) {
         createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }
@@ -41,6 +43,7 @@ export class UserController {
     try {
       const createData = parseJsonFields(req.body);
       createData.createdBy = req.user._id.toString();
+      if (!createData.organizationId && req.user?.organizationId) createData.organizationId = req.user.organizationId;
       if (req.file) {
         createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }
@@ -90,10 +93,12 @@ export class UserController {
     try {
       const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
 
-      // Support excludeRole=EMPLOYEE or comma-separated excludeRole=EMPLOYEE,MANAGER
-      if (excludeRole) {
-        const rolesToExclude = (excludeRole as string).split(',').map(r => r.trim().toUpperCase());
-        (filters as any).role = { $nin: rolesToExclude };
+      const rawExclude = (excludeRole as string | undefined) || 'SUPER_ADMIN';
+      if (rawExclude) {
+        const rolesToExclude = rawExclude.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
+        if (rolesToExclude.length) {
+          (filters as any).role = { $nin: rolesToExclude };
+        }
       }
 
       const result = await userService.getAllUsers(filters, {
@@ -117,12 +122,55 @@ export class UserController {
   }
 
   /**
+   * Get all users including drafts, with status field
+   */
+  async getAllUsersWithDraft(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', excludeRole, ...filters } = req.query;
+
+      const rawExclude = (excludeRole as string | undefined) || 'SUPER_ADMIN';
+      if (rawExclude) {
+        const rolesToExclude = rawExclude.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
+        if (rolesToExclude.length) {
+          (filters as any).role = { $nin: rolesToExclude };
+        }
+      }
+
+      const result = await userService.getAllUsersWithDrafts(filters, {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
+      });
+
+      const dataWithStatus = result.users.map((u: any) => ({
+        ...u.toObject?.() ?? u,
+        status: u.professionalDetails?.employmentStatus || 'ACTIVE'
+      }));
+
+      sendPaginatedResponse(
+        res,
+        dataWithStatus,
+        result.total,
+        Number(page),
+        Number(limit),
+        'Users (including drafts) retrieved successfully'
+      );
+    } catch (error: any) {
+      sendErrorResponse(res, error.message);
+    }
+  }
+
+  /**
    * Update user
    */
   async updateUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log('[UpdateEmployee][RawBody]', { params: req.params, body: req.body, files: req.files, file: req.file });
       const updateData = parseJsonFields(req.body);
+      console.log('[UpdateEmployee][ParsedPayload]', { education: updateData.education, experience: updateData.experience });
       updateData.updatedBy = req.user._id.toString();
+      if (!updateData.organizationId && req.user?.organizationId) updateData.organizationId = req.user.organizationId;
       if (req.file) {
         updateData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }

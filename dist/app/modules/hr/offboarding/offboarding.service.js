@@ -176,6 +176,18 @@ class OffboardingService {
         return await offboarding_dal_1.OffboardingDAL.updateById(offboardingId, updateData);
     }
     /**
+     * Schedule exit interview
+     */
+    static async scheduleExitInterview(offboardingId, exitInterviewDate, exitInterviewNotes) {
+        const offboarding = await this.getResignationById(offboardingId);
+        const updateData = {
+            exitInterviewScheduled: true,
+            exitInterviewDate: new Date(exitInterviewDate),
+            exitInterviewNotes
+        };
+        return await offboarding_dal_1.OffboardingDAL.updateById(offboardingId, updateData);
+    }
+    /**
      * Get pending resignations
      */
     static async getPendingResignations() {

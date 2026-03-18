@@ -148,7 +148,7 @@ router.get('/user/:userId', payroll_controller_1.PayrollController.getUserPayrol
  *         name: status
  *         schema:
  *           type: string
- *           enum: [PENDING, PROCESSING, PAID, FAILED]
+ *           enum: [DRAFT, PENDING, GENERATED, PROCESSING, PAID, FAILED]
  *       - in: query
  *         name: page
  *         schema:

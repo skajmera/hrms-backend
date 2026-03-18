@@ -22,6 +22,10 @@ export declare class UserController {
      */
     getAllUsers(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
     /**
+     * Get all users including drafts, with status field
+     */
+    getAllUsersWithDraft(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;
+    /**
      * Update user
      */
     updateUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void>;

@@ -1,10 +1,42 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PDFGenerator = void 0;
-const pdfkit_1 = __importDefault(require("pdfkit"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 class PDFGenerator {
@@ -13,241 +45,213 @@ class PDFGenerator {
      */
     static async generateSalarySlip(data) {
         const { payroll, user } = data;
-        return new Promise((resolve, reject) => {
-            try {
-                // Create uploads directory if not exists
-                const uploadDir = path_1.default.join(process.cwd(), 'uploads', 'payslips');
-                if (!fs_1.default.existsSync(uploadDir)) {
-                    fs_1.default.mkdirSync(uploadDir, { recursive: true });
-                }
-                // Generate filename
-                const fileName = `payslip_${user.professionalDetails.employeeId}_${payroll.month}_${payroll.year}.pdf`;
-                const filePath = path_1.default.join(uploadDir, fileName);
-                // Create PDF document
-                const doc = new pdfkit_1.default({
-                    size: 'A4',
-                    margins: { top: 50, bottom: 50, left: 50, right: 50 }
-                });
-                // Pipe to file
-                const stream = fs_1.default.createWriteStream(filePath);
-                doc.pipe(stream);
-                // Add content
-                this.addHeader(doc, user, payroll);
-                this.addEmployeeDetails(doc, user, payroll);
-                this.addSalaryDetails(doc, payroll);
-                this.addFooter(doc);
-                // Finalize PDF
-                doc.end();
-                stream.on('finish', () => {
-                    resolve(`/uploads/payslips/${fileName}`);
-                });
-                stream.on('error', (error) => {
-                    reject(error);
-                });
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
-    }
-    /**
-     * Add header to PDF
-     */
-    static addHeader(doc, user, payroll) {
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'];
-        // Company logo/name
-        doc
-            .fontSize(20)
-            .font('Helvetica-Bold')
-            .text('BRAIN INVENTORY', 50, 50, { align: 'center' })
-            .fontSize(10)
-            .font('Helvetica')
-            .text('Human Resource Management System', { align: 'center' })
-            .moveDown();
-        // Payslip title
-        doc
-            .fontSize(16)
-            .font('Helvetica-Bold')
-            .text('SALARY SLIP', { align: 'center' })
-            .fontSize(12)
-            .font('Helvetica')
-            .text(`${monthNames[payroll.month - 1]} ${payroll.year}`, { align: 'center' })
-            .moveDown(2);
-        // Draw line
-        doc
-            .moveTo(50, doc.y)
-            .lineTo(545, doc.y)
-            .stroke();
-        doc.moveDown();
-    }
-    /**
-     * Add employee details
-     */
-    static addEmployeeDetails(doc, user, payroll) {
-        const startY = doc.y;
-        // Left column
-        doc
-            .fontSize(10)
-            .font('Helvetica-Bold')
-            .text('Employee Name:', 50, startY)
-            .font('Helvetica')
-            .text(user.getFullName(), 150, startY)
-            .font('Helvetica-Bold')
-            .text('Employee ID:', 50, startY + 20)
-            .font('Helvetica')
-            .text(user.professionalDetails.employeeId, 150, startY + 20)
-            .font('Helvetica-Bold')
-            .text('Designation:', 50, startY + 40)
-            .font('Helvetica')
-            .text(user.professionalDetails.designation, 150, startY + 40);
-        // Right column
-        doc
-            .font('Helvetica-Bold')
-            .text('Department:', 320, startY)
-            .font('Helvetica')
-            .text(user.professionalDetails.department?.name || 'N/A', 420, startY)
-            .font('Helvetica-Bold')
-            .text('Date of Joining:', 320, startY + 20)
-            .font('Helvetica')
-            .text(new Date(user.professionalDetails.joiningDate).toLocaleDateString(), 420, startY + 20)
-            .font('Helvetica-Bold')
-            .text('Pay Date:', 320, startY + 40)
-            .font('Helvetica')
-            .text(payroll.paymentDate ? new Date(payroll.paymentDate).toLocaleDateString() : 'Pending', 420, startY + 40);
-        doc.moveDown(4);
-        // Draw line
-        doc
-            .moveTo(50, doc.y)
-            .lineTo(545, doc.y)
-            .stroke();
-        doc.moveDown();
-    }
-    /**
-     * Add salary details table
-     */
-    static addSalaryDetails(doc, payroll) {
-        const tableTop = doc.y;
-        const col1X = 50;
-        const col2X = 300;
-        const col3X = 400;
-        const col4X = 500;
-        // Table header
-        doc
-            .fontSize(10)
-            .font('Helvetica-Bold')
-            .fillColor('#333333')
-            .rect(50, tableTop, 495, 25)
-            .fill('#E8F4FD')
-            .fillColor('#000000')
-            .text('Earnings', col1X + 10, tableTop + 8)
-            .text('Amount (₹)', col2X + 10, tableTop + 8)
-            .text('Deductions', col3X + 10, tableTop + 8)
-            .text('Amount (₹)', col4X + 10, tableTop + 8);
-        doc.moveDown();
-        let currentY = tableTop + 35;
-        // Earnings
-        const earnings = [
-            { label: 'Basic Salary', value: payroll.salaryComponents.basic },
-            { label: 'HRA', value: payroll.salaryComponents.hra },
-            { label: 'Transport Allowance', value: payroll.salaryComponents.allowances.transport },
-            { label: 'Medical Allowance', value: payroll.salaryComponents.allowances.medical },
-            { label: 'Special Allowance', value: payroll.salaryComponents.allowances.special },
-            { label: 'Food Allowance', value: payroll.salaryComponents.allowances.foodAllowance },
-            { label: 'Other Allowances', value: payroll.salaryComponents.allowances.other },
-            { label: 'Bonus', value: payroll.bonus || 0 },
-            { label: 'Incentives', value: payroll.incentives || 0 },
-            { label: 'Overtime', value: payroll.overtimeAmount || 0 },
-        ];
-        // Deductions
-        const deductions = [
-            { label: 'Provident Fund', value: payroll.salaryComponents.deductions.providentFund },
-            { label: 'Professional Tax', value: payroll.salaryComponents.deductions.professionalTax },
-            { label: 'Income Tax', value: payroll.salaryComponents.deductions.incomeTax },
-            { label: 'ESI', value: payroll.salaryComponents.deductions.esi || 0 },
-            { label: 'Loan Deduction', value: payroll.salaryComponents.deductions.loanDeduction || 0 },
-            { label: 'Other Deductions', value: payroll.salaryComponents.deductions.other },
-        ];
-        doc.font('Helvetica');
-        const maxRows = Math.max(earnings.length, deductions.length);
-        for (let i = 0; i < maxRows; i++) {
-            // Earnings
-            if (i < earnings.length) {
-                doc
-                    .text(earnings[i].label, col1X + 10, currentY)
-                    .text((earnings[i]?.value ?? 0).toFixed(2), col2X + 10, currentY, { align: 'right', width: 80 });
-            }
-            // Deductions
-            if (i < deductions.length) {
-                doc
-                    .text(deductions[i].label, col3X + 10, currentY)
-                    .text((deductions[i]?.value ?? 0).toFixed(2), col4X + 10, currentY, { align: 'right', width: 80 });
-            }
-            currentY += 20;
+        const uploadDir = path_1.default.join(process.cwd(), 'uploads', 'payslips');
+        if (!fs_1.default.existsSync(uploadDir))
+            fs_1.default.mkdirSync(uploadDir, { recursive: true });
+        const fileName = `payslip_${user.professionalDetails.employeeId}_${payroll.month}_${payroll.year}.pdf`;
+        const filePath = path_1.default.join(uploadDir, fileName);
+        const html = this.buildPayslipHtml({ payroll, user });
+        // Lazy import to keep startup light
+        const puppeteer = await Promise.resolve().then(() => __importStar(require('puppeteer')));
+        const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        try {
+            const page = await browser.newPage();
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+            await page.pdf({
+                path: filePath,
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }
+            });
+            return `/uploads/payslips/${fileName}`;
         }
-        // Draw line
-        doc
-            .moveTo(50, currentY)
-            .lineTo(545, currentY)
-            .stroke();
-        currentY += 10;
-        // Totals
-        doc
-            .font('Helvetica-Bold')
-            .text('Gross Salary', col1X + 10, currentY)
-            .text(payroll.grossSalary.toFixed(2), col2X + 10, currentY, { align: 'right', width: 80 })
-            .text('Total Deductions', col3X + 10, currentY)
-            .text(payroll.totalDeductions.toFixed(2), col4X + 10, currentY, { align: 'right', width: 80 });
-        currentY += 25;
-        // Draw thick line
-        doc
-            .moveTo(50, currentY)
-            .lineTo(545, currentY)
-            .lineWidth(2)
-            .stroke()
-            .lineWidth(1);
-        currentY += 15;
-        // Net Salary
-        doc
-            .fontSize(12)
-            .font('Helvetica-Bold')
-            .fillColor('#1E40AF')
-            .text('NET SALARY', col1X + 10, currentY)
-            .text(`₹ ${payroll.netSalary.toFixed(2)}`, col4X + 10, currentY, { align: 'right', width: 80 })
-            .fillColor('#000000');
-        currentY += 30;
-        // Attendance details
-        doc
-            .fontSize(10)
-            .font('Helvetica-Bold')
-            .text('Attendance Summary:', 50, currentY);
-        currentY += 20;
-        doc
-            .font('Helvetica')
-            .text(`Working Days: ${payroll.workingDays}`, 70, currentY)
-            .text(`Present Days: ${payroll.presentDays}`, 200, currentY)
-            .text(`Absent Days: ${payroll.absentDays}`, 330, currentY)
-            .text(`Leave Days: ${payroll.paidLeaveDays + payroll.unpaidLeaveDays}`, 460, currentY);
-        doc.moveDown(3);
+        finally {
+            await browser.close();
+        }
     }
-    /**
-     * Add footer
-     */
-    static addFooter(doc) {
-        const pageHeight = 842; // A4 height in points
-        const footerY = pageHeight - 100;
-        doc
-            .fontSize(9)
-            .font('Helvetica-Oblique')
-            .fillColor('#666666')
-            .text('This is a computer-generated document and does not require a signature.', 50, footerY, { align: 'center', width: 495 })
-            .moveDown()
-            .text('© Brain Inventory - HRMS', { align: 'center' })
-            .fillColor('#000000');
-        // Add page number
-        doc
-            .fontSize(8)
-            .text(`Page 1 of 1`, 50, footerY + 40, { align: 'center', width: 495 });
+    static money(n) {
+        const v = Number(n ?? 0);
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(isFinite(v) ? v : 0);
+    }
+    static escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    static wordsForINR(amount) {
+        const a = Math.floor(Math.max(0, Number(amount) || 0));
+        if (!a)
+            return 'Zero rupees only';
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const two = (n) => (n < 20 ? ones[n] : `${tens[Math.floor(n / 10)]}${n % 10 ? ` ${ones[n % 10]}` : ''}`.trim());
+        const three = (n) => (n >= 100 ? `${ones[Math.floor(n / 100)]} Hundred${n % 100 ? ` ${two(n % 100)}` : ''}`.trim() : two(n));
+        const parts = [];
+        const crore = Math.floor(a / 10000000);
+        const lakh = Math.floor((a % 10000000) / 100000);
+        const thousand = Math.floor((a % 100000) / 1000);
+        const rest = a % 1000;
+        if (crore)
+            parts.push(`${three(crore)} Crore`);
+        if (lakh)
+            parts.push(`${three(lakh)} Lakh`);
+        if (thousand)
+            parts.push(`${three(thousand)} Thousand`);
+        if (rest)
+            parts.push(three(rest));
+        return `${parts.join(' ')} rupees only`;
+    }
+    static buildPayslipHtml({ payroll, user }) {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const payPeriod = `${monthNames[(payroll.month || 1) - 1]} ${payroll.year}`;
+        const payDate = payroll.paymentDate ? new Date(payroll.paymentDate).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+        const paidDays = (payroll.presentDays || 0) + (payroll.paidLeaveDays || 0);
+        const lop = (payroll.unpaidLeaveDays || 0) + (payroll.absentDays || 0);
+        const earnings = [
+            { label: 'Basic', amount: payroll.salaryComponents?.basic ?? 0 },
+            { label: 'House Rent Allowance', amount: payroll.salaryComponents?.hra ?? 0 },
+            { label: 'Transport Allowance', amount: payroll.salaryComponents?.allowances?.transport ?? 0 },
+            { label: 'Medical Allowance', amount: payroll.salaryComponents?.allowances?.medical ?? 0 },
+            { label: 'Conveyance', amount: payroll.salaryComponents?.allowances?.transport ?? 0 },
+            { label: 'Special Allowance', amount: payroll.salaryComponents?.allowances?.special ?? 0 },
+            { label: 'Statutory Bonus', amount: payroll.salaryComponents?.allowances?.statutoryBonus ?? 0 },
+            { label: 'Other Allowance', amount: payroll.salaryComponents?.allowances?.other ?? 0 },
+            ...(payroll.salaryComponents?.customEarnings || []).map((e) => ({ label: e.fieldName, amount: e.fieldValue })),
+            { label: 'Bonus', amount: payroll.bonus ?? 0 },
+            { label: 'Incentives', amount: payroll.incentives ?? 0 },
+            { label: 'Overtime', amount: payroll.overtimeAmount ?? 0 }
+        ].filter((x) => Number(x.amount || 0) !== 0);
+        const deductions = [
+            { label: 'Provident Fund', amount: payroll.salaryComponents?.deductions?.providentFund ?? 0 },
+            { label: 'Professional Tax', amount: payroll.salaryComponents?.deductions?.professionalTax ?? 0 },
+            { label: 'Income Tax', amount: payroll.salaryComponents?.deductions?.incomeTax ?? 0 },
+            { label: 'ESI', amount: payroll.salaryComponents?.deductions?.esi ?? 0 },
+            { label: 'Leave Without Pay', amount: payroll.salaryComponents?.deductions?.leaveWithoutPay ?? 0 },
+            { label: 'Late Without Pay', amount: payroll.salaryComponents?.deductions?.lateWithoutPay ?? 0 },
+            { label: 'Late Arrival Deductions', amount: payroll.salaryComponents?.deductions?.lateArrivalDeductions ?? 0 },
+            { label: 'Loan Deduction', amount: payroll.salaryComponents?.deductions?.loanDeduction ?? 0 },
+            { label: 'Other', amount: payroll.salaryComponents?.deductions?.other ?? 0 },
+            ...(payroll.salaryComponents?.customDeductions || []).map((d) => ({ label: d.fieldName, amount: d.fieldValue }))
+        ].filter((x) => Number(x.amount || 0) !== 0);
+        const earningsRows = (earnings.length ? earnings : [{ label: '—', amount: 0 }])
+            .map((e) => `<tr><td>${this.escapeHtml(e.label)}</td><td style="text-align:right;">${this.escapeHtml(this.money(e.amount))}</td></tr>`)
+            .join('');
+        const deductionsRows = (deductions.length ? deductions : [{ label: '—', amount: 0 }])
+            .map((d) => `<tr><td>${this.escapeHtml(d.label)}</td><td style="text-align:right;">${this.escapeHtml(this.money(d.amount))}</td></tr>`)
+            .join('');
+        const companyName = 'Brain Inventory';
+        const companyAddress = 'Shekhar Central, 618 AB Rd, Palasia Square, Indore, Madhya Pradesh, 452001, India';
+        const logoUrl = '';
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payslip</title>
+  <style>
+    @page { margin: 0; }
+    html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #fff; }
+    .container { max-width: 800px; margin: auto; background: #fff; border-radius: 10px; border: 1px solid #ddd; overflow: hidden; }
+    .header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+    .company { display: flex; gap: 15px; align-items: flex-start; }
+    .company img { width: 80px; height: auto; object-fit: contain; }
+    .company h2 { margin: 0; }
+    .company p { font-size: 11px; color: #666; margin: 5px 0 0; max-width: 260px; line-height: 1.35; }
+    .month { text-align: right; }
+    .month p { font-size: 11px; color: #888; margin: 0; }
+    .month h3 { margin: 5px 0 0; font-size: 14px; }
+    .section { padding: 20px; }
+    .summary { display: flex; justify-content: space-between; gap: 20px; }
+    .employee-details p { margin: 7px 0; font-size: 12.5px; }
+    .employee-details span { font-weight: bold; }
+    .net-pay { width: 240px; }
+    .net-pay .net-box { background: #d4edda; padding: 12px 14px; border-left: 4px solid #2ecc71; border-radius: 5px; }
+    .net-pay .net-box h2 { margin: 0; font-size: 18px; line-height: 1.15; }
+    .net-pay .net-box p { margin: 5px 0 0; font-size: 12px; color: #333; }
+    .net-pay .meta { margin-top: 8px; padding-left: 16px; font-size: 12px; color: #333; }
+    .net-pay .meta p { margin: 5px 0 0; }
+    .table-section { display: flex; gap: 20px; padding: 0 20px 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 8px; font-size: 12.5px; }
+    td { padding: 7px 0; font-size: 12.5px; border-bottom: 1px solid #f2f2f2; }
+    tr:last-child td { border-bottom: none; }
+    .totals { background: #f4f6fb; font-weight: bold; }
+    .totals td { padding: 10px 0; border-bottom: none; }
+    .net-total { display: flex; justify-content: space-between; margin: 20px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .net-total .label { padding: 15px; }
+    .net-total .amount { background: #d4edda; padding: 15px 22px; font-weight: bold; font-size: 16px; white-space: nowrap; }
+    .footer { text-align: right; padding: 10px 20px 20px; font-size: 11.5px; color: #555; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="company">
+      ${logoUrl ? `<img src="${this.escapeHtml(logoUrl)}" />` : `<div style="width:80px;"></div>`}
+      <div>
+        <h2>${this.escapeHtml(companyName)}</h2>
+        <p>${this.escapeHtml(companyAddress)}</p>
+      </div>
+    </div>
+    <div class="month">
+      <p>Payslip for the Month</p>
+      <h3>${this.escapeHtml(payPeriod)}</h3>
+    </div>
+  </div>
+
+  <div class="section summary">
+    <div class="employee-details">
+      <p>Employee Name: <span>${this.escapeHtml(user.getFullName())}</span></p>
+      <p>Employee ID: <span>${this.escapeHtml(user.professionalDetails?.employeeId)}</span></p>
+      <p>Pay Period: <span>${this.escapeHtml(payPeriod)}</span></p>
+      <p>Pay Date: <span>${this.escapeHtml(payDate)}</span></p>
+    </div>
+    <div class="net-pay">
+      <div class="net-box">
+        <h2>${this.escapeHtml(this.money(payroll.netSalary))}</h2>
+        <p>Total Net Pay</p>
+      </div>
+      <div class="meta">
+        <p>Paid Days: ${this.escapeHtml(paidDays)}</p>
+        <p>LOP: ${this.escapeHtml(lop)}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <table>
+      <thead>
+        <tr><th>Earnings</th><th style="text-align:right;">Amount</th></tr>
+      </thead>
+      <tbody>
+        ${earningsRows}
+        <tr class="totals"><td>Gross Earnings</td><td style="text-align:right;">${this.escapeHtml(this.money(payroll.grossSalary))}</td></tr>
+      </tbody>
+    </table>
+
+    <table>
+      <thead>
+        <tr><th>Deductions</th><th style="text-align:right;">Amount</th></tr>
+      </thead>
+      <tbody>
+        ${deductionsRows}
+        <tr class="totals"><td>Gross Deductions</td><td style="text-align:right;">${this.escapeHtml(this.money(payroll.totalDeductions))}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="net-total">
+    <div class="label">
+      <strong>TOTAL NET PAYABLE</strong><br/>
+      <small>Gross Earnings - Gross Deductions</small>
+    </div>
+    <div class="amount">${this.escapeHtml(this.money(payroll.netSalary))}</div>
+  </div>
+
+  <div class="footer">
+    Amount in words: <strong>${this.escapeHtml(this.wordsForINR(Number(payroll.netSalary || 0)))}</strong>
+  </div>
+</div>
+</body>
+</html>`;
     }
     /**
      * Generate multiple payslips
