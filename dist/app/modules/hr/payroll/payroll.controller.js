@@ -14,15 +14,11 @@
 //       sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
 //     }
 //   }
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PayrollController = void 0;
 const payroll_service_1 = require("./payroll.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
-const path_1 = __importDefault(require("path"));
 /**
  * Payroll Controller
  * Handles HTTP requests for payroll operations
@@ -241,13 +237,10 @@ class PayrollController {
      */
     static async downloadPayslip(req, res, next) {
         try {
-            const pdfPath = await payroll_service_1.PayrollService.downloadPayslip(req.params.id);
-            const fullPath = path_1.default.join(process.cwd(), pdfPath);
-            res.download(fullPath, (err) => {
-                if (err) {
-                    (0, response_1.sendErrorResponse)(res, 'Failed to download payslip', constants_1.HTTP_STATUS.INTERNAL_SERVER_ERROR);
-                }
-            });
+            const { buffer, fileName } = await payroll_service_1.PayrollService.downloadPayslip(req.params.id);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+            res.status(200).send(buffer);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.NOT_FOUND);

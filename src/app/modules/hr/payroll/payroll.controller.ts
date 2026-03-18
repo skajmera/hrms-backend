@@ -118,7 +118,6 @@ import { Request, Response, NextFunction } from 'express';
 import { PayrollService } from './payroll.service';
 import { sendSuccessResponse, sendErrorResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
-import path from 'path';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 /**
  * Payroll Controller
@@ -396,14 +395,10 @@ export class PayrollController {
    */
   static async downloadPayslip(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const pdfPath = await PayrollService.downloadPayslip(req.params.id);
-      const fullPath = path.join(process.cwd(), pdfPath);
-      
-      res.download(fullPath, (err) => {
-        if (err) {
-          sendErrorResponse(res, 'Failed to download payslip', HTTP_STATUS.INTERNAL_SERVER_ERROR);
-        }
-      });
+      const { buffer, fileName } = await PayrollService.downloadPayslip(req.params.id);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.status(200).send(buffer);
     } catch (error: any) {
       sendErrorResponse(res, error.message, HTTP_STATUS.NOT_FOUND);
     }

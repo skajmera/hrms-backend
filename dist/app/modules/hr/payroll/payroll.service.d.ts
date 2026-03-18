@@ -79,7 +79,10 @@ export declare class PayrollService {
     /**
      * Download payslip
      */
-    static downloadPayslip(payrollId: string): Promise<string>;
+    static downloadPayslip(payrollId: string): Promise<{
+        buffer: Buffer;
+        fileName: string;
+    }>;
     /**
      * Regenerate payslip
      */

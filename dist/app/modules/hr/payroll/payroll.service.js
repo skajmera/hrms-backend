@@ -388,21 +388,13 @@ class PayrollService {
         if (!payroll) {
             throw new Error('Payroll not found');
         }
-        if (!payroll.payslipPath) {
-            // Generate PDF if not exists
-            const uid = payroll.userId?._id?.toString?.() ?? payroll.userId?.toString?.();
-            if (!uid)
-                throw new Error('Payroll userId missing');
-            const user = await user_dal_1.userDAL.findById(uid);
-            if (!user) {
-                throw new Error('User not found');
-            }
-            const pdfPath = await pdfGenerator_1.PDFGenerator.generateSalarySlip({ payroll, user });
-            payroll.payslipPath = pdfPath;
-            await payroll.save();
-            return pdfPath;
-        }
-        return payroll.payslipPath;
+        const uid = payroll.userId?._id?.toString?.() ?? payroll.userId?.toString?.();
+        if (!uid)
+            throw new Error('Payroll userId missing');
+        const user = await user_dal_1.userDAL.findById(uid);
+        if (!user)
+            throw new Error('User not found');
+        return await pdfGenerator_1.PDFGenerator.generateSalarySlipBuffer({ payroll, user });
     }
     /**
      * Regenerate payslip

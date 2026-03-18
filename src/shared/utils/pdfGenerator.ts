@@ -9,6 +9,30 @@ interface PayslipData {
 }
 
 export class PDFGenerator {
+  private static async renderPdfBuffer(html: string): Promise<Buffer> {
+    const puppeteer = await import('puppeteer');
+    const args = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote', '--single-process', '--disable-gpu'];
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || (puppeteer as any).executablePath?.();
+    try {
+      const browser = await puppeteer.launch({ args, executablePath, headless: 'new' as any });
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'load' });
+        const buf = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }
+        });
+        return Buffer.from(buf);
+      } finally {
+        await browser.close();
+      }
+    } catch (e: any) {
+      console.error('[PayslipPDF] Failed to generate PDF:', e?.message || e);
+      throw new Error('Payslip PDF generation failed on server. If running on Render, ensure Chromium can launch (install deps or set PUPPETEER_EXECUTABLE_PATH).');
+    }
+  }
+
   /**
    * Generate salary slip PDF
    */
@@ -23,29 +47,17 @@ export class PDFGenerator {
 
     const html = this.buildPayslipHtml({ payroll, user });
 
-    // Lazy import to keep startup light
-    const puppeteer = await import('puppeteer');
-    const args = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--no-zygote', '--single-process', '--disable-gpu'];
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || (puppeteer as any).executablePath?.();
-    try {
-      const browser = await puppeteer.launch({ args, executablePath, headless: 'new' as any });
-      try {
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'load' });
-        await page.pdf({
-          path: filePath,
-          format: 'A4',
-          printBackground: true,
-          margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }
-        });
-        return `/uploads/payslips/${fileName}`;
-      } finally {
-        await browser.close();
-      }
-    } catch (e: any) {
-      console.error('[PayslipPDF] Failed to generate PDF:', e?.message || e);
-      throw new Error('Payslip PDF generation failed on server. If running on Render, ensure Chromium can launch (install deps or set PUPPETEER_EXECUTABLE_PATH).');
-    }
+    const buf = await this.renderPdfBuffer(html);
+    fs.writeFileSync(filePath, buf);
+    return `/uploads/payslips/${fileName}`;
+  }
+
+  static async generateSalarySlipBuffer(data: PayslipData): Promise<{ buffer: Buffer; fileName: string }> {
+    const { payroll, user } = data;
+    const fileName = `payslip_${user.professionalDetails.employeeId}_${payroll.month}_${payroll.year}.pdf`;
+    const html = this.buildPayslipHtml({ payroll, user });
+    const buffer = await this.renderPdfBuffer(html);
+    return { buffer, fileName };
   }
 
   private static money(n: any) {

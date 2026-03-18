@@ -477,30 +477,18 @@ export class PayrollService {
   /**
    * Download payslip
    */
-  static async downloadPayslip(payrollId: string): Promise<string> {
+  static async downloadPayslip(payrollId: string): Promise<{ buffer: Buffer; fileName: string }> {
     const payroll = await payrollDAL.findById(payrollId);
 
     if (!payroll) {
       throw new Error('Payroll not found');
     }
 
-    if (!payroll.payslipPath) {
-      // Generate PDF if not exists
-      const uid = (payroll.userId as any)?._id?.toString?.() ?? (payroll.userId as any)?.toString?.();
-      if (!uid) throw new Error('Payroll userId missing');
-      const user = await userDAL.findById(uid);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      const pdfPath = await PDFGenerator.generateSalarySlip({ payroll, user });
-      payroll.payslipPath = pdfPath;
-      await payroll.save();
-
-      return pdfPath;
-    }
-
-    return payroll.payslipPath;
+    const uid = (payroll.userId as any)?._id?.toString?.() ?? (payroll.userId as any)?.toString?.();
+    if (!uid) throw new Error('Payroll userId missing');
+    const user = await userDAL.findById(uid);
+    if (!user) throw new Error('User not found');
+    return await PDFGenerator.generateSalarySlipBuffer({ payroll, user });
   }
 
   /**
