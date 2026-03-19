@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PermissionsController = void 0;
 const permissions_service_1 = require("./permissions.service");
 const response_1 = require("../../../../shared/utils/response");
+const util_1 = __importDefault(require("util"));
 /**
  * Permissions Controller
  * Handles HTTP requests for user permissions
@@ -14,6 +18,7 @@ class PermissionsController {
      */
     static async inviteUser(req, res, next) {
         try {
+            console.log(util_1.default.inspect({ tag: '[HRPermissions][Invite][Body]', invitedBy: req.user?._id?.toString?.(), body: req.body }, { depth: null, colors: true, maxArrayLength: null, compact: false }));
             const inviteData = req.body;
             const invitedBy = req.user?._id;
             const permission = await permissions_service_1.permissionsService.inviteUser(inviteData, invitedBy);
@@ -107,6 +112,7 @@ class PermissionsController {
     static async updatePermissions(req, res, next) {
         try {
             const { userId } = req.params;
+            console.log(util_1.default.inspect({ tag: '[HRPermissions][Update][Body]', userId, updatedBy: req.user?._id?.toString?.(), body: req.body }, { depth: null, colors: true, maxArrayLength: null, compact: false }));
             const updateData = {
                 ...req.body,
                 invitedBy: req.user?._id

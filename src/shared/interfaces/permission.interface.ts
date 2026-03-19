@@ -64,6 +64,13 @@ export interface IUserPermission extends Document {
       view: boolean;
       edit: boolean;
     };
+    settings: {
+      companyInfo: { view: boolean; edit: boolean; fullAccess: boolean };
+      departments: { view: boolean; edit: boolean; fullAccess: boolean };
+      designations: { view: boolean; edit: boolean; fullAccess: boolean };
+      workSchedule: { view: boolean; edit: boolean; fullAccess: boolean };
+      security: { view: boolean; edit: boolean; fullAccess: boolean };
+    };
   };
   
   isActive: boolean;

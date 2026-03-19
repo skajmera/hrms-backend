@@ -714,7 +714,11 @@ export class UserDAL {
             {
               $project: {
                 checkInTime: 1,
-                isLate: 1
+                checkOutTime: 1,
+                shift: 1,
+                isLate: 1,
+                workingHours: 1,
+                overtimeHours: 1
               }
             }
           ],
@@ -759,7 +763,11 @@ export class UserDAL {
           "professionalDetails.employeeId": 1,
           "professionalDetails.department": 1,
           attendanceStatus: 1,
-          checkInTime: "$todayAttendance.checkInTime"
+          shift: "$todayAttendance.shift",
+          checkInTime: "$todayAttendance.checkInTime",
+          checkOutTime: "$todayAttendance.checkOutTime",
+          workingHours: "$todayAttendance.workingHours",
+          overtimeHours: "$todayAttendance.overtimeHours"
         }
       }
     ]);

@@ -71,7 +71,14 @@ const UserPermissionSchema = new mongoose_1.Schema({
         offboarding: PermissionSubSchema,
         payroll: PermissionSubSchema,
         announcements: PermissionSubSchema,
-        usersPermissions: PermissionSubSchema
+        usersPermissions: PermissionSubSchema,
+        settings: {
+            companyInfo: PermissionSubSchema,
+            departments: PermissionSubSchema,
+            designations: PermissionSubSchema,
+            workSchedule: PermissionSubSchema,
+            security: PermissionSubSchema
+        }
     },
     isActive: {
         type: Boolean,

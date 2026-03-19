@@ -152,7 +152,14 @@ class PermissionsService {
             offboarding: { fullAccess: false, view: false, edit: false },
             payroll: { fullAccess: false, view: false, edit: false },
             announcements: { fullAccess: false, view: false, edit: false },
-            usersPermissions: { fullAccess: false, view: false, edit: false }
+            usersPermissions: { fullAccess: false, view: false, edit: false },
+            settings: {
+                companyInfo: { fullAccess: false, view: false, edit: false },
+                departments: { fullAccess: false, view: false, edit: false },
+                designations: { fullAccess: false, view: false, edit: false },
+                workSchedule: { fullAccess: false, view: false, edit: false },
+                security: { fullAccess: false, view: false, edit: false }
+            }
         };
         // Admin gets full access to everything
         if (role === 'SUPER_ADMIN' || role === 'HR_ADMIN') {
@@ -172,7 +179,14 @@ class PermissionsService {
                 offboarding: { fullAccess: true, view: true, edit: true },
                 payroll: { fullAccess: true, view: true, edit: true },
                 announcements: { fullAccess: true, view: true, edit: true },
-                usersPermissions: { fullAccess: true, view: true, edit: true }
+                usersPermissions: { fullAccess: true, view: true, edit: true },
+                settings: {
+                    companyInfo: { fullAccess: true, view: true, edit: true },
+                    departments: { fullAccess: true, view: true, edit: true },
+                    designations: { fullAccess: true, view: true, edit: true },
+                    workSchedule: { fullAccess: true, view: true, edit: true },
+                    security: { fullAccess: true, view: true, edit: true }
+                }
             };
         }
         // Manager gets view and edit access to team-related modules
@@ -193,7 +207,14 @@ class PermissionsService {
                 offboarding: { fullAccess: false, view: true, edit: false },
                 payroll: { fullAccess: false, view: true, edit: false },
                 announcements: { fullAccess: false, view: true, edit: false },
-                usersPermissions: { fullAccess: false, view: false, edit: false }
+                usersPermissions: { fullAccess: false, view: false, edit: false },
+                settings: {
+                    companyInfo: { fullAccess: false, view: false, edit: false },
+                    departments: { fullAccess: false, view: false, edit: false },
+                    designations: { fullAccess: false, view: false, edit: false },
+                    workSchedule: { fullAccess: false, view: false, edit: false },
+                    security: { fullAccess: false, view: false, edit: false }
+                }
             };
         }
         // Employee gets only view access to their own data
