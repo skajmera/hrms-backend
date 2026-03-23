@@ -92,6 +92,7 @@ export interface IUser extends Document {
     };
     currentAddress?: IAddress;
     permanentAddress?: IAddress;
+    sameAsPermanentAddress?: boolean;
     professionalDetails?: IProfessionalDetails | any;
     education?: IEducation[];
     experience?: IExperience[];
@@ -135,6 +136,8 @@ export interface IUserCreateInput {
     gender?: 'MALE' | 'FEMALE' | 'OTHER';
     role: keyof typeof USER_ROLES;
     currentAddress?: IAddress;
+    permanentAddress?: IAddress;
+    sameAsPermanentAddress?: boolean;
     professionalDetails?: IProfessionalDetails | any;
 }
 export interface IUserUpdateInput {
@@ -151,6 +154,7 @@ export interface IUserUpdateInput {
     profilePicture?: string;
     currentAddress?: IAddress;
     permanentAddress?: IAddress;
+    sameAsPermanentAddress?: boolean;
     education?: IEducation[];
     experience?: IExperience[];
     emergencyContact?: {

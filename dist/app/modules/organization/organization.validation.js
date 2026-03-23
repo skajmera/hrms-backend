@@ -70,7 +70,7 @@ OrganizationValidation.updateOfficeLocation = [
  * Validation for adding WiFi network
  */
 OrganizationValidation.addWifiNetwork = [
-    (0, express_validator_1.body)('name').notEmpty().withMessage('Name is required'),
+    (0, express_validator_1.body)('name').optional().notEmpty().withMessage('Name cannot be empty'),
     (0, express_validator_1.body)('bssid').notEmpty().withMessage('BSSID is required')
 ];
 /**

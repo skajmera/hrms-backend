@@ -9,7 +9,14 @@ class EmployeePayrollController {
         try {
             const { limit = 12 } = req.query;
             const payslips = await payroll_service_1.employeePayrollService.getMyPayslips(req.user._id.toString(), Number(limit));
-            (0, response_1.sendSuccessResponse)(res, 'Payslips retrieved successfully', payslips);
+            const salary = req.user?.professionalDetails?.salaryDetails;
+            const lastPayrollCreatedAt = payslips.reduce((max, p) => (!max || (p?.createdAt && new Date(p.createdAt) > new Date(max)) ? p.createdAt : max), undefined);
+            (0, response_1.sendSuccessResponse)(res, 'Payslips retrieved successfully', {
+                ctc: salary?.grossSalary ?? 0,
+                joiningDate: req.user?.professionalDetails?.joiningDate,
+                lastPayrollCreatedAt,
+                payslips
+            });
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

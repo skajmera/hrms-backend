@@ -45,7 +45,8 @@ const UserPermissionSchema = new Schema<IUserPermission>({
       departments: PermissionSubSchema,
       designations: PermissionSubSchema,
       workSchedule: PermissionSubSchema,
-      security: PermissionSubSchema
+      security: PermissionSubSchema,
+      notifications: PermissionSubSchema
     }
   },
   

@@ -19,8 +19,8 @@ class PermissionDAL {
      */
     async findByUserId(userId) {
         return await permission_model_1.UserPermissionModel.findOne({ userId })
-            .populate('userId', 'firstName lastName email profilePicture')
-            .populate('invitedBy', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture')
+            .populate('invitedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Get all user permissions with pagination
@@ -31,8 +31,8 @@ class PermissionDAL {
         const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
         const [data, totalItems] = await Promise.all([
             permission_model_1.UserPermissionModel.find(filters)
-                .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-                .populate('invitedBy', 'firstName lastName profilePicture')
+                .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
+                .populate('invitedBy', 'firstName lastName phone profilePicture')
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
@@ -60,7 +60,7 @@ class PermissionDAL {
         // Using $set for all fields ensures required fields (userId, email, invitedBy) are always
         // present regardless of whether the document is being created or updated.
         const mergedData = { ...(upsertData || {}), ...updateData };
-        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, { $set: mergedData }, { new: true, upsert: true, runValidators: false }).populate('userId', 'firstName lastName email profilePicture');
+        return await permission_model_1.UserPermissionModel.findOneAndUpdate({ userId }, { $set: mergedData }, { new: true, upsert: true, runValidators: false }).populate('userId', 'firstName lastName email phone profilePicture');
     }
     /**
      * Delete user permission
@@ -90,7 +90,7 @@ class PermissionDAL {
      */
     async getActiveUsers() {
         return await permission_model_1.UserPermissionModel.find({ isActive: true })
-            .populate('userId', 'firstName lastName email profilePicture')
+            .populate('userId', 'firstName lastName email phone profilePicture')
             .sort({ createdAt: -1 });
     }
     /**

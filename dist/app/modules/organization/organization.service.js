@@ -57,7 +57,20 @@ class OrganizationService {
         const organization = organizationId ? await organization_dal_1.OrganizationDAL.findById(organizationId) : await organization_dal_1.OrganizationDAL.findByOwner(userId);
         if (!organization)
             throw new Error('Organization not found');
-        return organization;
+        // Inject mirrors + aliases required by mobile contract
+        const user = await user_dal_1.userDAL.findById(userId);
+        const orgObj = typeof organization.toObject === 'function' ? organization.toObject() : organization;
+        const sec = orgObj?.settings?.securitySettings || {};
+        // Alias sync: app treats them as OR
+        const effectiveRequireFace = Boolean(sec.requireFaceCapture || sec.isSelfieRequired);
+        sec.requireFaceCapture = effectiveRequireFace;
+        sec.isSelfieRequired = effectiveRequireFace;
+        sec.requiresEnrollment = Boolean(sec.requiresEnrollment);
+        // Mirrors (legacy fields in FE)
+        sec.registeredDeviceId = user?.registeredDeviceId ?? null;
+        sec.isFaceRegistered = Boolean(user?.azurePersonId);
+        orgObj.settings.securitySettings = sec;
+        return orgObj;
     }
     /**
      * Get all organizations

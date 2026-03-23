@@ -85,10 +85,18 @@ class EmployeeDashboardService {
         };
         return await announcement_dal_1.announcementDAL.findAll(filters, options);
     }
-    async getAllAnnouncements(userId, userRole, deptId, options) {
+    async getAllAnnouncements(userId, userRole, deptId, options, queryFilters = {}) {
         // Use active filter + audience targeting for employee-visible announcements
+        const activeFilter = announcement_dal_1.announcementDAL.getActiveFilter();
+        if (queryFilters.date) {
+            const refDate = new Date(queryFilters.date);
+            if (!Number.isNaN(refDate.getTime())) {
+                activeFilter.startDate = { $lte: refDate };
+                activeFilter.$or = [{ expiryDate: { $exists: false } }, { expiryDate: { $gte: refDate } }];
+            }
+        }
         const filters = {
-            ...announcement_dal_1.announcementDAL.getActiveFilter(),
+            ...activeFilter,
             $or: [
                 { 'targetAudience.isGlobal': true },
                 { 'targetAudience.roles': userRole },
@@ -96,6 +104,9 @@ class EmployeeDashboardService {
                 { 'targetAudience.specificUsers': userId }
             ]
         };
+        if (queryFilters.announcementType) {
+            filters.announcementType = queryFilters.announcementType;
+        }
         return await announcement_dal_1.announcementDAL.findAll(filters, options);
     }
 }

@@ -15,9 +15,9 @@ export class PayrollDAL {
    */
   async findById(id: string): Promise<IPayroll | null> {
     return await PayrollModel.findById(id)
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-      .populate('generatedBy', 'firstName lastName profilePicture')
-      .populate('approvedBy', 'firstName lastName profilePicture');
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
+      .populate('generatedBy', 'firstName lastName phone profilePicture')
+      .populate('approvedBy', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -31,9 +31,9 @@ export class PayrollDAL {
     const skip = (page - 1) * limit;
 
     const records = await PayrollModel.find(filters)
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-      .populate('generatedBy', 'firstName lastName profilePicture')
-      .populate('approvedBy', 'firstName lastName profilePicture')
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
+      .populate('generatedBy', 'firstName lastName phone profilePicture')
+      .populate('approvedBy', 'firstName lastName phone profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -52,14 +52,14 @@ export class PayrollDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email profilePicture');
+      .populate('userId', 'firstName lastName email phone profilePicture');
   }
   async updateById(id: string, updateData: Partial<IPayroll>): Promise<IPayroll> {
     const updatedPayroll = await PayrollModel.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: true }
-    ).populate('userId', 'firstName lastName email profilePicture');
+    ).populate('userId', 'firstName lastName email phone profilePicture');
 
     if (!updatedPayroll) {
       throw new Error('Payroll not found');
@@ -80,7 +80,7 @@ export class PayrollDAL {
    */
   async findByUserMonthYear(userId: string, month: number, year: number): Promise<IPayroll | null> {
     return await PayrollModel.findOne({ userId, month, year })
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId');
   }
 
   async findByUserAndPeriod(
@@ -93,16 +93,16 @@ export class PayrollDAL {
       month,
       year
     })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-      .populate('generatedBy', 'firstName lastName profilePicture')
-      .populate('approvedBy', 'firstName lastName profilePicture');
+      .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
+      .populate('generatedBy', 'firstName lastName phone profilePicture')
+      .populate('approvedBy', 'firstName lastName phone profilePicture');
   }
   /**
    * Get payroll by month and year
    */
   async findByMonthYear(month: number, year: number): Promise<IPayroll[]> {
     return await PayrollModel.find({ month, year })
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId professionalDetails.department');
   }
 
   /**
@@ -177,7 +177,7 @@ export class PayrollDAL {
     if (year) filter.year = year;
 
     return await PayrollModel.find(filter)
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
       .sort({ createdAt: -1 });
   }
 
@@ -190,7 +190,7 @@ export class PayrollDAL {
     if (year) filter.year = year;
 
     return await PayrollModel.find(filter)
-      .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+      .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
       .sort({ createdAt: -1 });
   }
   /**

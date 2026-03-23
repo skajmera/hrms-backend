@@ -9,6 +9,40 @@ import { IPaginationOptions } from '../../../../shared/interfaces/common.interfa
  */
 
 export class PermissionsService {
+  private toPlain<T = any>(value: any): T {
+    if (!value) return value;
+    if (typeof value.toObject === 'function') return value.toObject();
+    if (typeof value.toJSON === 'function') return value.toJSON();
+    return value;
+  }
+
+  private deepMergeKeepSource(defaults: any, source: any): any {
+    if (Array.isArray(defaults) || Array.isArray(source)) return source ?? defaults;
+    if (defaults && typeof defaults === 'object' && source && typeof source === 'object') {
+      const out: any = { ...defaults };
+      for (const k of Object.keys(source)) out[k] = this.deepMergeKeepSource(defaults?.[k], source[k]);
+      return out;
+    }
+    return source ?? defaults;
+  }
+
+  private normalizeModules(role: string, modules: any): IUserPermission['modules'] {
+    const defaults: any = this.getDefaultPermissionsByRole(role);
+    const src: any = this.toPlain(modules) || {};
+    // Ensures old docs get new keys (settings) but never flips true -> false.
+    return this.deepMergeKeepSource(defaults, src);
+  }
+
+  private normalizePermissionDoc(permission: any): any {
+    if (!permission) return permission;
+    const plain: any = this.toPlain(permission);
+    const role = plain?.role || permission?.role || '';
+    return {
+      ...plain,
+      modules: this.normalizeModules(role, plain.modules)
+    };
+  }
+
   /**
    * Invite user and set permissions
    */
@@ -30,11 +64,12 @@ export class PermissionsService {
       ...inviteData,
       invitedBy,
       isActive: true,
-      invitedAt: new Date()
+      invitedAt: new Date(),
+      modules: this.normalizeModules(inviteData.role, inviteData.modules)
     };
 
     const permission = await permissionDAL.create(permissionData);
-    return permission;
+    return this.normalizePermissionDoc(permission);
   }
 
   /**
@@ -58,7 +93,9 @@ export class PermissionsService {
       ];
     }
 
-    return await permissionDAL.findAll(queryFilters, options);
+    const result = await permissionDAL.findAll(queryFilters, options);
+    result.data = result.data.map((p: any) => this.normalizePermissionDoc(p));
+    return result;
   }
 
   /**
@@ -77,18 +114,19 @@ export class PermissionsService {
         userId: user._id,
         role: user.role,
         email: user.email,
-        modules: this.getDefaultPermissionsByRole(user.role),
+        modules: this.normalizeModules(user.role, this.getDefaultPermissionsByRole(user.role)),
         isActive: true
       };
     }
-    return permission;
+    return this.normalizePermissionDoc(permission);
   }
 
   /**
    * Get exact assigned permission by user ID (Returns object, empty object if not found)
    */
   async getAssignedPermissionByUserId(userId: string): Promise<any> {
-    return await permissionDAL.findByUserId(userId) || {};
+    const permission = await permissionDAL.findByUserId(userId);
+    return permission ? this.normalizePermissionDoc(permission) : {};
   }
 
   /**
@@ -99,21 +137,23 @@ export class PermissionsService {
     if (!user) throw new Error('User not found');
 
     const { invitedBy, ...dataToUpdate } = updateData;
+    const role = dataToUpdate.role || user.role;
+    const normalizedModules = this.normalizeModules(role, dataToUpdate.modules);
 
     const upsertData = {
       userId: user._id,
       email: user.email,
-      role: dataToUpdate.role || user.role,
-      modules: dataToUpdate.modules || this.getDefaultPermissionsByRole(user.role),
+      role,
+      modules: normalizedModules,
       invitedBy: invitedBy,
       isActive: true,
       invitedAt: new Date()
     };
 
-    const permission = await permissionDAL.updateByUserId(userId, dataToUpdate, upsertData);
+    const permission = await permissionDAL.updateByUserId(userId, { ...dataToUpdate, modules: normalizedModules }, upsertData);
     if (!permission) throw new Error('Failed to update or create user permissions');
 
-    return permission;
+    return this.normalizePermissionDoc(permission);
   }
 
   /**
@@ -154,7 +194,8 @@ export class PermissionsService {
    * Get all active users with permissions
    */
   async getActiveUsers() {
-    return await permissionDAL.getActiveUsers();
+    const users = await permissionDAL.getActiveUsers();
+    return users.map((p: any) => this.normalizePermissionDoc(p));
   }
 
   /**
@@ -183,7 +224,8 @@ export class PermissionsService {
         departments: { fullAccess: false, view: false, edit: false },
         designations: { fullAccess: false, view: false, edit: false },
         workSchedule: { fullAccess: false, view: false, edit: false },
-        security: { fullAccess: false, view: false, edit: false }
+        security: { fullAccess: false, view: false, edit: false },
+        notifications: { fullAccess: false, view: false, edit: false }
       }
     };
 
@@ -211,7 +253,8 @@ export class PermissionsService {
           departments: { fullAccess: true, view: true, edit: true },
           designations: { fullAccess: true, view: true, edit: true },
           workSchedule: { fullAccess: true, view: true, edit: true },
-          security: { fullAccess: true, view: true, edit: true }
+          security: { fullAccess: true, view: true, edit: true },
+          notifications: { fullAccess: true, view: true, edit: true }
         }
       };
     }
@@ -240,7 +283,8 @@ export class PermissionsService {
           departments: { fullAccess: false, view: false, edit: false },
           designations: { fullAccess: false, view: false, edit: false },
           workSchedule: { fullAccess: false, view: false, edit: false },
-          security: { fullAccess: false, view: false, edit: false }
+          security: { fullAccess: false, view: false, edit: false },
+          notifications: { fullAccess: false, view: false, edit: false }
         }
       };
     }

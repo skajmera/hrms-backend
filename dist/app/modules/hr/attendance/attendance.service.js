@@ -8,6 +8,9 @@ const shiftHelper_1 = require("../../../../shared/utils/shiftHelper");
 const haversine_1 = require("../../../../shared/utils/haversine");
 const azureFace_1 = require("../../../../shared/utils/azureFace");
 class AttendanceService {
+    normalizeBssid(value) {
+        return String(value || '').trim().toLowerCase();
+    }
     pickUserId(value) {
         const raw = value?._id || value?.id || value;
         if (!raw)
@@ -26,6 +29,7 @@ class AttendanceService {
         if (!userId)
             throw new Error('User ID is required');
         const data = { ...attendanceData, userId };
+        const clientRequestId = data.clientRequestId;
         const user = await user_dal_1.userDAL.findById(userId);
         if (!user) {
             throw new Error('User not found');
@@ -49,20 +53,42 @@ class AttendanceService {
             // --- CHECK-IN ---
             const checkInTime = data.checkInTime || new Date();
             const lateCheck = shiftHelper_1.ShiftHelper.isLate(new Date(checkInTime), shiftTime);
-            attendance = await attendance_dal_1.attendanceDAL.create({
-                ...data,
-                checkInTime,
-                isLate: lateCheck.isLate,
-                lateByMinutes: lateCheck.lateByMinutes,
-                status: data.status || 'PRESENT',
-                isApproved: false
-            });
+            try {
+                attendance = await attendance_dal_1.attendanceDAL.create({
+                    ...data,
+                    checkInTime,
+                    isLate: lateCheck.isLate,
+                    lateByMinutes: lateCheck.lateByMinutes,
+                    status: data.status || 'PRESENT',
+                    isApproved: false
+                });
+            }
+            catch (err) {
+                // Idempotency/race: if create happens twice concurrently, unique index may throw.
+                const isDuplicate = err?.code === 11000 || String(err?.message || '').includes('E11000') || String(err?.message || '').includes('duplicate key');
+                if (isDuplicate) {
+                    attendance = await attendance_dal_1.attendanceDAL.findByUserAndDate(userId, new Date(data.date));
+                    if (attendance) {
+                        return { type: 'CHECK_IN', attendance };
+                    }
+                }
+                throw err;
+            }
             return { type: 'CHECK_IN', attendance };
         }
         else {
             // --- CHECK-OUT ---
             if (attendance.checkOutTime) {
+                if (clientRequestId && attendance.clientRequestId === clientRequestId) {
+                    return { type: 'CHECK_OUT', attendance };
+                }
                 throw new Error('Already checked out for today');
+            }
+            // Idempotency:
+            // If clientRequestId matches the existing attendance, treat it as CHECK-IN replay (no-op),
+            // preventing a duplicate check-in from being interpreted as check-out.
+            if (clientRequestId && attendance.clientRequestId === clientRequestId) {
+                return { type: 'CHECK_IN', attendance };
             }
             const checkOutTime = data.checkOutTime || new Date();
             const earlyExitCheck = shiftHelper_1.ShiftHelper.isEarlyExit(new Date(checkOutTime), shiftTime);
@@ -77,6 +103,11 @@ class AttendanceService {
                 overtimeHours,
                 gpsLatitude: data.gpsLatitude,
                 gpsLongitude: data.gpsLongitude,
+                wifiBSSID: data.wifiBSSID,
+                deviceId: data.deviceId,
+                isMockLocation: data.isMockLocation,
+                selfie: data.selfie,
+                clientRequestId,
                 remarks: data.remarks || attendance.remarks
             });
             return { type: 'CHECK_OUT', attendance: updatedAttendance };
@@ -109,11 +140,23 @@ class AttendanceService {
      */
     async validateAttendance(attendanceData, user, organization) {
         const securitySettings = organization.settings?.securitySettings;
+        const requiresEnrollment = Boolean(securitySettings?.requiresEnrollment);
+        const requireFaceCaptureEffective = Boolean(securitySettings?.requireFaceCapture || securitySettings?.isSelfieRequired);
         // 1. Device ID Lock
         if (!user.registeredDeviceId) {
-            // First time registration (auto-lock if not already locked)
-            // Note: Typically you'd use the registration endpoint, 
-            // but we allow auto-lock on first mark if not yet set.
+            // Contract:
+            // - requiresEnrollment=true => block until client calls register-device
+            // - requiresEnrollment=false => allow first mark to bind device (legacy behavior)
+            if (requiresEnrollment) {
+                const error = new Error('DEVICE_ENROLLMENT_REQUIRED. Please register device first.');
+                error.statusCode = 400;
+                throw error;
+            }
+            if (!attendanceData.deviceId) {
+                const error = new Error('Device not registered. Please register device first.');
+                error.statusCode = 400;
+                throw error;
+            }
             user.registeredDeviceId = attendanceData.deviceId;
             await user.save({ validateBeforeSave: false });
         }
@@ -123,13 +166,14 @@ class AttendanceService {
             throw error;
         }
         // 2. Mock GPS Block
-        if (securitySettings?.blockMockLocations && attendanceData.isMockLocation) {
-            const error = new Error('Mock location detected. Please disable mock GPS.');
+        const isWFH = attendanceData.status === 'WFH';
+        if (securitySettings?.blockMockLocations && attendanceData.isMockLocation && !isWFH) {
+            const error = new Error('Mock location detected for office attendance.');
             error.statusCode = 403;
             throw error;
         }
         // 3. Geofence Re-verification (Haversine)
-        if (attendanceData.status !== 'WFH') {
+        if (!isWFH) {
             const officeLocations = securitySettings?.officeLocations || [];
             if (officeLocations.length > 0) {
                 let isWithinRange = false;
@@ -152,8 +196,15 @@ class AttendanceService {
         }
         // 4. BSSID Verification (Optional)
         const allowedWifis = securitySettings?.allowedWifiNetworks || [];
-        if (allowedWifis.length > 0 && attendanceData.wifiBSSID) {
-            const isAllowedWifi = allowedWifis.some((w) => w.bssid === attendanceData.wifiBSSID);
+        if (!isWFH && allowedWifis.length > 0) {
+            // For office attendance, Wi-Fi should be present and must be allowed.
+            if (!attendanceData.wifiBSSID) {
+                const error = new Error('wifiBSSID is required for office attendance.');
+                error.statusCode = 403;
+                throw error;
+            }
+            const requestedBssid = this.normalizeBssid(attendanceData.wifiBSSID);
+            const isAllowedWifi = allowedWifis.some((w) => this.normalizeBssid(w?.bssid) === requestedBssid);
             if (!isAllowedWifi) {
                 const error = new Error('Unauthorized WiFi network.');
                 error.statusCode = 403;
@@ -161,9 +212,9 @@ class AttendanceService {
             }
         }
         // 5. Selfie Verification (Azure Face API)
-        if (securitySettings?.requireFaceCapture) {
+        if (requireFaceCaptureEffective) {
             if (!attendanceData.selfie) {
-                const error = new Error('Selfie is required for attendance.');
+                const error = new Error('selfie is required for attendance.');
                 error.statusCode = 400;
                 throw error;
             }
@@ -310,8 +361,8 @@ class AttendanceService {
     /**
      * Get today's attendance
      */
-    async getTodayAttendance() {
-        return await user_dal_1.userDAL.getTodayAttendanceOverview();
+    async getTodayAttendance(organizationId) {
+        return await user_dal_1.userDAL.getTodayAttendanceOverview(organizationId);
     }
     /**
      * Get user attendance report

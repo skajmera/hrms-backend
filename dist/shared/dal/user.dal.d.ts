@@ -74,7 +74,7 @@ export declare class UserDAL {
      */
     getUserStats(): Promise<any>;
     getAnniversaryToday(): Promise<IUser[]>;
-    getTodayAttendanceOverview(): Promise<any[]>;
+    getTodayAttendanceOverview(organizationId?: string): Promise<any[]>;
     getYetToCheckInCount(): Promise<number>;
 }
 export declare const userDAL: UserDAL;

@@ -1,6 +1,10 @@
 import { IShiftTime } from '../interfaces/user.interface';
 
 export class ShiftHelper {
+  private static roundToTwo(value: number): number {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+  }
+
   /**
    * Check if employee is late based on shift time
    */
@@ -53,7 +57,7 @@ export class ShiftHelper {
   static calculateWorkingHours(checkInTime: Date, checkOutTime: Date, breakHours: number = 0): number {
     const diffMs = checkOutTime.getTime() - checkInTime.getTime();
     const diffHours = diffMs / (1000 * 60 * 60);
-    return Math.max(0, diffHours - breakHours);
+    return this.roundToTwo(Math.max(0, diffHours - breakHours));
   }
 
   /**
@@ -61,7 +65,7 @@ export class ShiftHelper {
    */
   static calculateOvertimeHours(workingHours: number, shiftTime: IShiftTime): number {
     const minimumHours = shiftTime.minimumHours || 8;
-    return Math.max(0, workingHours - minimumHours);
+    return this.roundToTwo(Math.max(0, workingHours - minimumHours));
   }
 
   /**

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.userDAL = exports.UserDAL = void 0;
 const user_model_1 = require("../models/user.model");
 const constants_1 = require("../../config/constants");
+const mongoose_1 = require("mongoose");
 class UserDAL {
     /**
      * Create a new user
@@ -10,8 +11,8 @@ class UserDAL {
     async create(userData) {
         const user = await user_model_1.UserModel.create(userData);
         await user.populate([
-            { path: 'createdBy', select: 'firstName lastName email profilePicture' },
-            { path: 'updatedBy', select: 'firstName lastName email profilePicture' }
+            { path: 'createdBy', select: 'firstName lastName email phone profilePicture' },
+            { path: 'updatedBy', select: 'firstName lastName email phone profilePicture' }
         ]);
         return user;
     }
@@ -22,9 +23,9 @@ class UserDAL {
         const query = user_model_1.UserModel.findById(id)
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
         if (selectPassword) {
             query.select('+password');
         }
@@ -47,9 +48,9 @@ class UserDAL {
         return await user_model_1.UserModel.findOne({ 'professionalDetails.employeeId': employeeId })
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Find all users with filters and pagination
@@ -66,9 +67,9 @@ class UserDAL {
         const users = await user_model_1.UserModel.find(query)
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -92,9 +93,9 @@ class UserDAL {
         const users = await user_model_1.UserModel.find(query)
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -126,8 +127,8 @@ class UserDAL {
             updateData = { $set: updateData };
         }
         return await user_model_1.UserModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: false })
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Delete user by ID (soft delete)
@@ -150,9 +151,9 @@ class UserDAL {
             isActive: true,
             'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
         })
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Find users by role
@@ -165,8 +166,8 @@ class UserDAL {
         })
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Get users with birthdays today
@@ -405,9 +406,9 @@ class UserDAL {
         })
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture')
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture')
             .limit(20);
     }
     /**
@@ -438,9 +439,9 @@ class UserDAL {
         })
             .populate({ path: 'professionalDetails.department', select: 'name code', match: { isActive: true } })
             .populate('professionalDetails.designation', 'name code level')
-            .populate('professionalDetails.reportingManager', 'firstName lastName email profilePicture')
-            .populate('createdBy', 'firstName lastName email profilePicture')
-            .populate('updatedBy', 'firstName lastName email profilePicture');
+            .populate('professionalDetails.reportingManager', 'firstName lastName email phone profilePicture')
+            .populate('createdBy', 'firstName lastName email phone profilePicture')
+            .populate('updatedBy', 'firstName lastName email phone profilePicture');
     }
     /**
      * Get user count by status
@@ -610,17 +611,21 @@ class UserDAL {
     //     }
     //   ]);
     // }
-    async getTodayAttendanceOverview() {
+    async getTodayAttendanceOverview(organizationId) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
+        const orgFilter = organizationId && mongoose_1.Types.ObjectId.isValid(organizationId)
+            ? { organizationId: new mongoose_1.Types.ObjectId(organizationId) }
+            : {};
         return await user_model_1.UserModel.aggregate([
-            // 1️⃣ Active employees only
+            // 1️⃣ Active users except SUPER_ADMIN (optionally scoped to org)
             {
                 $match: {
                     isActive: true,
-                    role: "EMPLOYEE",
+                    role: { $ne: "SUPER_ADMIN" },
+                    ...orgFilter,
                     'professionalDetails.employmentStatus': { $ne: 'DRAFT' }
                 }
             },
@@ -643,6 +648,7 @@ class UserDAL {
                         },
                         {
                             $project: {
+                                status: 1,
                                 checkInTime: 1,
                                 checkOutTime: 1,
                                 shift: 1,
@@ -668,11 +674,16 @@ class UserDAL {
                         $cond: [
                             { $ifNull: ["$todayAttendance", false] },
                             {
-                                $cond: [
-                                    { $eq: ["$todayAttendance.isLate", true] },
-                                    "LATE",
-                                    "ON_TIME"
-                                ]
+                                $switch: {
+                                    branches: [
+                                        { case: { $eq: ["$todayAttendance.status", "ABSENT"] }, then: "ABSENT" },
+                                        { case: { $eq: ["$todayAttendance.status", "ON_LEAVE"] }, then: "ON_LEAVE" },
+                                        { case: { $eq: ["$todayAttendance.status", "WFH"] }, then: "WFH" },
+                                        { case: { $eq: ["$todayAttendance.status", "HALF_DAY"] }, then: "HALF_DAY" },
+                                        { case: { $or: [{ $eq: ["$todayAttendance.status", "LATE"] }, { $eq: ["$todayAttendance.isLate", true] }] }, then: "LATE" }
+                                    ],
+                                    default: "ON_TIME"
+                                }
                             },
                             "YET_TO_CHECK_IN"
                         ]
@@ -685,6 +696,7 @@ class UserDAL {
                     firstName: 1,
                     lastName: 1,
                     email: 1,
+                    phone: 1,
                     profilePicture: 1,
                     profileImage: "$profilePicture",
                     "professionalDetails.employeeId": 1,
@@ -693,8 +705,20 @@ class UserDAL {
                     shift: "$todayAttendance.shift",
                     checkInTime: "$todayAttendance.checkInTime",
                     checkOutTime: "$todayAttendance.checkOutTime",
-                    workingHours: "$todayAttendance.workingHours",
-                    overtimeHours: "$todayAttendance.overtimeHours"
+                    workingHours: {
+                        $cond: [
+                            { $ne: ["$todayAttendance.workingHours", null] },
+                            { $round: ["$todayAttendance.workingHours", 2] },
+                            "$todayAttendance.workingHours"
+                        ]
+                    },
+                    overtimeHours: {
+                        $cond: [
+                            { $ne: ["$todayAttendance.overtimeHours", null] },
+                            { $round: ["$todayAttendance.overtimeHours", 2] },
+                            "$todayAttendance.overtimeHours"
+                        ]
+                    }
                 }
             }
         ]);

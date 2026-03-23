@@ -8,8 +8,15 @@ export class EmployeePayrollController {
   async getMyPayslips(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { limit = 12 } = req.query;
-      const payslips = await employeePayrollService.getMyPayslips(req.user._id.toString(), Number(limit));
-      sendSuccessResponse(res, 'Payslips retrieved successfully', payslips);
+      const payslips: any[] = await employeePayrollService.getMyPayslips(req.user._id.toString(), Number(limit));
+      const salary = (req.user as any)?.professionalDetails?.salaryDetails;
+      const lastPayrollCreatedAt = payslips.reduce((max: any, p: any) => (!max || (p?.createdAt && new Date(p.createdAt) > new Date(max)) ? p.createdAt : max), undefined);
+      sendSuccessResponse(res, 'Payslips retrieved successfully', {
+        ctc: salary?.grossSalary ?? 0,
+        joiningDate: (req.user as any)?.professionalDetails?.joiningDate,
+        lastPayrollCreatedAt,
+        payslips
+      });
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

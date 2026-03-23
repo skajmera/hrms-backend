@@ -162,6 +162,7 @@ const UserSchema = new mongoose_1.Schema({
     // Address
     currentAddress: { type: AddressSchema, required: false },
     permanentAddress: AddressSchema,
+    sameAsPermanentAddress: { type: Boolean, default: false },
     separationInfo: {
         dateOfExit: { type: Date },
         previousCompany: { type: String }

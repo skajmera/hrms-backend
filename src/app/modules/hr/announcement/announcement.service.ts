@@ -172,27 +172,36 @@ export class AnnouncementService {
    */
   private injectLikedField(announcement: any, userId: string): any {
     const a = announcement.toObject ? announcement.toObject() : announcement;
+    a.likes = Array.isArray(a.likes) ? a.likes : [];
+    a.comments = Array.isArray(a.comments) ? a.comments : [];
 
     // Announcement liked status
-    a.liked = a.likes?.some((id: any) =>
+    a.liked = a.likes.some((id: any) =>
       (id._id || id).toString() === userId.toString()
-    ) || false;
+    );
 
     // Comments liked status
-    if (a.comments) {
-      a.comments = a.comments.map((c: any) => ({
+    a.comments = a.comments.map((c: any) => {
+      const commentLikes = Array.isArray(c?.likes) ? c.likes : [];
+      const replies = Array.isArray(c?.replies) ? c.replies : [];
+      return {
         ...c,
-        liked: c.likes?.some((id: any) =>
-          (id._id || id).toString() === userId.toString()
-        ) || false,
-        replies: c.replies ? c.replies.map((r: any) => ({
-          ...r,
-          liked: r.likes?.some((id: any) =>
-            (id._id || id).toString() === userId.toString()
-          ) || false
-        })) : []
-      }));
-    }
+        likes: commentLikes,
+        liked: commentLikes.some((id: any) =>
+          (id?._id || id).toString() === userId.toString()
+        ),
+        replies: replies.map((r: any) => {
+          const replyLikes = Array.isArray(r?.likes) ? r.likes : [];
+          return {
+            ...r,
+            likes: replyLikes,
+            liked: replyLikes.some((id: any) =>
+              (id?._id || id).toString() === userId.toString()
+            )
+          };
+        })
+      };
+    });
 
     return a;
   }

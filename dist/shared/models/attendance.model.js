@@ -95,9 +95,28 @@ const AttendanceSchema = new mongoose_1.Schema({
     gpsLongitude: { type: Number },
     wifiBSSID: { type: String },
     isMockLocation: { type: Boolean, default: false },
-    selfie: { type: String }
+    selfie: { type: String },
+    clientRequestId: { type: String }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+        transform: (_doc, ret) => {
+            if (typeof ret?.workingHours === 'number')
+                ret.workingHours = Math.round((ret.workingHours + Number.EPSILON) * 100) / 100;
+            if (typeof ret?.overtimeHours === 'number')
+                ret.overtimeHours = Math.round((ret.overtimeHours + Number.EPSILON) * 100) / 100;
+            return ret;
+        }
+    },
+    toObject: {
+        transform: (_doc, ret) => {
+            if (typeof ret?.workingHours === 'number')
+                ret.workingHours = Math.round((ret.workingHours + Number.EPSILON) * 100) / 100;
+            if (typeof ret?.overtimeHours === 'number')
+                ret.overtimeHours = Math.round((ret.overtimeHours + Number.EPSILON) * 100) / 100;
+            return ret;
+        }
+    }
 });
 // Indexes
 AttendanceSchema.index({ userId: 1, date: 1 }, { unique: true });

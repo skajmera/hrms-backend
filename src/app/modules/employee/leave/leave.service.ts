@@ -6,6 +6,15 @@ import { NotificationType } from '../../../../shared/interfaces/notification.int
 import { USER_ROLES } from '../../../../config/constants';
 
 export class EmployeeLeaveService {
+  private normalizeQueryValues(value: any): string[] {
+    if (value === undefined || value === null || value === '') return [];
+    const arr = Array.isArray(value) ? value : [value];
+    return arr
+      .flatMap((v: any) => String(v).split(','))
+      .map((v: string) => v.trim().toUpperCase())
+      .filter(Boolean);
+  }
+
   /**
    * Apply for leave
    */
@@ -89,13 +98,13 @@ export class EmployeeLeaveService {
       ];
     }
 
-    if (filters.leaveType) {
-      query.leaveType = Array.isArray(filters.leaveType) ? { $in: filters.leaveType } : filters.leaveType;
-    }
+    const leaveTypes = this.normalizeQueryValues(filters.leaveType);
+    if (leaveTypes.length === 1) query.leaveType = leaveTypes[0];
+    else if (leaveTypes.length > 1) query.leaveType = { $in: leaveTypes };
 
-    if (filters.status) {
-      query.status = Array.isArray(filters.status) ? { $in: filters.status } : filters.status;
-    }
+    const statuses = this.normalizeQueryValues(filters.status);
+    if (statuses.length === 1) query.status = statuses[0];
+    else if (statuses.length > 1) query.status = { $in: statuses };
 
     return await leaveDAL.findAll(query, options);
   }

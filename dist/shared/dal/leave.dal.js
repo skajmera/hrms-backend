@@ -15,10 +15,10 @@ class LeaveDAL {
      */
     async findById(id) {
         return await leave_model_1.LeaveModel.findById(id)
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
-            .populate('approvedBy', 'firstName lastName profilePicture')
-            .populate('rejectedBy', 'firstName lastName profilePicture')
-            .populate('handoverTo', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId professionalDetails.department')
+            .populate('approvedBy', 'firstName lastName phone profilePicture')
+            .populate('rejectedBy', 'firstName lastName phone profilePicture')
+            .populate('handoverTo', 'firstName lastName email phone profilePicture');
     }
     /**
      * Find all leaves
@@ -27,8 +27,8 @@ class LeaveDAL {
         const { page = 1, limit = 10, sortBy = 'appliedDate', sortOrder = 'desc' } = options;
         const skip = (page - 1) * limit;
         const leaves = await leave_model_1.LeaveModel.find(filters)
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-            .populate('approvedBy', 'firstName lastName profilePicture')
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
+            .populate('approvedBy', 'firstName lastName phone profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -40,7 +40,7 @@ class LeaveDAL {
      */
     async update(id, updateData) {
         return await leave_model_1.LeaveModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture');
     }
     /**
      * Delete leave
@@ -53,7 +53,7 @@ class LeaveDAL {
      */
     async getPendingLeaves() {
         return await leave_model_1.LeaveModel.find({ status: constants_1.LEAVE_STATUS.PENDING })
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department')
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId professionalDetails.department')
             .sort({ appliedDate: 1 });
     }
     /**
@@ -85,7 +85,7 @@ class LeaveDAL {
             startDate: { $lte: today },
             endDate: { $gte: today }
         })
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department');
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId professionalDetails.department');
     }
     /**
      * Approve leave
@@ -98,7 +98,7 @@ class LeaveDAL {
                 approvedDate: new Date()
             }
         }, { new: true })
-            .populate('userId', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture');
     }
     /**
      * Reject leave
@@ -112,7 +112,7 @@ class LeaveDAL {
                 rejectionReason
             }
         }, { new: true })
-            .populate('userId', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture');
     }
     /**
      * Get leave balance
@@ -170,8 +170,8 @@ class LeaveDAL {
             ],
             status: constants_1.LEAVE_STATUS.APPROVED // Only count approved leaves
         })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
-            .populate('approvedBy', 'firstName lastName profilePicture')
+            .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
+            .populate('approvedBy', 'firstName lastName phone profilePicture')
             .sort({ startDate: 1 });
     }
 }

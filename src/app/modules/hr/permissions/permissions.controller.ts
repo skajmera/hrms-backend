@@ -3,7 +3,6 @@ import { permissionsService } from './permissions.service';
 import { sendSuccessResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
-import util from 'util';
 
 /**
  * Permissions Controller
@@ -17,7 +16,6 @@ export class PermissionsController {
    */
   static async inviteUser(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log(util.inspect({ tag: '[HRPermissions][Invite][Body]', invitedBy: req.user?._id?.toString?.(), body: req.body }, { depth: null, colors: true, maxArrayLength: null, compact: false }));
       const inviteData = req.body;
       const invitedBy = req.user?._id;
 
@@ -126,7 +124,6 @@ export class PermissionsController {
   static async updatePermissions(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
-      console.log(util.inspect({ tag: '[HRPermissions][Update][Body]', userId, updatedBy: req.user?._id?.toString?.(), body: req.body }, { depth: null, colors: true, maxArrayLength: null, compact: false }));
       const updateData = {
         ...req.body,
         invitedBy: req.user?._id

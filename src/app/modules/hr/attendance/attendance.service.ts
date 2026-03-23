@@ -9,6 +9,10 @@ import { AzureFaceService } from '../../../../shared/utils/azureFace';
 import { AttendanceModel } from '../../../../shared/models/attendance.model';
 
 export class AttendanceService {
+  private normalizeBssid(value: any): string {
+    return String(value || '').trim().toLowerCase();
+  }
+
   private pickUserId(value: any): string {
     const raw = value?._id || value?.id || value;
     if (!raw) return '';
@@ -24,6 +28,7 @@ export class AttendanceService {
     if (!userId) throw new Error('User ID is required');
 
     const data: any = { ...attendanceData, userId };
+    const clientRequestId = data.clientRequestId;
     const user = await userDAL.findById(userId);
     if (!user) {
       throw new Error('User not found');
@@ -57,19 +62,42 @@ export class AttendanceService {
       const checkInTime = data.checkInTime || new Date();
       const lateCheck = ShiftHelper.isLate(new Date(checkInTime), shiftTime);
 
-      attendance = await attendanceDAL.create({
-        ...data,
-        checkInTime,
-        isLate: lateCheck.isLate,
-        lateByMinutes: lateCheck.lateByMinutes,
-        status: data.status || 'PRESENT',
-        isApproved: false
-      });
+      try {
+        attendance = await attendanceDAL.create({
+          ...data,
+          checkInTime,
+          isLate: lateCheck.isLate,
+          lateByMinutes: lateCheck.lateByMinutes,
+          status: data.status || 'PRESENT',
+          isApproved: false
+        });
+      } catch (err: any) {
+        // Idempotency/race: if create happens twice concurrently, unique index may throw.
+        const isDuplicate =
+          err?.code === 11000 || String(err?.message || '').includes('E11000') || String(err?.message || '').includes('duplicate key');
+        if (isDuplicate) {
+          attendance = await attendanceDAL.findByUserAndDate(userId, new Date(data.date));
+          if (attendance) {
+            return { type: 'CHECK_IN', attendance };
+          }
+        }
+        throw err;
+      }
       return { type: 'CHECK_IN', attendance };
     } else {
       // --- CHECK-OUT ---
       if (attendance.checkOutTime) {
+        if (clientRequestId && attendance.clientRequestId === clientRequestId) {
+          return { type: 'CHECK_OUT', attendance };
+        }
         throw new Error('Already checked out for today');
+      }
+
+      // Idempotency:
+      // If clientRequestId matches the existing attendance, treat it as CHECK-IN replay (no-op),
+      // preventing a duplicate check-in from being interpreted as check-out.
+      if (clientRequestId && attendance.clientRequestId === clientRequestId) {
+        return { type: 'CHECK_IN', attendance };
       }
 
       const checkOutTime = data.checkOutTime || new Date();
@@ -91,6 +119,11 @@ export class AttendanceService {
         overtimeHours,
         gpsLatitude: data.gpsLatitude,
         gpsLongitude: data.gpsLongitude,
+        wifiBSSID: data.wifiBSSID,
+        deviceId: data.deviceId,
+        isMockLocation: data.isMockLocation,
+        selfie: data.selfie,
+        clientRequestId,
         remarks: data.remarks || attendance.remarks
       });
 
@@ -140,12 +173,26 @@ export class AttendanceService {
    */
   private async validateAttendance(attendanceData: any, user: any, organization: any) {
     const securitySettings = organization.settings?.securitySettings;
+    const requiresEnrollment = Boolean(securitySettings?.requiresEnrollment);
+    const requireFaceCaptureEffective = Boolean(securitySettings?.requireFaceCapture || securitySettings?.isSelfieRequired);
 
     // 1. Device ID Lock
     if (!user.registeredDeviceId) {
-      // First time registration (auto-lock if not already locked)
-      // Note: Typically you'd use the registration endpoint, 
-      // but we allow auto-lock on first mark if not yet set.
+      // Contract:
+      // - requiresEnrollment=true => block until client calls register-device
+      // - requiresEnrollment=false => allow first mark to bind device (legacy behavior)
+      if (requiresEnrollment) {
+        const error = new Error('DEVICE_ENROLLMENT_REQUIRED. Please register device first.');
+        (error as any).statusCode = 400;
+        throw error;
+      }
+
+      if (!attendanceData.deviceId) {
+        const error = new Error('Device not registered. Please register device first.');
+        (error as any).statusCode = 400;
+        throw error;
+      }
+
       user.registeredDeviceId = attendanceData.deviceId;
       await user.save({ validateBeforeSave: false });
     } else if (user.registeredDeviceId !== attendanceData.deviceId) {
@@ -155,14 +202,15 @@ export class AttendanceService {
     }
 
     // 2. Mock GPS Block
-    if (securitySettings?.blockMockLocations && attendanceData.isMockLocation) {
-      const error = new Error('Mock location detected. Please disable mock GPS.');
+    const isWFH = attendanceData.status === 'WFH';
+    if (securitySettings?.blockMockLocations && attendanceData.isMockLocation && !isWFH) {
+      const error = new Error('Mock location detected for office attendance.');
       (error as any).statusCode = 403;
       throw error;
     }
 
     // 3. Geofence Re-verification (Haversine)
-    if (attendanceData.status !== 'WFH') {
+    if (!isWFH) {
       const officeLocations = securitySettings?.officeLocations || [];
       if (officeLocations.length > 0) {
         let isWithinRange = false;
@@ -192,8 +240,16 @@ export class AttendanceService {
 
     // 4. BSSID Verification (Optional)
     const allowedWifis = securitySettings?.allowedWifiNetworks || [];
-    if (allowedWifis.length > 0 && attendanceData.wifiBSSID) {
-      const isAllowedWifi = allowedWifis.some((w: any) => w.bssid === attendanceData.wifiBSSID);
+    if (!isWFH && allowedWifis.length > 0) {
+      // For office attendance, Wi-Fi should be present and must be allowed.
+      if (!attendanceData.wifiBSSID) {
+        const error = new Error('wifiBSSID is required for office attendance.');
+        (error as any).statusCode = 403;
+        throw error;
+      }
+
+      const requestedBssid = this.normalizeBssid(attendanceData.wifiBSSID);
+      const isAllowedWifi = allowedWifis.some((w: any) => this.normalizeBssid(w?.bssid) === requestedBssid);
       if (!isAllowedWifi) {
         const error = new Error('Unauthorized WiFi network.');
         (error as any).statusCode = 403;
@@ -202,9 +258,9 @@ export class AttendanceService {
     }
 
     // 5. Selfie Verification (Azure Face API)
-    if (securitySettings?.requireFaceCapture) {
+    if (requireFaceCaptureEffective) {
       if (!attendanceData.selfie) {
-        const error = new Error('Selfie is required for attendance.');
+        const error = new Error('selfie is required for attendance.');
         (error as any).statusCode = 400;
         throw error;
       }
@@ -393,8 +449,8 @@ export class AttendanceService {
   /**
    * Get today's attendance
    */
-  async getTodayAttendance() {
-    return await userDAL.getTodayAttendanceOverview();
+  async getTodayAttendance(organizationId?: string) {
+    return await userDAL.getTodayAttendanceOverview(organizationId);
   }
 
   /**

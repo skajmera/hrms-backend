@@ -7,6 +7,15 @@ const notifications_service_1 = require("../../notifications/notifications.servi
 const notification_interface_1 = require("../../../../shared/interfaces/notification.interface");
 const constants_1 = require("../../../../config/constants");
 class EmployeeLeaveService {
+    normalizeQueryValues(value) {
+        if (value === undefined || value === null || value === '')
+            return [];
+        const arr = Array.isArray(value) ? value : [value];
+        return arr
+            .flatMap((v) => String(v).split(','))
+            .map((v) => v.trim().toUpperCase())
+            .filter(Boolean);
+    }
     /**
      * Apply for leave
      */
@@ -79,12 +88,16 @@ class EmployeeLeaveService {
                 }
             ];
         }
-        if (filters.leaveType) {
-            query.leaveType = Array.isArray(filters.leaveType) ? { $in: filters.leaveType } : filters.leaveType;
-        }
-        if (filters.status) {
-            query.status = Array.isArray(filters.status) ? { $in: filters.status } : filters.status;
-        }
+        const leaveTypes = this.normalizeQueryValues(filters.leaveType);
+        if (leaveTypes.length === 1)
+            query.leaveType = leaveTypes[0];
+        else if (leaveTypes.length > 1)
+            query.leaveType = { $in: leaveTypes };
+        const statuses = this.normalizeQueryValues(filters.status);
+        if (statuses.length === 1)
+            query.status = statuses[0];
+        else if (statuses.length > 1)
+            query.status = { $in: statuses };
         return await leave_dal_1.leaveDAL.findAll(query, options);
     }
     /**

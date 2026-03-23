@@ -8,6 +8,42 @@ const user_dal_1 = require("../../../../shared/dal/user.dal");
  * Business logic for user permissions
  */
 class PermissionsService {
+    toPlain(value) {
+        if (!value)
+            return value;
+        if (typeof value.toObject === 'function')
+            return value.toObject();
+        if (typeof value.toJSON === 'function')
+            return value.toJSON();
+        return value;
+    }
+    deepMergeKeepSource(defaults, source) {
+        if (Array.isArray(defaults) || Array.isArray(source))
+            return source ?? defaults;
+        if (defaults && typeof defaults === 'object' && source && typeof source === 'object') {
+            const out = { ...defaults };
+            for (const k of Object.keys(source))
+                out[k] = this.deepMergeKeepSource(defaults?.[k], source[k]);
+            return out;
+        }
+        return source ?? defaults;
+    }
+    normalizeModules(role, modules) {
+        const defaults = this.getDefaultPermissionsByRole(role);
+        const src = this.toPlain(modules) || {};
+        // Ensures old docs get new keys (settings) but never flips true -> false.
+        return this.deepMergeKeepSource(defaults, src);
+    }
+    normalizePermissionDoc(permission) {
+        if (!permission)
+            return permission;
+        const plain = this.toPlain(permission);
+        const role = plain?.role || permission?.role || '';
+        return {
+            ...plain,
+            modules: this.normalizeModules(role, plain.modules)
+        };
+    }
     /**
      * Invite user and set permissions
      */
@@ -27,10 +63,11 @@ class PermissionsService {
             ...inviteData,
             invitedBy,
             isActive: true,
-            invitedAt: new Date()
+            invitedAt: new Date(),
+            modules: this.normalizeModules(inviteData.role, inviteData.modules)
         };
         const permission = await permission_dal_1.permissionDAL.create(permissionData);
-        return permission;
+        return this.normalizePermissionDoc(permission);
     }
     /**
      * Get all user permissions
@@ -49,7 +86,9 @@ class PermissionsService {
                 { role: { $regex: filters.search, $options: 'i' } }
             ];
         }
-        return await permission_dal_1.permissionDAL.findAll(queryFilters, options);
+        const result = await permission_dal_1.permissionDAL.findAll(queryFilters, options);
+        result.data = result.data.map((p) => this.normalizePermissionDoc(p));
+        return result;
     }
     /**
      * Get permission by user ID
@@ -66,17 +105,18 @@ class PermissionsService {
                 userId: user._id,
                 role: user.role,
                 email: user.email,
-                modules: this.getDefaultPermissionsByRole(user.role),
+                modules: this.normalizeModules(user.role, this.getDefaultPermissionsByRole(user.role)),
                 isActive: true
             };
         }
-        return permission;
+        return this.normalizePermissionDoc(permission);
     }
     /**
      * Get exact assigned permission by user ID (Returns object, empty object if not found)
      */
     async getAssignedPermissionByUserId(userId) {
-        return await permission_dal_1.permissionDAL.findByUserId(userId) || {};
+        const permission = await permission_dal_1.permissionDAL.findByUserId(userId);
+        return permission ? this.normalizePermissionDoc(permission) : {};
     }
     /**
      * Update or create user permissions (Atomic Upsert)
@@ -86,19 +126,21 @@ class PermissionsService {
         if (!user)
             throw new Error('User not found');
         const { invitedBy, ...dataToUpdate } = updateData;
+        const role = dataToUpdate.role || user.role;
+        const normalizedModules = this.normalizeModules(role, dataToUpdate.modules);
         const upsertData = {
             userId: user._id,
             email: user.email,
-            role: dataToUpdate.role || user.role,
-            modules: dataToUpdate.modules || this.getDefaultPermissionsByRole(user.role),
+            role,
+            modules: normalizedModules,
             invitedBy: invitedBy,
             isActive: true,
             invitedAt: new Date()
         };
-        const permission = await permission_dal_1.permissionDAL.updateByUserId(userId, dataToUpdate, upsertData);
+        const permission = await permission_dal_1.permissionDAL.updateByUserId(userId, { ...dataToUpdate, modules: normalizedModules }, upsertData);
         if (!permission)
             throw new Error('Failed to update or create user permissions');
-        return permission;
+        return this.normalizePermissionDoc(permission);
     }
     /**
      * Delete user permissions (Gracefully handles non-existent permissions)
@@ -130,7 +172,8 @@ class PermissionsService {
      * Get all active users with permissions
      */
     async getActiveUsers() {
-        return await permission_dal_1.permissionDAL.getActiveUsers();
+        const users = await permission_dal_1.permissionDAL.getActiveUsers();
+        return users.map((p) => this.normalizePermissionDoc(p));
     }
     /**
      * Get default permissions by role
@@ -158,7 +201,8 @@ class PermissionsService {
                 departments: { fullAccess: false, view: false, edit: false },
                 designations: { fullAccess: false, view: false, edit: false },
                 workSchedule: { fullAccess: false, view: false, edit: false },
-                security: { fullAccess: false, view: false, edit: false }
+                security: { fullAccess: false, view: false, edit: false },
+                notifications: { fullAccess: false, view: false, edit: false }
             }
         };
         // Admin gets full access to everything
@@ -185,7 +229,8 @@ class PermissionsService {
                     departments: { fullAccess: true, view: true, edit: true },
                     designations: { fullAccess: true, view: true, edit: true },
                     workSchedule: { fullAccess: true, view: true, edit: true },
-                    security: { fullAccess: true, view: true, edit: true }
+                    security: { fullAccess: true, view: true, edit: true },
+                    notifications: { fullAccess: true, view: true, edit: true }
                 }
             };
         }
@@ -213,7 +258,8 @@ class PermissionsService {
                     departments: { fullAccess: false, view: false, edit: false },
                     designations: { fullAccess: false, view: false, edit: false },
                     workSchedule: { fullAccess: false, view: false, edit: false },
-                    security: { fullAccess: false, view: false, edit: false }
+                    security: { fullAccess: false, view: false, edit: false },
+                    notifications: { fullAccess: false, view: false, edit: false }
                 }
             };
         }

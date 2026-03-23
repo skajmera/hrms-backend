@@ -66,16 +66,32 @@ export class EmployeeDashboardController {
 
   async getAllAnnouncements(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+      const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', announcementType, type, date, data } = req.query;
       const userId = req.user._id.toString();
       const userRole = req.user.role;
       const dept = req.user.professionalDetails?.department;
       const deptId = dept?._id ? dept._id.toString() : dept?.toString() ?? '';
+      const normalizedType = String(announcementType || type || '').trim().toUpperCase() || undefined;
+      const normalizedDate = String(date || data || '').trim() || undefined;
 
       const result = await employeeDashboardService.getAllAnnouncements(
         userId, userRole, deptId,
-        { page: Number(page), limit: Number(limit), sortBy: sortBy as string, sortOrder: sortOrder as 'asc' | 'desc' }
+        { page: Number(page), limit: Number(limit), sortBy: sortBy as string, sortOrder: sortOrder as 'asc' | 'desc' },
+        {
+          announcementType: normalizedType,
+          date: normalizedDate
+        }
       );
+      console.log('[EmployeeAnnouncement][GetAll][Response]', {
+        userId,
+        page: Number(page),
+        limit: Number(limit),
+        announcementType: normalizedType,
+        date: normalizedDate,
+        count: Array.isArray(result?.announcements) ? result.announcements.length : 0,
+        total: result?.total ?? 0,
+        data: result?.announcements
+      });
       sendPaginatedResponse(res, result.announcements, result.total, Number(page), Number(limit), 'Announcements retrieved successfully');
     } catch (error: any) {
       sendErrorResponse(res, error.message);

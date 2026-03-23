@@ -113,6 +113,11 @@ export interface IUserPermission extends Document {
                 edit: boolean;
                 fullAccess: boolean;
             };
+            notifications: {
+                view: boolean;
+                edit: boolean;
+                fullAccess: boolean;
+            };
         };
     };
     isActive: boolean;

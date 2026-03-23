@@ -105,6 +105,7 @@ export interface IUser extends Document {
   // Address
   currentAddress?: IAddress;
   permanentAddress?: IAddress;
+  sameAsPermanentAddress?: boolean;
 
   // Professional Details
   professionalDetails?: IProfessionalDetails | any;
@@ -160,6 +161,8 @@ export interface IUserCreateInput {
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   role: keyof typeof USER_ROLES;
   currentAddress?: IAddress;
+  permanentAddress?: IAddress;
+  sameAsPermanentAddress?: boolean;
   professionalDetails?: IProfessionalDetails | any;
 }
 
@@ -177,6 +180,7 @@ export interface IUserUpdateInput {
   profilePicture?: string;
   currentAddress?: IAddress;
   permanentAddress?: IAddress;
+  sameAsPermanentAddress?: boolean;
   education?: IEducation[];
   experience?: IExperience[];
   emergencyContact?: {

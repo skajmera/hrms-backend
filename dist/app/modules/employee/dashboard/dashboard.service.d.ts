@@ -37,7 +37,10 @@ export declare class EmployeeDashboardService {
         total: number;
     }>;
     private getAllAnnouncementsByType;
-    getAllAnnouncements(userId: string, userRole: string, deptId: string, options: IPaginationOptions): Promise<{
+    getAllAnnouncements(userId: string, userRole: string, deptId: string, options: IPaginationOptions, queryFilters?: {
+        announcementType?: string;
+        date?: string;
+    }): Promise<{
         announcements: import("../../../../shared/interfaces/announcement.interface").IAnnouncement[];
         total: number;
     }>;

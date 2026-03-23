@@ -3,6 +3,7 @@ import { userService } from './user.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
+import { compressImageIfNeeded } from '../../../../shared/utils/imageCompressor';
 
 // When form is sent as multipart/form-data, nested JSON fields arrive as strings — parse them back.
 const JSON_FIELDS = ['education', 'experience', 'currentAddress', 'permanentAddress', 'professionalDetails', 'separationInfo', 'bankDetails', 'emergencyContact', 'documents'];
@@ -27,6 +28,7 @@ export class UserController {
       createData.createdBy = req.user._id.toString();
       if (!createData.organizationId && req.user?.organizationId) createData.organizationId = req.user.organizationId;
       if (req.file) {
+        await compressImageIfNeeded(req.file.path, req.file.mimetype);
         createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }
       const user = await userService.createUser(createData);
@@ -45,6 +47,7 @@ export class UserController {
       createData.createdBy = req.user._id.toString();
       if (!createData.organizationId && req.user?.organizationId) createData.organizationId = req.user.organizationId;
       if (req.file) {
+        await compressImageIfNeeded(req.file.path, req.file.mimetype);
         createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }
       const user = await userService.createDraftEmployee(createData);
@@ -179,6 +182,7 @@ export class UserController {
       updateData.updatedBy = req.user._id.toString();
       if (!updateData.organizationId && req.user?.organizationId) updateData.organizationId = req.user.organizationId;
       if (req.file) {
+        await compressImageIfNeeded(req.file.path, req.file.mimetype);
         updateData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
       }
       const user = await userService.updateUser(req.params.id, updateData);

@@ -70,6 +70,7 @@ export interface IUserPermission extends Document {
       designations: { view: boolean; edit: boolean; fullAccess: boolean };
       workSchedule: { view: boolean; edit: boolean; fullAccess: boolean };
       security: { view: boolean; edit: boolean; fullAccess: boolean };
+      notifications: { view: boolean; edit: boolean; fullAccess: boolean };
     };
   };
   

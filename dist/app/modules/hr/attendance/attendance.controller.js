@@ -4,6 +4,7 @@ exports.attendanceController = exports.AttendanceController = void 0;
 const attendance_service_1 = require("./attendance.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
+const imageCompressor_1 = require("../../../../shared/utils/imageCompressor");
 const pickUserId = (value) => {
     const raw = value?._id || value?.id || value;
     if (typeof raw === 'string') {
@@ -26,12 +27,13 @@ class AttendanceController {
             const userId = pickUserId(req.body.userId) || req.user?._id?.toString() || req.user?.id;
             if (!userId)
                 throw new Error('User ID is required');
-            console.log('userId : ', userId);
             const attendanceData = { ...req.body, userId, ...(req.file ? { selfie: `/${req.file.path.replace(/\\/g, '/')}` } : {}) };
-            const isHrOverride = [constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN].includes(req.user?.role) && !!req.body.userId && userId !== req.user?._id?.toString();
-            console.log('isHrOverride : ', isHrOverride);
-            console.log('attendanceData : ', attendanceData);
-            console.log('userId : ', userId);
+            if (req.file)
+                await (0, imageCompressor_1.compressImageIfNeeded)(req.file.path, req.file.mimetype);
+            const body = req.body || {};
+            const isHrOverride = [constants_1.USER_ROLES.SUPER_ADMIN, constants_1.USER_ROLES.HR_ADMIN].includes(req.user?.role) &&
+                !!req.body.userId &&
+                userId !== req.user?._id?.toString();
             if (isHrOverride) {
                 const result = await attendance_service_1.attendanceService.upsertAttendanceByAdmin({ ...attendanceData, userId, date: attendanceData.date || new Date() });
                 (0, response_1.sendSuccessResponse)(res, result.isNew ? 'Attendance created successfully' : 'Attendance updated successfully', result.attendance);
@@ -56,7 +58,7 @@ class AttendanceController {
      */
     async registerDevice(req, res, next) {
         try {
-            const userId = req.user?.id;
+            const userId = req.user?._id?.toString?.() ?? req.user?.id;
             const { deviceId, wifiBSSID, gpsLatitude, gpsLongitude } = req.body;
             const selfie = req.file?.path ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
             if (!selfie) {
@@ -178,7 +180,8 @@ class AttendanceController {
     }
     async getTodayAttendance(req, res, next) {
         try {
-            const attendance = await attendance_service_1.attendanceService.getTodayAttendance();
+            const organizationId = req.user?.organizationId?.toString?.() ?? req.user?.organizationId;
+            const attendance = await attendance_service_1.attendanceService.getTodayAttendance(organizationId);
             (0, response_1.sendSuccessResponse)(res, "Today's attendance retrieved successfully", attendance);
         }
         catch (error) {

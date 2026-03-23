@@ -73,7 +73,7 @@ export class OrganizationValidation {
    * Validation for adding WiFi network
    */
   static addWifiNetwork = [
-    body('name').notEmpty().withMessage('Name is required'),
+    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
     body('bssid').notEmpty().withMessage('BSSID is required')
   ];
 

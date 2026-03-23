@@ -3,14 +3,25 @@ import { employeeAttendanceService } from './attendance.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 import { sendSuccessResponse, sendErrorResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS } from '../../../../config/constants';
+import { compressImageIfNeeded } from '../../../../shared/utils/imageCompressor';
 
 export class EmployeeAttendanceController {
   async markMyAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const attendance = await employeeAttendanceService.markMyAttendance(req.user._id.toString(), req.body);
+      const selfie = req.file?.path ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
+      if (req.file?.path) await compressImageIfNeeded(req.file.path, req.file.mimetype);
+
+      const attendancePayload = {
+        ...req.body,
+        ...(selfie ? { selfie } : {}),
+      };
+
+      const attendance = await employeeAttendanceService.markMyAttendance(req.user._id.toString(), attendancePayload);
+
       sendSuccessResponse(res, 'Attendance marked successfully', attendance, HTTP_STATUS.CREATED);
     } catch (error: any) {
-      sendErrorResponse(res, error.message, HTTP_STATUS.BAD_REQUEST);
+      const statusCode = error?.statusCode ?? HTTP_STATUS.BAD_REQUEST;
+      sendErrorResponse(res, error.message, statusCode);
     }
   }
 
@@ -46,7 +57,9 @@ export class EmployeeAttendanceController {
   async getMyTodayAttendance(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const attendance = await employeeAttendanceService.getTodayAttendance(req.user._id.toString());
-      sendSuccessResponse(res, "Today's attendance retrieved successfully", attendance);
+      // Contract: when no attendance exists for the current calendar day,
+      // frontend must receive `data: null` (or no row).
+      sendSuccessResponse(res, "Today's attendance retrieved successfully", attendance ?? null);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
     }

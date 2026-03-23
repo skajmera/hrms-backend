@@ -16,12 +16,12 @@ export class DepartmentDAL {
   async findById(id: string): Promise<IDepartment | null> {
     return await DepartmentModel.findOne({ _id: id, isActive: true })
       .populate('parentDepartment', 'name code')
-      .populate('headOfDepartment', 'firstName lastName email profilePicture')
+      .populate('headOfDepartment', 'firstName lastName email phone profilePicture')
       .populate({
         path: 'employees',
-        select: 'firstName lastName email profilePicture professionalDetails.employeeId'
+        select: 'firstName lastName email phone profilePicture professionalDetails.employeeId'
       })
-      .populate('createdBy', 'firstName lastName email profilePicture');
+      .populate('createdBy', 'firstName lastName email phone profilePicture');
   }
 
   /**
@@ -37,8 +37,8 @@ export class DepartmentDAL {
 
     const departments = await DepartmentModel.find(activeFilters)
       .populate('parentDepartment', 'name code')
-      .populate('headOfDepartment', 'firstName lastName email profilePicture')
-      .populate('employees', 'firstName lastName email profilePicture')
+      .populate('headOfDepartment', 'firstName lastName email phone profilePicture')
+      .populate('employees', 'firstName lastName email phone profilePicture')
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -58,7 +58,7 @@ export class DepartmentDAL {
       { new: true, runValidators: true }
     )
       .populate('parentDepartment', 'name code')
-      .populate('headOfDepartment', 'firstName lastName email profilePicture');
+      .populate('headOfDepartment', 'firstName lastName email phone profilePicture');
   }
 
   /**
@@ -90,8 +90,8 @@ export class DepartmentDAL {
   */
   async getDepartmentTree(): Promise<IDepartmentTree[]> {
     const departments = await DepartmentModel.find({ isActive: true })
-      .populate('headOfDepartment', 'firstName lastName email profilePicture')
-      .populate('employees', 'firstName lastName email profilePicture')
+      .populate('headOfDepartment', 'firstName lastName email phone profilePicture')
+      .populate('employees', 'firstName lastName email phone profilePicture')
       .sort({ level: 1, name: 1 });
     const buildTree = (parentId: string | null = null): IDepartmentTree[] => {
       return departments
@@ -154,6 +154,7 @@ export class DepartmentDAL {
             fullName: { $concat: ['$head.firstName', ' ', '$head.lastName'] },
             profilePicture: '$head.profilePicture',
             profileImage: '$head.profilePicture',
+            phone: '$head.phone',
             designation: '$head.professionalDetails.designation'
           },
 
@@ -166,6 +167,7 @@ export class DepartmentDAL {
                 fullName: { $concat: ['$$e.firstName', ' ', '$$e.lastName'] },
                 profilePicture: '$$e.profilePicture',
                 profileImage: '$$e.profilePicture',
+                    phone: '$$e.phone',
                 designation: '$$e.professionalDetails.designation',
                 reportingManager: '$$e.professionalDetails.reportingManager'
               }
@@ -184,7 +186,7 @@ export class DepartmentDAL {
   */
   async getSubDepartments(parentId: string): Promise<IDepartment[]> {
     return await DepartmentModel.find({ parentDepartment: parentId, isActive: true })
-      .populate('headOfDepartment', 'firstName lastName email profilePicture');
+      .populate('headOfDepartment', 'firstName lastName email phone profilePicture');
   }
 
   /**

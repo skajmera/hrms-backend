@@ -1,6 +1,7 @@
 import app from './app';
 import { config } from './config/env';
 import { connectDatabase } from './config/db';
+import { registerJobs } from './shared/jobs';
 
 /**
  * Start the Express server
@@ -9,6 +10,7 @@ const startServer = async (): Promise<void> => {
   try {
     // Connect to MongoDB
     await connectDatabase();
+    registerJobs();
 
     // Start Express server
     const server = app.listen(config.port, () => {

@@ -1,6 +1,8 @@
 import { IUserUpdateInput } from '../../../../shared/interfaces/user.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 export declare class UserService {
+    private toBoolean;
+    private normalizeAddressPayload;
     /**
      * Create new user
      */

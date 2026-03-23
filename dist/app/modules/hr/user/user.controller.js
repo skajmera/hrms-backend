@@ -4,6 +4,7 @@ exports.userController = exports.UserController = void 0;
 const user_service_1 = require("./user.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
+const imageCompressor_1 = require("../../../../shared/utils/imageCompressor");
 // When form is sent as multipart/form-data, nested JSON fields arrive as strings — parse them back.
 const JSON_FIELDS = ['education', 'experience', 'currentAddress', 'permanentAddress', 'professionalDetails', 'separationInfo', 'bankDetails', 'emergencyContact', 'documents'];
 const parseJsonFields = (body) => {
@@ -30,6 +31,7 @@ class UserController {
             if (!createData.organizationId && req.user?.organizationId)
                 createData.organizationId = req.user.organizationId;
             if (req.file) {
+                await (0, imageCompressor_1.compressImageIfNeeded)(req.file.path, req.file.mimetype);
                 createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }
             const user = await user_service_1.userService.createUser(createData);
@@ -49,6 +51,7 @@ class UserController {
             if (!createData.organizationId && req.user?.organizationId)
                 createData.organizationId = req.user.organizationId;
             if (req.file) {
+                await (0, imageCompressor_1.compressImageIfNeeded)(req.file.path, req.file.mimetype);
                 createData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }
             const user = await user_service_1.userService.createDraftEmployee(createData);
@@ -161,6 +164,7 @@ class UserController {
             if (!updateData.organizationId && req.user?.organizationId)
                 updateData.organizationId = req.user.organizationId;
             if (req.file) {
+                await (0, imageCompressor_1.compressImageIfNeeded)(req.file.path, req.file.mimetype);
                 updateData.profilePicture = `/${req.file.path.replace(/\\/g, '/')}`;
             }
             const user = await user_service_1.userService.updateUser(req.params.id, updateData);

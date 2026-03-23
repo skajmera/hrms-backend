@@ -58,7 +58,11 @@ export interface IOrganizationSettings {
             bssid: string;
         }[];
         requireFaceCapture: boolean;
+        isSelfieRequired?: boolean;
+        requiresEnrollment?: boolean;
         blockMockLocations: boolean;
+        registeredDeviceId?: string | null;
+        isFaceRegistered?: boolean;
     };
     locale: ILocaleSettings;
 }

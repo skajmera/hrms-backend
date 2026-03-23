@@ -21,16 +21,16 @@ class OffboardingDAL {
         return await offboarding_model_1.OffboardingModel.findById(offboardingId)
             .populate({
             path: 'userId',
-            select: 'firstName lastName email professionalDetails profilePicture',
+            select: 'firstName lastName email phone professionalDetails profilePicture',
             populate: {
                 path: 'professionalDetails.reportingManager',
-                select: 'firstName lastName email profilePicture'
+                select: 'firstName lastName email phone profilePicture'
             }
         })
             .populate('department', 'name code')
-            .populate('approvedBy', 'firstName lastName profilePicture')
-            .populate('rejectedBy', 'firstName lastName profilePicture')
-            .populate('createdBy', 'firstName lastName profilePicture');
+            .populate('approvedBy', 'firstName lastName phone profilePicture')
+            .populate('rejectedBy', 'firstName lastName phone profilePicture')
+            .populate('createdBy', 'firstName lastName phone profilePicture');
     }
     /**
      * Get all offboarding records with pagination
@@ -41,9 +41,9 @@ class OffboardingDAL {
         const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
         const [data, totalItems] = await Promise.all([
             offboarding_model_1.OffboardingModel.find(filters)
-                .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+                .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
                 .populate('department', 'name code')
-                .populate('approvedBy', 'firstName lastName profilePicture')
+                .populate('approvedBy', 'firstName lastName phone profilePicture')
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
@@ -73,7 +73,7 @@ class OffboardingDAL {
     //   }
     static async updateById(offboardingId, updateData) {
         const updated = await offboarding_model_1.OffboardingModel.findByIdAndUpdate(offboardingId, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email profilePicture')
+            .populate('userId', 'firstName lastName email phone profilePicture')
             .populate('department', 'name code');
         if (!updated) {
             throw new Error('Offboarding record not found');
@@ -99,7 +99,7 @@ class OffboardingDAL {
      */
     static async getPendingResignations() {
         return await offboarding_model_1.OffboardingModel.find({ status: 'PENDING' })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+            .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
             .populate('department', 'name code')
             .sort({ resignationDate: 1 });
     }
@@ -108,7 +108,7 @@ class OffboardingDAL {
      */
     static async getNoticePeriodEmployees() {
         return await offboarding_model_1.OffboardingModel.find({ status: 'NOTICE_PERIOD' })
-            .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+            .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
             .populate('department', 'name code')
             .sort({ lastWorkingDate: 1 });
     }

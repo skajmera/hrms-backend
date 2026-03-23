@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
 const env_1 = require("./config/env");
 const db_1 = require("./config/db");
+const jobs_1 = require("./shared/jobs");
 /**
  * Start the Express server
  */
@@ -13,6 +14,7 @@ const startServer = async () => {
     try {
         // Connect to MongoDB
         await (0, db_1.connectDatabase)();
+        (0, jobs_1.registerJobs)();
         // Start Express server
         const server = app_1.default.listen(env_1.config.port, () => {
             console.log('=================================');

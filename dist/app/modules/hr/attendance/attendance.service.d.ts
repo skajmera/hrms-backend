@@ -1,6 +1,7 @@
 import { IAttendance, IAttendanceCreateInput } from '../../../../shared/interfaces/attendance.interface';
 import { IPaginationOptions } from '../../../../shared/interfaces/common.interface';
 export declare class AttendanceService {
+    private normalizeBssid;
     private pickUserId;
     /**
      * Mark attendance with Zero-Trust Validation
@@ -67,7 +68,7 @@ export declare class AttendanceService {
     /**
      * Get today's attendance
      */
-    getTodayAttendance(): Promise<any[]>;
+    getTodayAttendance(organizationId?: string): Promise<any[]>;
     /**
      * Get user attendance report
      */

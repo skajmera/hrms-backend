@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShiftHelper = void 0;
 class ShiftHelper {
+    static roundToTwo(value) {
+        return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+    }
     /**
      * Check if employee is late based on shift time
      */
@@ -44,14 +47,14 @@ class ShiftHelper {
     static calculateWorkingHours(checkInTime, checkOutTime, breakHours = 0) {
         const diffMs = checkOutTime.getTime() - checkInTime.getTime();
         const diffHours = diffMs / (1000 * 60 * 60);
-        return Math.max(0, diffHours - breakHours);
+        return this.roundToTwo(Math.max(0, diffHours - breakHours));
     }
     /**
      * Calculate overtime hours
      */
     static calculateOvertimeHours(workingHours, shiftTime) {
         const minimumHours = shiftTime.minimumHours || 8;
-        return Math.max(0, workingHours - minimumHours);
+        return this.roundToTwo(Math.max(0, workingHours - minimumHours));
     }
     /**
      * Check if working hours meet minimum requirement

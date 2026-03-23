@@ -5,6 +5,10 @@ import { IPaginationOptions } from '../../../../shared/interfaces/common.interfa
  * Business logic for user permissions
  */
 export declare class PermissionsService {
+    private toPlain;
+    private deepMergeKeepSource;
+    private normalizeModules;
+    private normalizePermissionDoc;
     /**
      * Invite user and set permissions
      */
@@ -44,7 +48,7 @@ export declare class PermissionsService {
     /**
      * Get all active users with permissions
      */
-    getActiveUsers(): Promise<IUserPermission[]>;
+    getActiveUsers(): Promise<any[]>;
     /**
      * Get default permissions by role
      */

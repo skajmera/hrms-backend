@@ -97,10 +97,25 @@ export class EmployeeDashboardService {
     return await announcementDAL.findAll(filters, options);
   }
 
-  async getAllAnnouncements(userId: string, userRole: string, deptId: string, options: IPaginationOptions) {
+  async getAllAnnouncements(
+    userId: string,
+    userRole: string,
+    deptId: string,
+    options: IPaginationOptions,
+    queryFilters: { announcementType?: string; date?: string } = {}
+  ) {
     // Use active filter + audience targeting for employee-visible announcements
+    const activeFilter = announcementDAL.getActiveFilter();
+    if (queryFilters.date) {
+      const refDate = new Date(queryFilters.date);
+      if (!Number.isNaN(refDate.getTime())) {
+        activeFilter.startDate = { $lte: refDate } as any;
+        activeFilter.$or = [{ expiryDate: { $exists: false } }, { expiryDate: { $gte: refDate } }];
+      }
+    }
+
     const filters: any = {
-      ...announcementDAL.getActiveFilter(),
+      ...activeFilter,
       $or: [
         { 'targetAudience.isGlobal': true },
         { 'targetAudience.roles': userRole },
@@ -108,6 +123,9 @@ export class EmployeeDashboardService {
         { 'targetAudience.specificUsers': userId }
       ]
     };
+    if (queryFilters.announcementType) {
+      filters.announcementType = queryFilters.announcementType;
+    }
     return await announcementDAL.findAll(filters, options);
   }
 }

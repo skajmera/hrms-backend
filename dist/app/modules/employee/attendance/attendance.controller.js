@@ -4,14 +4,23 @@ exports.employeeAttendanceController = exports.EmployeeAttendanceController = vo
 const attendance_service_1 = require("./attendance.service");
 const response_1 = require("../../../../shared/utils/response");
 const constants_1 = require("../../../../config/constants");
+const imageCompressor_1 = require("../../../../shared/utils/imageCompressor");
 class EmployeeAttendanceController {
     async markMyAttendance(req, res, next) {
         try {
-            const attendance = await attendance_service_1.employeeAttendanceService.markMyAttendance(req.user._id.toString(), req.body);
+            const selfie = req.file?.path ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
+            if (req.file?.path)
+                await (0, imageCompressor_1.compressImageIfNeeded)(req.file.path, req.file.mimetype);
+            const attendancePayload = {
+                ...req.body,
+                ...(selfie ? { selfie } : {}),
+            };
+            const attendance = await attendance_service_1.employeeAttendanceService.markMyAttendance(req.user._id.toString(), attendancePayload);
             (0, response_1.sendSuccessResponse)(res, 'Attendance marked successfully', attendance, constants_1.HTTP_STATUS.CREATED);
         }
         catch (error) {
-            (0, response_1.sendErrorResponse)(res, error.message, constants_1.HTTP_STATUS.BAD_REQUEST);
+            const statusCode = error?.statusCode ?? constants_1.HTTP_STATUS.BAD_REQUEST;
+            (0, response_1.sendErrorResponse)(res, error.message, statusCode);
         }
     }
     async getMyAttendance(req, res, next) {
@@ -37,7 +46,9 @@ class EmployeeAttendanceController {
     async getMyTodayAttendance(req, res, next) {
         try {
             const attendance = await attendance_service_1.employeeAttendanceService.getTodayAttendance(req.user._id.toString());
-            (0, response_1.sendSuccessResponse)(res, "Today's attendance retrieved successfully", attendance);
+            // Contract: when no attendance exists for the current calendar day,
+            // frontend must receive `data: null` (or no row).
+            (0, response_1.sendSuccessResponse)(res, "Today's attendance retrieved successfully", attendance ?? null);
         }
         catch (error) {
             (0, response_1.sendErrorResponse)(res, error.message);

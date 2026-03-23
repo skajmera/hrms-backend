@@ -18,6 +18,9 @@ exports.createUserValidation = [
     (0, express_validator_1.body)('gender').optional().isIn(['MALE', 'FEMALE', 'OTHER']).withMessage('Valid gender is required'),
     (0, express_validator_1.body)('profileImage').optional().isString().withMessage('Profile image must be a URL string'),
     (0, express_validator_1.body)('permanentAddress').optional().isObject(),
+    (0, express_validator_1.body)('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+    (0, express_validator_1.body)('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+    (0, express_validator_1.body)('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean'),
     (0, express_validator_1.body)('role').optional().isIn(['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER', 'EMPLOYEE']).withMessage('Valid role is required'),
     // Professional Details
     (0, express_validator_1.body)('professionalDetails.employeeId').notEmpty().withMessage('Employee ID is required'),
@@ -47,6 +50,9 @@ exports.updateUserValidation = [
         .withMessage('Valid alternate phone number is required (7-15 digits)'),
     (0, express_validator_1.body)('email').optional().isEmail().withMessage('Valid email is required'),
     (0, express_validator_1.body)('profileImage').optional().isString(),
+    (0, express_validator_1.body)('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+    (0, express_validator_1.body)('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+    (0, express_validator_1.body)('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean'),
     (0, express_validator_1.body)('professionalDetails.totalExperience').optional().isString(),
     (0, express_validator_1.body)('professionalDetails.currentExperience').optional().isString(),
     (0, express_validator_1.body)('experience.*.isRelevant').optional().isBoolean(),
@@ -71,6 +77,9 @@ exports.createDraftValidation = [
     (0, express_validator_1.body)('alternatePhone')
         .optional({ checkFalsy: true })
         .matches(/^\+?[0-9\s\-()]{7,15}$/)
-        .withMessage('Valid alternate phone number is required (7-15 digits)')
+        .withMessage('Valid alternate phone number is required (7-15 digits)'),
+    (0, express_validator_1.body)('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+    (0, express_validator_1.body)('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+    (0, express_validator_1.body)('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean')
 ];
 //# sourceMappingURL=user.validation.js.map

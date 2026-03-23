@@ -1,6 +1,8 @@
 import { IAnnouncement, IAnnouncementCreateInput } from '../interfaces/announcement.interface';
 import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interface';
 export declare class AnnouncementDAL {
+    private applyAnnouncementUserPopulates;
+    private populateAnnouncementUsers;
     /**
      * Create announcement
      */

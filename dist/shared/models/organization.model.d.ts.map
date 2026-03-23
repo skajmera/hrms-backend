@@ -1,1 +1,1 @@
-{"version":3,"file":"organization.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/organization.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,aAAa,EAAE,MAAM,sCAAsC,CAAC;AAmLrE,eAAO,MAAM,iBAAiB;;;;OAAoE,CAAC"}
+{"version":3,"file":"organization.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/organization.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,aAAa,EAAE,MAAM,sCAAsC,CAAC;AAqLrE,eAAO,MAAM,iBAAiB;;;;OAAoE,CAAC"}

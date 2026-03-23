@@ -22,8 +22,8 @@ export class PermissionDAL {
    */
   async findByUserId(userId: string): Promise<IUserPermission | null> {
     return await UserPermissionModel.findOne({ userId })
-      .populate('userId', 'firstName lastName email profilePicture')
-      .populate('invitedBy', 'firstName lastName email profilePicture');
+      .populate('userId', 'firstName lastName email phone profilePicture')
+      .populate('invitedBy', 'firstName lastName email phone profilePicture');
   }
 
   /**
@@ -45,8 +45,8 @@ export class PermissionDAL {
 
     const [data, totalItems] = await Promise.all([
       UserPermissionModel.find(filters)
-        .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
-        .populate('invitedBy', 'firstName lastName profilePicture')
+        .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
+        .populate('invitedBy', 'firstName lastName phone profilePicture')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -86,7 +86,7 @@ export class PermissionDAL {
       { userId },
       { $set: mergedData },
       { new: true, upsert: true, runValidators: false }
-    ).populate('userId', 'firstName lastName email profilePicture');
+    ).populate('userId', 'firstName lastName email phone profilePicture');
   }
 
   /**
@@ -126,7 +126,7 @@ export class PermissionDAL {
    */
   async getActiveUsers(): Promise<IUserPermission[]> {
     return await UserPermissionModel.find({ isActive: true })
-      .populate('userId', 'firstName lastName email profilePicture')
+      .populate('userId', 'firstName lastName email phone profilePicture')
       .sort({ createdAt: -1 });
   }
 

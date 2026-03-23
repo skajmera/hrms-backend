@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { employeeAttendanceController } from './attendance.controller';
 import { authenticate } from '../../../../shared/middlewares/auth.middleware';
+import { attendanceUpload } from '../../../../shared/middlewares/upload.middleware';
 
 const router = Router();
 
@@ -40,7 +41,11 @@ router.use(authenticate);
  *       201:
  *         description: Attendance marked successfully
  */
-router.post('/mark', employeeAttendanceController.markMyAttendance.bind(employeeAttendanceController));
+router.post(
+  '/mark',
+  attendanceUpload.single('selfie'),
+  employeeAttendanceController.markMyAttendance.bind(employeeAttendanceController)
+);
 
 /**
  * @swagger

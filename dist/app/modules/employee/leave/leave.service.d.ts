@@ -1,5 +1,6 @@
 import { ILeaveCreateInput } from '../../../../shared/interfaces/leave.interface';
 export declare class EmployeeLeaveService {
+    private normalizeQueryValues;
     /**
      * Apply for leave
      */

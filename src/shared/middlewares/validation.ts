@@ -19,11 +19,25 @@ export const validate = (validations: ValidationChain[]) => {
     }
 
     const rawErrors = errors.array();
+    const isWifiSettingsRoute = req.originalUrl.includes('/organization/settings/wifi');
     // Lightweight debug log to inspect failing payloads and rules
     console.error('[ValidationError]', {
       path: req.path,
+      originalUrl: req.originalUrl,
       method: req.method,
-      errors: rawErrors
+      errors: rawErrors,
+      ...(isWifiSettingsRoute
+        ? {
+            payload: {
+              headers: {
+                'content-type': req.headers['content-type'],
+              },
+              body: req.body,
+              params: req.params,
+              query: req.query
+            }
+          }
+        : {})
     });
 
     const formattedErrors = rawErrors.map(err => ({

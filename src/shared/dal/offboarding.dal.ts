@@ -25,16 +25,16 @@ export class OffboardingDAL {
 
       .populate({
         path: 'userId',
-        select: 'firstName lastName email professionalDetails profilePicture',
+        select: 'firstName lastName email phone professionalDetails profilePicture',
         populate: {
           path: 'professionalDetails.reportingManager',
-          select: 'firstName lastName email profilePicture'
+          select: 'firstName lastName email phone profilePicture'
         }
       })
       .populate('department', 'name code')
-      .populate('approvedBy', 'firstName lastName profilePicture')
-      .populate('rejectedBy', 'firstName lastName profilePicture')
-      .populate('createdBy', 'firstName lastName profilePicture');
+      .populate('approvedBy', 'firstName lastName phone profilePicture')
+      .populate('rejectedBy', 'firstName lastName phone profilePicture')
+      .populate('createdBy', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -56,9 +56,9 @@ export class OffboardingDAL {
 
     const [data, totalItems] = await Promise.all([
       OffboardingModel.find(filters)
-        .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+        .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
         .populate('department', 'name code')
-        .populate('approvedBy', 'firstName lastName profilePicture')
+        .populate('approvedBy', 'firstName lastName phone profilePicture')
         .sort(sort)
         .skip(skip)
         .limit(limit)
@@ -100,7 +100,7 @@ export class OffboardingDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('userId', 'firstName lastName email profilePicture')
+      .populate('userId', 'firstName lastName email phone profilePicture')
       .populate('department', 'name code');
 
     if (!updated) {
@@ -131,7 +131,7 @@ export class OffboardingDAL {
    */
   static async getPendingResignations(): Promise<IOffboarding[]> {
     return await OffboardingModel.find({ status: 'PENDING' })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+      .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
       .populate('department', 'name code')
       .sort({ resignationDate: 1 });
   }
@@ -141,7 +141,7 @@ export class OffboardingDAL {
    */
   static async getNoticePeriodEmployees(): Promise<IOffboarding[]> {
     return await OffboardingModel.find({ status: 'NOTICE_PERIOD' })
-      .populate('userId', 'firstName lastName email professionalDetails.employeeId profilePicture')
+      .populate('userId', 'firstName lastName email phone professionalDetails.employeeId profilePicture')
       .populate('department', 'name code')
       .sort({ lastWorkingDate: 1 });
   }

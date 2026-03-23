@@ -1,1 +1,1 @@
-{"version":3,"file":"attendance.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/attendance.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,WAAW,EAAE,MAAM,oCAAoC,CAAC;AAyFjE,eAAO,MAAM,eAAe;;;;OAA8D,CAAC"}
+{"version":3,"file":"attendance.model.d.ts","sourceRoot":"","sources":["../../../src/shared/models/attendance.model.ts"],"names":[],"mappings":"AAAA,OAAO,QAAoB,MAAM,UAAU,CAAC;AAC5C,OAAO,EAAE,WAAW,EAAE,MAAM,oCAAoC,CAAC;AAwGjE,eAAO,MAAM,eAAe;;;;OAA8D,CAAC"}

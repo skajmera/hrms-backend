@@ -34,6 +34,7 @@ export interface IAttendance extends Document {
     wifiBSSID?: string;
     isMockLocation?: boolean;
     selfie?: string;
+    clientRequestId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -64,6 +65,7 @@ export interface IAttendanceCreateInput {
     wifiBSSID?: string;
     isMockLocation?: boolean;
     selfie?: string;
+    clientRequestId?: string;
 }
 export interface IAttendanceReport {
     userId: string;

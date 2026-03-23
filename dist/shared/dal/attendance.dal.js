@@ -18,7 +18,7 @@ class AttendanceDAL {
      */
     async findById(id) {
         return await attendance_model_1.AttendanceModel.findById(id)
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId');
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId');
     }
     /**
      * Find attendance by user and date
@@ -40,8 +40,8 @@ class AttendanceDAL {
         const { page = 1, limit = 10, sortBy = 'date', sortOrder = 'desc' } = options;
         const skip = (page - 1) * limit;
         const records = await attendance_model_1.AttendanceModel.find(filters)
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
-            .populate('approvedBy', 'firstName lastName profilePicture')
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId professionalDetails.department professionalDetails.shiftTime')
+            .populate('approvedBy', 'firstName lastName phone profilePicture')
             .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
             .skip(skip)
             .limit(limit);
@@ -53,7 +53,7 @@ class AttendanceDAL {
      */
     async update(id, updateData) {
         return await attendance_model_1.AttendanceModel.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
-            .populate('userId', 'firstName lastName email profilePicture');
+            .populate('userId', 'firstName lastName email phone profilePicture');
     }
     /**
      * Delete attendance
@@ -82,7 +82,7 @@ class AttendanceDAL {
         return await attendance_model_1.AttendanceModel.find({
             date: { $gte: today, $lt: tomorrow }
         })
-            .populate('userId', 'firstName lastName shiftTime email profilePicture professionalDetails.employeeId professionalDetails.department');
+            .populate('userId', 'firstName lastName shiftTime email phone profilePicture professionalDetails.employeeId professionalDetails.department');
     }
     /**
      * Get attendance statistics for a user
@@ -178,7 +178,7 @@ class AttendanceDAL {
             date: { $gte: startDate, $lte: endDate },
             isLate: true
         })
-            .populate('userId', 'firstName lastName email profilePicture professionalDetails.employeeId')
+            .populate('userId', 'firstName lastName email phone profilePicture professionalDetails.employeeId')
             .sort({ date: -1 });
     }
     /**
@@ -310,6 +310,8 @@ class AttendanceDAL {
         if (report.presentDays > 0) {
             report.averageWorkingHours = report.totalWorkingHours / report.presentDays;
         }
+        report.totalWorkingHours = Math.round((report.totalWorkingHours + Number.EPSILON) * 100) / 100;
+        report.averageWorkingHours = Math.round((report.averageWorkingHours + Number.EPSILON) * 100) / 100;
         return report;
     }
     /**

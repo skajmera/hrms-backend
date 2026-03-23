@@ -64,7 +64,24 @@ export class OrganizationService {
   static async getUserOrganization({ userId, organizationId }: { userId: string; organizationId?: string }): Promise<IOrganization> {
     const organization = organizationId ? await OrganizationDAL.findById(organizationId) : await OrganizationDAL.findByOwner(userId);
     if (!organization) throw new Error('Organization not found');
-    return organization;
+
+    // Inject mirrors + aliases required by mobile contract
+    const user = await userDAL.findById(userId);
+    const orgObj: any = typeof (organization as any).toObject === 'function' ? (organization as any).toObject() : organization;
+    const sec: any = orgObj?.settings?.securitySettings || {};
+
+    // Alias sync: app treats them as OR
+    const effectiveRequireFace = Boolean(sec.requireFaceCapture || sec.isSelfieRequired);
+    sec.requireFaceCapture = effectiveRequireFace;
+    sec.isSelfieRequired = effectiveRequireFace;
+    sec.requiresEnrollment = Boolean(sec.requiresEnrollment);
+
+    // Mirrors (legacy fields in FE)
+    sec.registeredDeviceId = user?.registeredDeviceId ?? null;
+    sec.isFaceRegistered = Boolean(user?.azurePersonId);
+
+    orgObj.settings.securitySettings = sec;
+    return orgObj;
   }
 
   /**

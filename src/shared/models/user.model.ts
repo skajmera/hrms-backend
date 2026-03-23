@@ -132,6 +132,7 @@ const UserSchema = new Schema<IUser>({
   // Address
   currentAddress: { type: AddressSchema, required: false },
   permanentAddress: AddressSchema,
+  sameAsPermanentAddress: { type: Boolean, default: false },
   separationInfo: {
     dateOfExit: { type: Date },
     previousCompany: { type: String }

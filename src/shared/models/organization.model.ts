@@ -62,7 +62,9 @@ const OrganizationSettingsSchema = new Schema({
       name: { type: String, required: true },
       bssid: { type: String, required: true }
     }],
+    requiresEnrollment: { type: Boolean, default: false },
     requireFaceCapture: { type: Boolean, default: false },
+    isSelfieRequired: { type: Boolean, default: false },
     blockMockLocations: { type: Boolean, default: true }
   },
   locale: { type: LocaleSettingsSchema, default: () => ({}) }

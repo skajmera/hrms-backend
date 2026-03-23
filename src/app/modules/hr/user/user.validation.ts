@@ -17,6 +17,9 @@ export const createUserValidation = [
   body('gender').optional().isIn(['MALE', 'FEMALE', 'OTHER']).withMessage('Valid gender is required'),
   body('profileImage').optional().isString().withMessage('Profile image must be a URL string'),
   body('permanentAddress').optional().isObject(),
+  body('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+  body('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+  body('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean'),
   body('role').optional().isIn(['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER', 'EMPLOYEE']).withMessage('Valid role is required'),
 
   // Professional Details
@@ -51,6 +54,9 @@ export const updateUserValidation = [
 
   body('email').optional().isEmail().withMessage('Valid email is required'),
   body('profileImage').optional().isString(),
+  body('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+  body('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+  body('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean'),
   body('professionalDetails.totalExperience').optional().isString(),
   body('professionalDetails.currentExperience').optional().isString(),
   body('experience.*.isRelevant').optional().isBoolean(),
@@ -78,6 +84,9 @@ export const createDraftValidation = [
   body('alternatePhone')
     .optional({ checkFalsy: true })
     .matches(/^\+?[0-9\s\-()]{7,15}$/)
-    .withMessage('Valid alternate phone number is required (7-15 digits)')
+    .withMessage('Valid alternate phone number is required (7-15 digits)'),
+  body('sameAsPermanentAddress').optional().isBoolean().toBoolean().withMessage('sameAsPermanentAddress must be a boolean'),
+  body('currentAddressSameAsPermanent').optional().isBoolean().toBoolean().withMessage('currentAddressSameAsPermanent must be a boolean'),
+  body('usePermanentAddressAsCurrent').optional().isBoolean().toBoolean().withMessage('usePermanentAddressAsCurrent must be a boolean')
 
 ];

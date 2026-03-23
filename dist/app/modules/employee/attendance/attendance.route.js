@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const attendance_controller_1 = require("./attendance.controller");
 const auth_middleware_1 = require("../../../../shared/middlewares/auth.middleware");
+const upload_middleware_1 = require("../../../../shared/middlewares/upload.middleware");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate);
 /**
@@ -39,7 +40,7 @@ router.use(auth_middleware_1.authenticate);
  *       201:
  *         description: Attendance marked successfully
  */
-router.post('/mark', attendance_controller_1.employeeAttendanceController.markMyAttendance.bind(attendance_controller_1.employeeAttendanceController));
+router.post('/mark', upload_middleware_1.attendanceUpload.single('selfie'), attendance_controller_1.employeeAttendanceController.markMyAttendance.bind(attendance_controller_1.employeeAttendanceController));
 /**
  * @swagger
  * /employee/attendance:

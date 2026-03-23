@@ -4,6 +4,31 @@ import { IQueryFilters, IPaginationOptions } from '../interfaces/common.interfac
 import { EMPLOYMENT_STATUS } from '../../config/constants';
 
 export class AnnouncementDAL {
+  private applyAnnouncementUserPopulates(query: any) {
+    return query
+      .populate('createdBy', 'firstName lastName email phone profilePicture')
+      .populate('targetAudience.departments', 'name code')
+      .populate('targetAudience.specificUsers', 'firstName lastName email phone profilePicture')
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture')
+      .populate('comments.replies.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.replies.likes', 'firstName lastName phone profilePicture');
+  }
+
+  private async populateAnnouncementUsers(announcements: any[]) {
+    return AnnouncementModel.populate(announcements, [
+      { path: 'createdBy', select: 'firstName lastName email phone profilePicture' },
+      { path: 'targetAudience.departments', select: 'name code' },
+      { path: 'targetAudience.specificUsers', select: 'firstName lastName email phone profilePicture' },
+      { path: 'likes', select: 'firstName lastName phone profilePicture' },
+      { path: 'comments.userId', select: 'firstName lastName phone profilePicture' },
+      { path: 'comments.likes', select: 'firstName lastName phone profilePicture' },
+      { path: 'comments.replies.userId', select: 'firstName lastName phone profilePicture' },
+      { path: 'comments.replies.likes', select: 'firstName lastName phone profilePicture' }
+    ]);
+  }
+
   /**
    * Create announcement
    */
@@ -22,13 +47,7 @@ export class AnnouncementDAL {
    * Find announcement by ID
    */
   async findById(id: string): Promise<IAnnouncement | null> {
-    const a: any = await AnnouncementModel.findById(id)
-      .populate('createdBy', 'firstName lastName email profilePicture')
-      .populate('targetAudience.departments', 'name code')
-      .populate('targetAudience.specificUsers', 'firstName lastName email profilePicture')
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture');
+    const a: any = await this.applyAnnouncementUserPopulates(AnnouncementModel.findById(id));
     return a;
   }
 
@@ -42,10 +61,7 @@ export class AnnouncementDAL {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = options;
     const skip = (page - 1) * limit;
 
-    const announcements = await AnnouncementModel.find(filters)
-      .populate('createdBy', 'firstName lastName profilePicture')
-      .populate('targetAudience.departments', 'name code')
-      .populate('likes', 'firstName lastName profilePicture')
+    const announcements = await this.applyAnnouncementUserPopulates(AnnouncementModel.find(filters))
       .sort({ isPinned: -1, [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit);
@@ -64,7 +80,7 @@ export class AnnouncementDAL {
       { $set: updateData },
       { new: true, runValidators: true }
     )
-      .populate('createdBy', 'firstName lastName profilePicture');
+      .populate('createdBy', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -83,7 +99,7 @@ export class AnnouncementDAL {
     userDepartmentId: string
   ): Promise<IAnnouncement[]> {
     const now = new Date();
-    return await AnnouncementModel.find({
+    return await this.applyAnnouncementUserPopulates(AnnouncementModel.find({
       isActive: true,
       startDate: { $lte: now },
 
@@ -103,12 +119,8 @@ export class AnnouncementDAL {
           ]
         }
       ]
-    })
-      .populate('createdBy', 'firstName lastName profilePicture')
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture')
-      .populate('targetAudience.specificUsers', 'firstName lastName profilePicture professionalDetails.designation professionalDetails.department professionalDetails.joiningDate')
+    }))
+      .populate('targetAudience.specificUsers', 'firstName lastName email phone profilePicture professionalDetails.designation professionalDetails.department professionalDetails.joiningDate')
       .sort({ isPinned: -1, priority: -1, createdAt: -1 });
   }
 
@@ -143,8 +155,8 @@ export class AnnouncementDAL {
    */
   async getPinnedAnnouncements(): Promise<IAnnouncement[]> {
     return await AnnouncementModel.find({ isPinned: true, isActive: true })
-      .populate('createdBy', 'firstName lastName profilePicture')
-      .populate('likes', 'firstName lastName profilePicture')
+      .populate('createdBy', 'firstName lastName phone profilePicture')
+      .populate('likes', 'firstName lastName phone profilePicture')
       .sort({ createdAt: -1 });
   }
 
@@ -165,9 +177,9 @@ export class AnnouncementDAL {
       update,
       { new: true }
     )
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture');
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -190,9 +202,9 @@ export class AnnouncementDAL {
       update as any,
       { new: true }
     )
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture');
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -213,9 +225,9 @@ export class AnnouncementDAL {
       },
       { new: true }
     )
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture');
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -234,9 +246,9 @@ export class AnnouncementDAL {
       },
       { new: true }
     )
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture');
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -257,11 +269,11 @@ export class AnnouncementDAL {
       },
       { new: true }
     )
-      .populate('likes', 'firstName lastName profilePicture')
-      .populate('comments.userId', 'firstName lastName profilePicture')
-      .populate('comments.likes', 'firstName lastName profilePicture')
-      .populate('comments.replies.userId', 'firstName lastName profilePicture')
-      .populate('comments.replies.likes', 'firstName lastName profilePicture');
+      .populate('likes', 'firstName lastName phone profilePicture')
+      .populate('comments.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.likes', 'firstName lastName phone profilePicture')
+      .populate('comments.replies.userId', 'firstName lastName phone profilePicture')
+      .populate('comments.replies.likes', 'firstName lastName phone profilePicture');
   }
 
   /**
@@ -304,6 +316,7 @@ export class AnnouncementDAL {
               lastName: 1,
               fullName: { $concat: [{ $ifNull: ['$firstName', ''] }, ' ', { $ifNull: ['$lastName', ''] }] },
               profilePicture: 1,
+              phone: 1,
               isActive: 1,
               'professionalDetails.employmentStatus': 1,
               'professionalDetails.designation': 1,
@@ -319,7 +332,7 @@ export class AnnouncementDAL {
           from: 'users',
           localField: 'createdBy',
           foreignField: '_id',
-          pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1 } }],
+          pipeline: [{ $project: { firstName: 1, lastName: 1, profilePicture: 1, phone: 1 } }],
           as: 'createdByUser'
         }
       },
@@ -351,7 +364,9 @@ export class AnnouncementDAL {
       AnnouncementModel.aggregate([...pipeline, { $count: 'total' }])
     ]);
 
-    return { announcements, total: countResult[0]?.total ?? 0 };
+    const populatedAnnouncements = await this.populateAnnouncementUsers(announcements || []);
+
+    return { announcements: populatedAnnouncements as any[], total: countResult[0]?.total ?? 0 };
   }
 }
 

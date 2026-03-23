@@ -2,74 +2,18 @@ import { attendanceDAL } from '../../../../shared/dal/attendance.dal';
 import { IAttendanceCreateInput } from '../../../../shared/interfaces/attendance.interface';
 import { ShiftHelper } from '../../../../shared/utils/shiftHelper';
 import { userDAL } from '../../../../shared/dal/user.dal';
+import { attendanceService as hrAttendanceService } from '../../hr/attendance/attendance.service';
 
 export class EmployeeAttendanceService {
   /**
    * Mark own attendance (Check-In or Check-Out)
    */
   async markMyAttendance(userId: string, attendanceData: Omit<IAttendanceCreateInput, 'userId'>) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Check if attendance record exists for today
-    let attendance = await attendanceDAL.findByUserAndDate(userId, today);
-
-    // Get user shift time
-    const user = await userDAL.findById(userId);
-    if (!user || !user.professionalDetails.shiftTime) {
-      throw new Error('Shift time not configured. Please contact HR.');
-    }
-    const shiftTime = user.professionalDetails.shiftTime;
-
-    if (!attendance) {
-      // --- CHECK-IN ---
-      const checkInTime = new Date();
-      const lateCheck = ShiftHelper.isLate(checkInTime, shiftTime);
-
-      // Auto-detect status based on shift time
-      let status = attendanceData.status || 'PRESENT';
-      if (lateCheck.isLate && status === 'PRESENT') {
-        status = 'LATE';
-      }
-
-      return await attendanceDAL.create({
-        ...attendanceData,
-        userId,
-        checkInTime,
-        isLate: lateCheck.isLate,
-        lateByMinutes: lateCheck.lateByMinutes,
-        status,
-        isApproved: false
-      });
-    } else {
-      // --- CHECK-OUT ---
-      if (attendance.checkOutTime) {
-        throw new Error('Already checked out for today');
-      }
-
-      const checkOutTime = new Date();
-      const earlyExitCheck = ShiftHelper.isEarlyExit(checkOutTime, shiftTime);
-
-      // Calculate working hours
-      const workingHours = ShiftHelper.calculateWorkingHours(
-        attendance.checkInTime!,
-        checkOutTime
-      );
-
-      // Calculate overtime
-      const overtimeHours = ShiftHelper.calculateOvertimeHours(workingHours, shiftTime);
-
-      return await attendanceDAL.update(attendance._id.toString(), {
-        checkOutTime,
-        workingHours,
-        overtimeHours,
-        earlyExit: earlyExitCheck.earlyExit,
-        earlyExitByMinutes: earlyExitCheck.earlyExitByMinutes,
-        remarks: attendanceData.remarks || attendance.remarks,
-        gpsLatitude: attendanceData.gpsLatitude,
-        gpsLongitude: attendanceData.gpsLongitude
-      });
-    }
+    const result = await hrAttendanceService.markAttendance({
+      ...(attendanceData as any),
+      userId
+    } as any);
+    return result.attendance;
   }
 
 

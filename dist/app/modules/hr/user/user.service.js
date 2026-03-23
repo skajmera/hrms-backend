@@ -5,10 +5,49 @@ const user_dal_1 = require("../../../../shared/dal/user.dal");
 const leave_dal_1 = require("../../../../shared/dal/leave.dal");
 const email_1 = require("../../../../shared/utils/email");
 class UserService {
+    toBoolean(value) {
+        if (typeof value === 'boolean')
+            return value;
+        if (typeof value === 'string') {
+            const v = value.trim().toLowerCase();
+            if (v === 'true' || v === '1')
+                return true;
+            if (v === 'false' || v === '0')
+                return false;
+        }
+        if (typeof value === 'number') {
+            if (value === 1)
+                return true;
+            if (value === 0)
+                return false;
+        }
+        return undefined;
+    }
+    normalizeAddressPayload(payload, existingUser) {
+        const sameAsPermanent = this.toBoolean(payload?.sameAsPermanentAddress ??
+            payload?.currentAddressSameAsPermanent ??
+            payload?.usePermanentAddressAsCurrent);
+        if (sameAsPermanent !== undefined) {
+            payload.sameAsPermanentAddress = sameAsPermanent;
+        }
+        else if (existingUser?.sameAsPermanentAddress !== undefined) {
+            payload.sameAsPermanentAddress = existingUser.sameAsPermanentAddress;
+        }
+        if (sameAsPermanent === true) {
+            const sourcePermanent = payload?.permanentAddress || existingUser?.permanentAddress;
+            if (sourcePermanent && typeof sourcePermanent === 'object') {
+                payload.currentAddress = { ...sourcePermanent };
+            }
+        }
+        delete payload.currentAddressSameAsPermanent;
+        delete payload.usePermanentAddressAsCurrent;
+        return payload;
+    }
     /**
      * Create new user
      */
     async createUser(userData) {
+        userData = this.normalizeAddressPayload(userData);
         // Clean empty strings for unique fields to avoid duplicate-key errors
         const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
         uniqueFields.forEach(field => {
@@ -84,6 +123,7 @@ class UserService {
      * Create draft user
      */
     async createDraftEmployee(userData) {
+        userData = this.normalizeAddressPayload(userData);
         // Prevent MongoDB unique sparse index duplicate key errors for empty string inputs
         const uniqueFields = ['email', 'personalEmail', 'adhaarNumber', 'panNumber'];
         uniqueFields.forEach(field => {
@@ -165,7 +205,12 @@ class UserService {
      * Update user
      */
     async updateUser(id, updateData) {
-        const user = await user_dal_1.userDAL.update(id, updateData);
+        const existingUser = await user_dal_1.userDAL.findById(id);
+        if (!existingUser) {
+            throw new Error('User not found');
+        }
+        const normalizedUpdateData = this.normalizeAddressPayload(updateData, existingUser);
+        const user = await user_dal_1.userDAL.update(id, normalizedUpdateData);
         if (!user) {
             throw new Error('User not found');
         }

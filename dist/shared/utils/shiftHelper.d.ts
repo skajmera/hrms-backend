@@ -1,5 +1,6 @@
 import { IShiftTime } from '../interfaces/user.interface';
 export declare class ShiftHelper {
+    private static roundToTwo;
     /**
      * Check if employee is late based on shift time
      */

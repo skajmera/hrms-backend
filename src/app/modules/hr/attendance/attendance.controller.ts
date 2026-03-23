@@ -3,6 +3,7 @@ import { attendanceService } from './attendance.service';
 import { AuthRequest } from '../../../../shared/middlewares/auth.middleware';
 import { sendSuccessResponse, sendErrorResponse, sendPaginatedResponse } from '../../../../shared/utils/response';
 import { HTTP_STATUS, USER_ROLES } from '../../../../config/constants';
+import { compressImageIfNeeded } from '../../../../shared/utils/imageCompressor';
 
 const pickUserId = (value: any): string => {
   const raw = value?._id || value?.id || value;
@@ -24,12 +25,14 @@ export class AttendanceController {
     try {
       const userId = pickUserId(req.body.userId) || req.user?._id?.toString() || req.user?.id;
       if (!userId) throw new Error('User ID is required');
-      console.log('userId : ', userId);
       const attendanceData = { ...req.body, userId, ...(req.file ? { selfie: `/${req.file.path.replace(/\\/g, '/')}` } : {}) };
-      const isHrOverride = [USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN].includes(req.user?.role) && !!req.body.userId && userId !== req.user?._id?.toString();
-      console.log('isHrOverride : ', isHrOverride);
-      console.log('attendanceData : ', attendanceData);
-      console.log('userId : ', userId);
+      if (req.file) await compressImageIfNeeded(req.file.path, req.file.mimetype);
+      const body: any = req.body || {};
+      const isHrOverride =
+        [USER_ROLES.SUPER_ADMIN, USER_ROLES.HR_ADMIN].includes(req.user?.role) &&
+        !!req.body.userId &&
+        userId !== req.user?._id?.toString();
+
       if (isHrOverride) {
         const result = await attendanceService.upsertAttendanceByAdmin({ ...attendanceData, userId, date: attendanceData.date || new Date() });
         sendSuccessResponse(res, result.isNew ? 'Attendance created successfully' : 'Attendance updated successfully', result.attendance);
@@ -60,7 +63,7 @@ export class AttendanceController {
    */
   async registerDevice(req: any, res: Response, next: NextFunction) {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?._id?.toString?.() ?? req.user?.id;
       const { deviceId, wifiBSSID, gpsLatitude, gpsLongitude } = req.body;
       const selfie = req.file?.path ? `/${req.file.path.replace(/\\/g, '/')}` : undefined;
 
@@ -199,7 +202,8 @@ export class AttendanceController {
 
   async getTodayAttendance(req: any, res: Response, next: NextFunction): Promise<void> {
     try {
-      const attendance = await attendanceService.getTodayAttendance();
+      const organizationId = req.user?.organizationId?.toString?.() ?? req.user?.organizationId;
+      const attendance = await attendanceService.getTodayAttendance(organizationId);
       sendSuccessResponse(res, "Today's attendance retrieved successfully", attendance);
     } catch (error: any) {
       sendErrorResponse(res, error.message);
